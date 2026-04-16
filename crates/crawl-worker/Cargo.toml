@@ -1,0 +1,30 @@
+[package]
+name = "sf-crawl-worker"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "sf-crawl-worker"
+path = "src/main.rs"
+
+[dependencies]
+sf-core.workspace = true
+sf-evaluators.workspace = true
+tokio.workspace = true
+reqwest.workspace = true
+scraper.workspace = true
+lol_html.workspace = true
+sqlx.workspace = true
+redis.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+url.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+robotstxt.workspace = true
+quick-xml.workspace = true
+dotenvy.workspace = true
