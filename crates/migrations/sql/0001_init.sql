@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS projects (
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_projects_tenant ON projects (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_projects_tenant ON projects (tenant_id);
 
 CREATE TABLE IF NOT EXISTS crawls (
     id              UUID PRIMARY KEY,
@@ -26,9 +26,9 @@ CREATE TABLE IF NOT EXISTS crawls (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_crawls_project ON crawls (project_id);
-CREATE INDEX idx_crawls_tenant ON crawls (tenant_id);
-CREATE INDEX idx_crawls_status ON crawls (status);
+CREATE INDEX IF NOT EXISTS idx_crawls_project ON crawls (project_id);
+CREATE INDEX IF NOT EXISTS idx_crawls_tenant ON crawls (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_crawls_status ON crawls (status);
 
 CREATE TABLE IF NOT EXISTS crawl_urls (
     id                      UUID PRIMARY KEY,
@@ -60,8 +60,8 @@ CREATE TABLE IF NOT EXISTS crawl_urls (
     crawled_at              TIMESTAMPTZ
 );
 
-CREATE INDEX idx_crawl_urls_crawl ON crawl_urls (crawl_id);
-CREATE UNIQUE INDEX idx_crawl_urls_dedupe ON crawl_urls (crawl_id, url_hash);
+CREATE INDEX IF NOT EXISTS idx_crawl_urls_crawl ON crawl_urls (crawl_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_crawl_urls_dedupe ON crawl_urls (crawl_id, url_hash);
 
 -- Findings: one row per (url, filter_key) match.
 -- This is the read-hot table — the grid queries join through it.
@@ -72,8 +72,8 @@ CREATE TABLE IF NOT EXISTS crawl_url_findings (
     filter_key   TEXT NOT NULL
 );
 
-CREATE INDEX idx_findings_crawl_filter ON crawl_url_findings (crawl_id, filter_key);
-CREATE INDEX idx_findings_url ON crawl_url_findings (crawl_url_id);
+CREATE INDEX IF NOT EXISTS idx_findings_crawl_filter ON crawl_url_findings (crawl_id, filter_key);
+CREATE INDEX IF NOT EXISTS idx_findings_url ON crawl_url_findings (crawl_url_id);
 
 -- Links: edges between crawled URLs (inlinks/outlinks).
 CREATE TABLE IF NOT EXISTS crawl_links (
@@ -86,6 +86,6 @@ CREATE TABLE IF NOT EXISTS crawl_links (
     is_nofollow    BOOLEAN NOT NULL DEFAULT false
 );
 
-CREATE INDEX idx_links_crawl ON crawl_links (crawl_id);
-CREATE INDEX idx_links_source ON crawl_links (source_url_id);
-CREATE INDEX idx_links_target ON crawl_links (target_url_id);
+CREATE INDEX IF NOT EXISTS idx_links_crawl ON crawl_links (crawl_id);
+CREATE INDEX IF NOT EXISTS idx_links_source ON crawl_links (source_url_id);
+CREATE INDEX IF NOT EXISTS idx_links_target ON crawl_links (target_url_id);
