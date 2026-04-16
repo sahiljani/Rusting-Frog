@@ -41,6 +41,9 @@ pub enum TabKey {
     CustomJavaScript,
     Ai,
     Accessibility,
+    /// "UNDEF" tab in the Java enum — used only by the UNKNOWN filter key.
+    /// Not rendered in the UI; kept for parity with the source format.
+    Undef,
 }
 
 impl TabKey {
@@ -79,6 +82,7 @@ impl TabKey {
             Self::CustomJavaScript,
             Self::Ai,
             Self::Accessibility,
+            Self::Undef,
         ]
     }
 
@@ -117,6 +121,7 @@ impl TabKey {
             Self::CustomJavaScript => "tab.custom_javascript.title",
             Self::Ai => "tab.ai.title",
             Self::Accessibility => "tab.accessibility.name",
+            Self::Undef => "UNDEF",
         }
     }
 
@@ -155,6 +160,7 @@ impl TabKey {
             Self::CustomJavaScript => "Custom JavaScript",
             Self::Ai => "AI",
             Self::Accessibility => "Accessibility",
+            Self::Undef => "UNDEF",
         }
     }
 
