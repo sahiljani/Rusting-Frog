@@ -321,6 +321,18 @@ impl CrawlPipeline {
                 None => (None, None, None, None, None, 0, None, 0, None, None, None),
             };
 
+        // Persist response headers as a JSON array of [name, value] pairs so
+        // downstream /headers + /cookies endpoints can read them without a
+        // join. `final_url` captures the post-redirect URL so SF's HTTP
+        // Headers detail pane can show the original-vs-final mapping.
+        let headers_json: serde_json::Value = serde_json::Value::Array(
+            fetch
+                .headers
+                .iter()
+                .map(|(k, v)| serde_json::json!([k, v]))
+                .collect(),
+        );
+
         sqlx::query!(
             r#"
             INSERT INTO crawl_urls (
@@ -328,10 +340,10 @@ impl CrawlPipeline {
                 is_internal, depth, title, title_length, meta_description,
                 meta_description_length, h1_first, h1_count, h2_first, h2_count,
                 word_count, response_time_ms, content_length, canonical_url,
-                meta_robots, crawled_at
+                meta_robots, response_headers, final_url, crawled_at
             ) VALUES (
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-                $15, $16, $17, $18, $19, $20, $21, $22
+                $15, $16, $17, $18, $19, $20, $21, $22, $23, $24
             )
             ON CONFLICT (crawl_id, url_hash) DO NOTHING
             "#,
@@ -356,6 +368,8 @@ impl CrawlPipeline {
             fetch.content_length as i64,
             canonical,
             robots,
+            headers_json,
+            fetch.final_url,
             now,
         )
         .execute(&self.db)

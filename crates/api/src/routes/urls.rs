@@ -17,6 +17,8 @@ pub fn routes() -> Router<AppState> {
         .route("/crawls/{crawl_id}/urls/{url_id}/outlinks", get(get_outlinks))
         .route("/crawls/{crawl_id}/urls/{url_id}/images", get(get_images))
         .route("/crawls/{crawl_id}/urls/{url_id}/serp", get(get_serp))
+        .route("/crawls/{crawl_id}/urls/{url_id}/headers", get(get_headers))
+        .route("/crawls/{crawl_id}/urls/{url_id}/cookies", get(get_cookies))
         .route("/crawls/{crawl_id}/overview", get(get_overview))
 }
 
@@ -389,6 +391,146 @@ async fn get_serp(
             "truncated": desc_px > DESC_MAX_PIXELS,
         }
     })))
+}
+
+/// Feeds Screaming Frog's "HTTP Headers" detail sub-tab. Returns the raw
+/// response headers (in arrival order) plus the post-redirect URL.
+async fn get_headers(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path((crawl_id, url_id)): Path<(Uuid, Uuid)>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    verify_crawl_ownership(&state, &auth, &crawl_id).await?;
+    let row = sqlx::query!(
+        r#"
+        SELECT url, final_url, status_code, response_headers
+        FROM crawl_urls
+        WHERE id = $1 AND crawl_id = $2
+        "#,
+        &url_id,
+        &crawl_id,
+    )
+    .fetch_optional(&state.db)
+    .await?
+    .ok_or_else(|| ApiError::not_found("URL not found"))?;
+
+    let headers: Vec<serde_json::Value> = row
+        .response_headers
+        .as_array()
+        .cloned()
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|pair| {
+            let arr = pair.as_array()?;
+            Some(serde_json::json!({
+                "name": arr.first().and_then(|v| v.as_str()).unwrap_or(""),
+                "value": arr.get(1).and_then(|v| v.as_str()).unwrap_or(""),
+            }))
+        })
+        .collect();
+
+    Ok(Json(serde_json::json!({
+        "url": row.url,
+        "final_url": row.final_url,
+        "status_code": row.status_code,
+        "header_count": headers.len(),
+        "headers": headers,
+    })))
+}
+
+/// Feeds Screaming Frog's "Cookies" detail sub-tab. Parses every
+/// `Set-Cookie` response header into name / value / domain / path /
+/// expires / max_age / secure / http_only / same_site so the UI can
+/// render one row per cookie.
+async fn get_cookies(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path((crawl_id, url_id)): Path<(Uuid, Uuid)>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    verify_crawl_ownership(&state, &auth, &crawl_id).await?;
+    let row = sqlx::query!(
+        r#"
+        SELECT url, response_headers
+        FROM crawl_urls
+        WHERE id = $1 AND crawl_id = $2
+        "#,
+        &url_id,
+        &crawl_id,
+    )
+    .fetch_optional(&state.db)
+    .await?
+    .ok_or_else(|| ApiError::not_found("URL not found"))?;
+
+    let cookies: Vec<serde_json::Value> = row
+        .response_headers
+        .as_array()
+        .cloned()
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|pair| {
+            let arr = pair.as_array()?;
+            let name = arr.first()?.as_str()?;
+            if !name.eq_ignore_ascii_case("set-cookie") {
+                return None;
+            }
+            let raw = arr.get(1)?.as_str()?;
+            Some(parse_set_cookie(raw))
+        })
+        .collect();
+
+    Ok(Json(serde_json::json!({
+        "url": row.url,
+        "count": cookies.len(),
+        "cookies": cookies,
+    })))
+}
+
+/// Cheap hand-rolled `Set-Cookie` parser that returns everything SF's
+/// Cookies detail tab shows. Accepts the raw header value (what comes
+/// after "Set-Cookie:" with no further unfolding) and produces a JSON
+/// object. Unknown attributes are silently dropped.
+fn parse_set_cookie(raw: &str) -> serde_json::Value {
+    let mut parts = raw.split(';').map(str::trim);
+    let Some(first) = parts.next() else {
+        return serde_json::json!({ "raw": raw });
+    };
+    let (name, value) = first.split_once('=').unwrap_or((first, ""));
+
+    let mut domain: Option<String> = None;
+    let mut path: Option<String> = None;
+    let mut expires: Option<String> = None;
+    let mut max_age: Option<i64> = None;
+    let mut secure = false;
+    let mut http_only = false;
+    let mut same_site: Option<String> = None;
+
+    for attr in parts {
+        if attr.is_empty() { continue; }
+        let (k, v) = attr.split_once('=').map(|(k, v)| (k.trim(), v.trim())).unwrap_or((attr, ""));
+        match k.to_ascii_lowercase().as_str() {
+            "domain"   => domain = Some(v.to_string()),
+            "path"     => path = Some(v.to_string()),
+            "expires"  => expires = Some(v.to_string()),
+            "max-age"  => max_age = v.parse().ok(),
+            "secure"   => secure = true,
+            "httponly" => http_only = true,
+            "samesite" => same_site = Some(v.to_string()),
+            _ => {}
+        }
+    }
+
+    serde_json::json!({
+        "name": name,
+        "value": value,
+        "domain": domain,
+        "path": path,
+        "expires": expires,
+        "max_age": max_age,
+        "secure": secure,
+        "http_only": http_only,
+        "same_site": same_site,
+        "raw": raw,
+    })
 }
 
 async fn get_overview(

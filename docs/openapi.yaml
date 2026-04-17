@@ -133,7 +133,7 @@ info:
 
     **This spec is hand-written** — a Swagger UI app in `../swagger-ui/` loads it
     and issues requests against the Rust server at `http://localhost:3000`.
-  version: "0.10.0"
+  version: "0.11.0"
   contact:
     name: sf-clone-rust
     url: https://github.com/sahiljani/Rusting-Frog
@@ -1050,6 +1050,148 @@ paths:
                       remaining_pixels: 915
                       truncated: false
 
+  /v1/crawls/{crawl_id}/urls/{url_id}/headers:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlIdAsCrawl" }
+      - { $ref: "#/components/parameters/UrlId" }
+    get:
+      tags: [urls]
+      summary: HTTP response headers for a single URL
+      description: |
+        Feeds SF's per-URL **HTTP Headers** detail tab. Returns every
+        response header captured during the crawl, preserved in the
+        original order the server sent them (headers are sometimes
+        order-significant — e.g. multiple `Set-Cookie` lines). Header
+        names are lowercased because the crawler normalises them at
+        ingest; values are verbatim. `final_url` reflects the URL
+        *after* any 3xx redirect chain — compare with the `url`
+        parameter to detect redirects.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, header_count, headers]
+                properties:
+                  url:          { type: string, format: uri }
+                  final_url:    { type: string, format: uri, nullable: true }
+                  status_code:  { type: integer, nullable: true }
+                  header_count: { type: integer }
+                  headers:
+                    type: array
+                    items:
+                      type: object
+                      required: [name, value]
+                      properties:
+                        name:  { type: string }
+                        value: { type: string }
+              examples:
+                example_com:
+                  summary: example.com — 10 headers, no redirect
+                  value:
+                    url: "https://example.com/"
+                    final_url: "https://example.com/"
+                    status_code: 200
+                    header_count: 10
+                    headers:
+                      - { name: "date",              value: "Fri, 17 Apr 2026 13:27:10 GMT" }
+                      - { name: "content-type",      value: "text/html" }
+                      - { name: "transfer-encoding", value: "chunked" }
+                      - { name: "connection",        value: "keep-alive" }
+                      - { name: "server",            value: "cloudflare" }
+                      - { name: "last-modified",     value: "Tue, 14 Apr 2026 05:44:44 GMT" }
+                      - { name: "allow",             value: "GET, HEAD, OPTIONS" }
+                      - { name: "cache-control",     value: "max-age=1914" }
+                      - { name: "vary",              value: "Accept-Encoding" }
+                      - { name: "etag",              value: "\"84238dfc8092e5d9c0dac8ef93371a07:1749285264.428683\"" }
+
+  /v1/crawls/{crawl_id}/urls/{url_id}/cookies:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlIdAsCrawl" }
+      - { $ref: "#/components/parameters/UrlId" }
+    get:
+      tags: [urls]
+      summary: Parsed cookies for a single URL
+      description: |
+        Feeds SF's per-URL **Cookies** detail tab. Filters the URL's
+        response headers down to `Set-Cookie` entries and parses each
+        into its attribute breakdown (Domain / Path / Expires / Max-Age
+        / Secure / HttpOnly / SameSite). Matching is case-insensitive.
+        The `raw` field preserves the full `Set-Cookie` line for
+        audit/debug. Returns `cookies: []` when the response set none.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, count, cookies]
+                properties:
+                  url:    { type: string, format: uri }
+                  count:  { type: integer }
+                  cookies:
+                    type: array
+                    items:
+                      type: object
+                      required: [name, value, raw]
+                      properties:
+                        name:      { type: string }
+                        value:     { type: string }
+                        domain:    { type: string, nullable: true }
+                        path:      { type: string, nullable: true }
+                        expires:   { type: string, nullable: true, description: "Raw Expires= value (HTTP-date)" }
+                        max_age:   { type: integer, nullable: true }
+                        secure:    { type: boolean }
+                        http_only: { type: boolean }
+                        same_site: { type: string, nullable: true, enum: [Strict, Lax, None] }
+                        raw:       { type: string, description: "Original Set-Cookie header value" }
+              examples:
+                github_root:
+                  summary: github.com — 3 cookies with full attribute coverage
+                  value:
+                    url: "https://github.com/"
+                    count: 3
+                    cookies:
+                      - name: "_gh_sess"
+                        value: "iIKg…tQ%3D%3D"
+                        domain: null
+                        path: "/"
+                        expires: null
+                        max_age: null
+                        secure: true
+                        http_only: true
+                        same_site: "Lax"
+                        raw: "_gh_sess=iIKg…; path=/; HttpOnly; secure; SameSite=Lax"
+                      - name: "_octo"
+                        value: "GH1.1.227630100.1776432693"
+                        domain: ".github.com"
+                        path: "/"
+                        expires: "Sat, 17 Apr 2027 13:31:33 GMT"
+                        max_age: null
+                        secure: true
+                        http_only: false
+                        same_site: "Lax"
+                        raw: "_octo=GH1.1.227630100.1776432693; expires=Sat, 17 Apr 2027 13:31:33 GMT; domain=.github.com; path=/; secure; SameSite=Lax"
+                      - name: "logged_in"
+                        value: "no"
+                        domain: ".github.com"
+                        path: "/"
+                        expires: "Sat, 17 Apr 2027 13:31:33 GMT"
+                        max_age: null
+                        secure: true
+                        http_only: true
+                        same_site: "Lax"
+                        raw: "logged_in=no; expires=Sat, 17 Apr 2027 13:31:33 GMT; domain=.github.com; path=/; HttpOnly; secure; SameSite=Lax"
+                example_com_empty:
+                  summary: example.com — no cookies set
+                  value:
+                    url: "https://example.com/"
+                    count: 0
+                    cookies: []
+
   /v1/crawls/{crawl_id}/reports:
     parameters:
       - { $ref: "#/components/parameters/CrawlIdAsCrawl" }
@@ -1061,9 +1203,11 @@ paths:
         this crawl — groups match SF's top-menu Reports submenu
         (Redirects, Canonicals, Pagination, Hreflang, Security, SERP,
         Links, Structured Data, JavaScript, PageSpeed, Mobile,
-        Accessibility, HTTP Headers, Cookies). Reports not yet wired to
-        captured data (http-headers, cookies, redirect chains, segments)
-        are listed and return `rows: []` with a `notes` field.
+        Accessibility, HTTP Headers, Cookies). As of 0.11.0, the
+        `http_headers_all` and `cookies_all` reports are wired to real
+        crawler-captured header data; a small number of reports (redirect
+        chains, segment rollups) remain stubs and return `rows: []` with
+        a `notes` field until their upstream data is captured.
       responses:
         "200":
           description: OK
@@ -1137,6 +1281,45 @@ paths:
                       - { depth: 2, urls: 103 }
                       - { depth: 3, urls: 48 }
                       - { depth: 4, urls: 14 }
+                http_headers_all:
+                  summary: http_headers_all — one row per (URL, header)
+                  value:
+                    key: "http_headers_all"
+                    title: "HTTP Headers: All"
+                    group: "HTTP Headers"
+                    count: 3
+                    columns: ["url", "name", "value"]
+                    rows:
+                      - { url: "https://example.com/", name: "content-type",      value: "text/html" }
+                      - { url: "https://example.com/", name: "server",            value: "cloudflare" }
+                      - { url: "https://example.com/", name: "cache-control",     value: "max-age=1914" }
+                cookies_all:
+                  summary: cookies_all — parsed Set-Cookie attributes per row
+                  value:
+                    key: "cookies_all"
+                    title: "Cookies: All"
+                    group: "Cookies"
+                    count: 2
+                    columns: ["url", "name", "value", "domain", "path", "expires", "secure", "http_only", "same_site"]
+                    rows:
+                      - url: "https://github.com/"
+                        name: "_octo"
+                        value: "GH1.1.227630100.1776432693"
+                        domain: ".github.com"
+                        path: "/"
+                        expires: "Sat, 17 Apr 2027 13:31:33 GMT"
+                        secure: true
+                        http_only: false
+                        same_site: "Lax"
+                      - url: "https://github.com/"
+                        name: "logged_in"
+                        value: "no"
+                        domain: ".github.com"
+                        path: "/"
+                        expires: "Sat, 17 Apr 2027 13:31:33 GMT"
+                        secure: true
+                        http_only: true
+                        same_site: "Lax"
             text/csv:
               schema: { type: string }
               examples:

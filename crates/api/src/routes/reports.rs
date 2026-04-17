@@ -220,16 +220,8 @@ async fn build_report(
         "mobile_all" => report_finding(state, crawl_id, "mobile_all", limit).await,
         "accessibility_all" => report_finding(state, crawl_id, "accessibility_all", limit).await,
 
-        "http_headers_all" => Ok((
-            vec!["url", "name", "value"],
-            vec![],
-            Some("Response headers not yet captured by crawl-worker (Batch B).".into()),
-        )),
-        "cookies_all" => Ok((
-            vec!["url", "name", "domain", "path", "secure", "http_only", "same_site"],
-            vec![],
-            Some("Set-Cookie headers not yet captured by crawl-worker (Batch B).".into()),
-        )),
+        "http_headers_all" => report_http_headers(state, crawl_id, limit).await,
+        "cookies_all" => report_cookies(state, crawl_id, limit).await,
 
         other => Err(ApiError::not_found(format!("unknown report '{}'", other))),
     }
@@ -737,4 +729,116 @@ async fn report_finding(
             None,
         ),
     )
+}
+
+/// All HTTP response headers across the crawl, flattened to one row per
+/// (url, header_name, header_value) tuple.
+async fn report_http_headers(
+    state: &AppState,
+    crawl_id: &Uuid,
+    limit: i64,
+) -> Result<ReportOutput, ApiError> {
+    let rows = sqlx::query!(
+        r#"
+        SELECT url, response_headers
+        FROM crawl_urls
+        WHERE crawl_id = $1 AND jsonb_array_length(response_headers) > 0
+        ORDER BY url
+        LIMIT $2
+        "#,
+        crawl_id,
+        limit,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    let mut data: Vec<Value> = Vec::new();
+    for r in rows {
+        if let Some(arr) = r.response_headers.as_array() {
+            for pair in arr {
+                let Some(p) = pair.as_array() else { continue };
+                let name = p.first().and_then(|v| v.as_str()).unwrap_or("");
+                let value = p.get(1).and_then(|v| v.as_str()).unwrap_or("");
+                data.push(json!({ "url": r.url, "name": name, "value": value }));
+            }
+        }
+    }
+
+    Ok((vec!["url", "name", "value"], data, None))
+}
+
+/// Every Set-Cookie seen during the crawl, parsed into SF's Cookies
+/// detail columns.
+async fn report_cookies(
+    state: &AppState,
+    crawl_id: &Uuid,
+    limit: i64,
+) -> Result<ReportOutput, ApiError> {
+    let rows = sqlx::query!(
+        r#"
+        SELECT url, response_headers
+        FROM crawl_urls
+        WHERE crawl_id = $1 AND jsonb_array_length(response_headers) > 0
+        ORDER BY url
+        LIMIT $2
+        "#,
+        crawl_id,
+        limit,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    let mut data: Vec<Value> = Vec::new();
+    for r in rows {
+        let Some(arr) = r.response_headers.as_array() else { continue };
+        for pair in arr {
+            let Some(p) = pair.as_array() else { continue };
+            let name = p.first().and_then(|v| v.as_str()).unwrap_or("");
+            if !name.eq_ignore_ascii_case("set-cookie") { continue; }
+            let raw = p.get(1).and_then(|v| v.as_str()).unwrap_or("");
+            let parsed = parse_set_cookie_report(raw);
+            data.push(json!({
+                "url": r.url,
+                "name":      parsed.0,
+                "value":     parsed.1,
+                "domain":    parsed.2,
+                "path":      parsed.3,
+                "expires":   parsed.4,
+                "secure":    parsed.5,
+                "http_only": parsed.6,
+                "same_site": parsed.7,
+            }));
+        }
+    }
+
+    Ok((
+        vec!["url", "name", "value", "domain", "path", "expires", "secure", "http_only", "same_site"],
+        data,
+        None,
+    ))
+}
+
+/// Cheap Set-Cookie parser — duplicated here to keep `reports` standalone.
+/// Returns (name, value, domain, path, expires, secure, http_only, same_site).
+type ParsedCookie = (String, String, Option<String>, Option<String>, Option<String>, bool, bool, Option<String>);
+fn parse_set_cookie_report(raw: &str) -> ParsedCookie {
+    let mut parts = raw.split(';').map(str::trim);
+    let first = parts.next().unwrap_or("");
+    let (name, value) = first.split_once('=').unwrap_or((first, ""));
+    let (mut domain, mut path, mut expires, mut same_site) = (None, None, None, None);
+    let (mut secure, mut http_only) = (false, false);
+    for attr in parts {
+        if attr.is_empty() { continue; }
+        let (k, v) = attr.split_once('=').map(|(k, v)| (k.trim(), v.trim())).unwrap_or((attr, ""));
+        match k.to_ascii_lowercase().as_str() {
+            "domain"   => domain = Some(v.to_string()),
+            "path"     => path = Some(v.to_string()),
+            "expires"  => expires = Some(v.to_string()),
+            "secure"   => secure = true,
+            "httponly" => http_only = true,
+            "samesite" => same_site = Some(v.to_string()),
+            _ => {}
+        }
+    }
+    (name.to_string(), value.to_string(), domain, path, expires, secure, http_only, same_site)
 }
