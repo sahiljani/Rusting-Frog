@@ -13,10 +13,11 @@ pub fn routes() -> Router<AppState> {
 async fn list_tabs() -> Json<serde_json::Value> {
     let tabs: Vec<serde_json::Value> = TabKey::all()
         .iter()
-        .filter(|t| t.is_phase1())
+        .filter(|t| !matches!(t, TabKey::Undef))
         .map(|tab| {
             let filters: Vec<serde_json::Value> = FilterKey::for_tab(*tab)
                 .iter()
+                .filter(|f| !f.is_deprecated())
                 .map(|f| {
                     serde_json::json!({
                         "key": f,
@@ -32,6 +33,7 @@ async fn list_tabs() -> Json<serde_json::Value> {
                 "key": tab,
                 "display_name": tab.display_name(),
                 "i18n_key": tab.i18n_key(),
+                "has_dynamic_filters": tab.has_dynamic_filters(),
                 "filters": filters,
             })
         })

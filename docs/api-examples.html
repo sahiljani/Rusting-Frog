@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>sf-clone-rust API — Request/Response Reference</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #161a22;
+    --panel-2: #1d2230;
+    --border: #2a2f3b;
+    --ink: #e6e8ec;
+    --ink-dim: #9aa3b2;
+    --accent: #7cc4ff;
+    --get: #4ec9b0;
+    --post: #c586c0;
+    --delete: #f28b82;
+    --code-bg: #0b0d12;
+    --ok: #7ee787;
+    --bad: #ff7b72;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  header { padding: 24px 32px; border-bottom: 1px solid var(--border); background: var(--panel); position: sticky; top: 0; z-index: 10; }
+  header h1 { margin: 0 0 4px; font-size: 20px; }
+  header p { margin: 0; color: var(--ink-dim); font-size: 14px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 32px 96px; }
+  nav.toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; padding: 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 28px; }
+  nav.toc a { color: var(--accent); text-decoration: none; font-size: 13px; }
+  nav.toc a:hover { text-decoration: underline; }
+  section.group { margin-top: 36px; }
+  section.group > h2 { margin: 0 0 4px; font-size: 17px; letter-spacing: 0.02em; border-left: 3px solid var(--accent); padding-left: 10px; }
+  section.group > p.lead { margin: 4px 0 16px; color: var(--ink-dim); font-size: 13px; }
+  article.ep { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; }
+  .method { display: inline-block; padding: 2px 8px; border-radius: 4px; font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; margin-right: 8px; color: #0f1115; }
+  .method.GET { background: var(--get); }
+  .method.POST { background: var(--post); }
+  .method.DELETE { background: var(--delete); }
+  .method.WS, .method.SSE { background: #f1e05a; }
+  .path { font-family: var(--mono); font-size: 14px; color: var(--ink); }
+  .summary { color: var(--ink-dim); font-size: 13px; margin: 6px 0 12px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+  @media (max-width: 820px) { .row { grid-template-columns: 1fr; } }
+  .box { background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .box > .label { font-size: 11px; padding: 6px 10px; background: #0f131b; color: var(--ink-dim); letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  pre { margin: 0; padding: 12px 14px; overflow: auto; background: var(--code-bg); font-family: var(--mono); font-size: 12.5px; line-height: 1.45; max-height: 420px; }
+  pre code .k { color: #ff7b72; }
+  pre code .s { color: #a5d6ff; }
+  pre code .n { color: #79c0ff; }
+  pre code .b { color: var(--ink-dim); }
+  table.params { width: 100%; border-collapse: collapse; margin: 8px 0 4px; font-size: 12.5px; }
+  table.params th, table.params td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  table.params th { color: var(--ink-dim); font-weight: 500; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; }
+  table.params td code { font-family: var(--mono); background: var(--panel-2); padding: 1px 6px; border-radius: 3px; font-size: 12px; }
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 10.5px; background: var(--panel-2); color: var(--ink-dim); margin-left: 4px; }
+  .pill.ok { background: #1a3a26; color: var(--ok); }
+  .pill.bad { background: #3a1a1a; color: var(--bad); }
+  code.inline { font-family: var(--mono); background: var(--panel-2); padding: 1px 6px; border-radius: 3px; font-size: 12.5px; }
+  h3 { margin: 0; font-size: 15px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+  .note { font-size: 12px; color: var(--ink-dim); margin-top: 10px; font-style: italic; }
+  hr.sep { border: none; border-top: 1px solid var(--border); margin: 40px 0 24px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>sf-clone-rust API — Request / Response Reference</h1>
+  <p>Base URL: <code class="inline">http://127.0.0.1:3000</code> · All endpoints require <code class="inline">Authorization: Bearer &lt;JWT&gt;</code>. Mint a dev JWT with <code class="inline">node scripts/mint_jwt.js</code>.</p>
+</header>
+
+<main>
+<nav class="toc">
+  <a href="#auth">Auth</a>
+  <a href="#catalog">Catalog</a>
+  <a href="#projects">Projects</a>
+  <a href="#crawls">Crawl lifecycle</a>
+  <a href="#urls">URL grid &amp; detail</a>
+  <a href="#overview">Overview</a>
+  <a href="#errors">Errors</a>
+  <a href="#filterkey">FilterKey reference</a>
+</nav>
+
+<section class="group" id="auth">
+  <h2>Authentication</h2>
+  <p class="lead">Laravel (or any upstream) mints a short-lived HS256 JWT with <code class="inline">tenant_id</code>, <code class="inline">user_id</code>, and <code class="inline">scopes</code> claims, signed with the shared <code class="inline">JWT_SECRET</code>. Every API call passes it as <code class="inline">Authorization: Bearer &lt;token&gt;</code>. For local testing, <code class="inline">scripts/mint_jwt.js</code> mints one signed with the dev secret in <code class="inline">.env</code>.</p>
+  <article class="ep">
+    <h3><span class="method GET">SHELL</span> <span class="path">node scripts/mint_jwt.js</span></h3>
+    <p class="summary">Dev-only helper. Prints a JWT valid for 1 hour with tenant <code class="inline">test-tenant</code>.</p>
+    <div class="row">
+      <div class="box">
+        <div class="label">Command</div>
+        <pre><code>JWT=$(node scripts/mint_jwt.js | tail -1)
+echo $JWT</code></pre>
+      </div>
+      <div class="box">
+        <div class="label">Output</div>
+        <pre><code>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZW5hbnRfaWQiOiJ0ZXN0LXRlbmFudCIsI…</code></pre>
+      </div>
+    </div>
+  </article>
+</section>
+
+<section class="group" id="catalog">
+  <h2>Catalog</h2>
+  <p class="lead">Static registry the frontend renders tabs and filter dropdowns from. Tabs and filters are immutable at runtime — this endpoint is cache-friendly.</p>
+
+  <article class="ep">
+    <h3><span class="method GET">GET</span> <span class="path">/v1/catalog/tabs</span> <span class="pill ok">200</span></h3>
+    <p class="summary">Lists all 33 SF-style tabs with their filter sets. Deprecated filters are omitted. Total payload: 33 tabs × up to ~400 filters each (AI tab is largest, ~401 entries: 1 aggregator + 4 providers × 100 slots).</p>
+    <div class="row">
+      <div class="box">
+        <div class="label">Request</div>
+        <pre><code>curl -H "Authorization: Bearer $JWT" \
+  http://127.0.0.1:3000/v1/catalog/tabs</code></pre>
+      </div>
+      <div class="box">
+        <div class="label">Response (truncated)</div>
+        <pre><code>[
+  {
+    "display_name": "Internal",
+    "has_dynamic_filters": false,
+    "i18n_key": "tab.internal",
+    "key": "internal",
+    "filters": [
+      {
+        "display_name": "All",
+        "filter_type": "normal",
+        "has_watermark": false,
+        "key": "internal_all",
+        "severity": "stat"
+      },
+      {
+        "display_name": "Html",
+        "filter_type": "normal",
+        "has_watermark": false,
+        "key": "internal_html",
+        "severity": "stat"
+      }
+      // … 10 more
+    ]
+  },
+  {
+    "display_name": "Custom Search",
+    "has_dynamic_filters": true,
+    "i18n_key": "tab.custom_search",
+    "key": "custom_search",
+    "filters": [
+      { "key": "custom_search_all",     "display_name": "All",             "severity": "stat",  "filter_type": "normal", "has_watermark": false },
+      { "key": "custom_search_slot_1",  "display_name": "Custom Search 1", "severity": "issue", "filter_type": "normal", "has_watermark": false },
+      { "key": "custom_search_slot_2",  "display_name": "Custom Search 2", "severity": "issue", "filter_type": "normal", "has_watermark": false }
+      // … slots 3..100
+    ]
+  },
+  {
+    "display_name": "AI",
+    "has_dynamic_filters": true,
+    "key": "ai",
+    "filters": [
+      { "key": "ai_all",                 "display_name": "All",               "severity": "stat",  "filter_type": "normal", "has_watermark": false },
+      { "key": "ai_openai_slot_1",       "display_name": "OpenAI Prompt 1",   "severity": "issue", "filter_type": "normal", "has_watermark": false },
+      { "key": "ai_anthropic_slot_1",    "display_name": "Anthropic Prompt 1","severity": "issue", "filter_type": "normal", "has_watermark": false },
+      { "key": "ai_gemini_slot_1",       "display_name": "Gemini Prompt 1",   "severity": "issue", "filter_type": "normal", "has_watermark": false },
+      { "key": "ai_ollama_slot_1",       "display_name": "Ollama Prompt 1",   "severity": "issue", "filter_type": "normal", "has_watermark": false }
+      // … slots 2..100 for each provider
+    ]
+  }
+  // … 30 more tabs
+]</code></pre>
+      </div>
+    </div>
+    <table class="params">
+      <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+      <tr><td><code>key</code></td><td>string</td><td>Stable snake_case identifier used in all other endpoints.</td></tr>
+      <tr><td><code>has_dynamic_filters</code></td><td>bool</td><td><code>true</code> for tabs whose filters are per-user slots (Custom Search / Extraction / JavaScript / AI).</td></tr>
+      <tr><td><code>filters[].filter_type</code></td><td>enum</td><td><code>normal</code>, <code>post_crawl_analysis</code>, or <code>spelling_and_grammar</code>.</td></tr>
+      <tr><td><code>filters[].severity</code></td><td>enum</td><td><code>stat</code> (informational counter) or <code>issue</code> (flagged problem).</td></tr>
+      <tr><td><code>filters[].has_watermark</code></td><td>bool</td><td>Filter is user-configurable via a watermark/threshold (e.g. <code>title_over_x_characters</code>).</td></tr>
+    </table>
+  </article>
+</section>
+
+<section class="group" id="projects">
+  <h2>Projects</h2>
+  <p class="lead">A project is a named "site" with a persisted seed URL and config. All crawls are children of a project.</p>
+
+  <article class="ep">
+    <h3><span class="method POST">POST</span> <span class="path">/v1/projects</span> <span class="pill ok">200</span></h3>
+    <p class="summary">Create a new project. Returns the project row immediately.</p>
+    <div class="row">
+      <div class="box">
+        <div class="label">Request</div>
+        <pre><code>curl -X POST \
+  -H "Authorization: Bearer $JWT" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"boltrack","seed_url":"https://boltrack.in"}' \
+  http://127.0.0.1:3000/v1/projects</code></pre>
+      </div>
+      <div class="box">
+        <div class="label">Response</div>
+        <pre><code>{
+  "id": "019d98d7-6896-7a73-ac63-b0315adf6af6",
+  "name": "boltrack",
+  "seed_url": "https://boltrack.in",
+  "created_at": "2026-04-17T00:29:07.094545Z",
+  "updated_at": "2026-04-17T00:29:07.094545Z"
+}</code></pre>
+      </div>
+    </div>
+    <table class="params">
+      <tr><th>Body field</th><th>Type</th><th>Required</th><th>Notes</th></tr>
+      <tr><td><code>name</code></td><td>string</td><td>yes</td><td>Human label. Unique per tenant.</td></tr>
+      <tr><td><code>seed_url</code></td><td>string (URL)</td><td>yes</td><td>Starting URL the crawler uses when no override is passed.</td></tr>
+    </table>
+  </article>
+
+  <article class="ep">
+    <h3><span class="method GET">GET</span> <span class="path">/v1/projects</span> <span class="pill ok">200</span></h3>
+    <p class="summary">List every project the caller's tenant owns, newest first.</p>
+    <div class="row">
+      <div class="box">
+        <div class="label">Request</div>
+        <pre><code>curl -H "Authorization: Bearer $JWT" \
+  http://127.0.0.1:3000/v1/projects</code></pre>
+      </div>
+      <div class="box">
+        <div class="label">Response</div>
+        <pre><code>[
+  {
+    "id": "019d98d8-6e9d-7020-837d-96231d0bd40c",
+    "name": "doc-sample",
+    "seed_url": "https://example.com",
+    "created_at": "2026-04-17T00:30:14.173244Z",
+    "updated_at": "2026-04-17T00:30:14.173244Z"
+  },
+  {
+    "id": "019d98d7-6896-7a73-ac63-b0315adf6af6",
+    "name": "boltrack",
+    "seed_url": "https://boltrack.in",
+    "created_at": "2026-04-17T00:29:07.094545Z",
+    "updated_at": "2026-04-17T00:29:07.094545Z"
+  }
+]</code></pre>
+      </div>
+    </div>
+  </article>
+
+  <article class="ep">
+    <h3><span class="method GET">GET</span> <span class="path">/v1/projects/{id}</span> <span class="pill ok">200</span> <span class="pill bad">404</span></h3>
+    <p class="summary">Fetch one project by id.</p>
+  </article>
+
+  <article class="ep">
+    <h3><span class="method DELETE">DELETE</span> <span class="path">/v1/projects/{id}</span> <span class="pill ok">204</span></h3>
+    <p class="summary">Delete the project. Cascades to every crawl, URL, finding, and link row it owns.</p>
+  </article>
+</section>
+
+<section class="group" id="crawls">
+  <h2>Crawl lifecycle</h2>
+  <p class="lead">A crawl is one execution of the spider against a project's seed URL. POST enqueues the job to Redis — the worker picks it up and starts fetching. Status transitions: <code class="inline">queued → running → completed / failed</code>, with <code class="inline">paused</code> and <code class="inline">stopped</code> as optional terminal states.</p>
+
+  <article class="ep">
+    <h3><span class="method POST">POST</span> <span class="path">/v1/projects/{project_id}/crawls</span> <span class="pill ok">200</span></h3>
+    <p class="summary">Start a crawl. Body is optional — if omitted, uses the project's stored seed URL.</p>
+    <div class="row">
+      <div class="box">
+        <div class="label">Request</div>
+        <pre><code>curl -X POST \
+  -H "Authorization: Bearer $JWT" \
+  -H "Content-Type: application/json" \
+  -d '{}' \
+  http://127.0.0.1:3000/v1/projects/019d98d7-6896-7a73-ac63-b0315adf6af6/crawls</code></pre>
+      </div>
+      <div class="box">
+        <div class="label">Response</div>
+        <pre><code>{
+  "id": "019d98d7-a11a-74f3-ae24-d605bc206dda",
+  "status": "queued",
+  "message": "crawl queued"
+}</code></pre>
+      </div>
+    </div>
+  </article>
+
+  <article class="ep">
+    <h3><span class="method GET">GET</span> <span class="path">/v1/crawls/{id}</span> <span class="pill ok">200</span></h3>
+    <p class="summary">Crawl metadata, status, and counters. Poll every 2–5s while <code class="inline">status</code> is <code class="inline">queued</code> or <code class="inline">running</code>. Use the live WebSocket for real-time updates once the React app is wired up.</p>
+    <div class="row">
+      <div class="box">
+        <div class="label">Request</div>
+        <pre><code>curl -H "Authorization: Bearer $JWT" \
+  http://127.0.0.1:3000/v1/crawls/019d98d7-a11a-74f3-ae24-d605bc206dda</code></pre>
+      </div>
+      <div class="box">
+        <div class="label">Response</div>
+        <pre><code>{
+  "id": "019d98d7-a11a-74f3-ae24-d605bc206dda",
+  "project_id": "019d98d7-6896-7a73-ac63-b0315adf6af6",
+  "status": "completed",
+  "seed_urls": ["https://boltrack.in"],
+  "urls_discovered": 105,
+  "urls_crawled": 105,
+  "created_at":   "2026-04-17T00:29:21.562315Z",
+  "started_at":   "2026-04-17T00:29:23.152008Z",
+  "completed_at": "2026-04-17T00:30:15.938377Z"
+}</code></pre>
+      </div>
+    </div>
+  </article>
+
+  <article class="ep">
+    <h3><span class="method POST">POST</span> <span class="path">/v1/crawls/{id}/pause</span></h3>
+    <p class="summary">Idempotent pause signal. Worker drains its in-flight URLs and persists frontier.</p>
+  </article>
+  <article class="ep">
+    <h3><span class="method POST">POST</span> <span class="path">/v1/crawls/{id}/resume</span></h3>
+    <p class="summary">Resume a paused crawl. Frontier is restored from the DB.</p>
+  </article>
+  <article class="ep">
+    <h3><span class="method POST">POST</span> <span class="path">/v1/crawls/{id}/stop</span></h3>
+    <p class="summary">Terminate permanently. Status transitions to <code class="inline">completed</code> (if any URLs were processed) or <code class="inline">failed</code>.</p>
+  </article>
+</section>
+
+<section class="group" id="urls">
+  <h2>URL grid &amp; detail</h2>
+  <p class="lead">The hot path — the React grid hits these constantly. All list endpoints are cursor-paginated. Filter keys are the stable snake_case identifiers from <code class="inline">/v1/catalog/tabs</code>.</p>
+
+  <article class="ep">
+    <h3><span class="method GET">GET</span> <span class="path">/v1/crawls/{crawl_id}/urls</span> <span class="pill ok">200</span></h3>
+    <p class="summary">The main grid data. Filter by one filter key, sort, search, paginate.</p>
+    <table class="params">
+      <tr><th>Query param</th><th>Type</th><th>Notes</th></tr>
+      <tr><td><code>filter</code></td><td>filter_key</td><td>E.g. <code>title_over_x_characters</code>. When present, returns only URLs that matched that filter during evaluation.</td></tr>
+      <tr><td><code>tab</code></td><td>tab_key</td><td>E.g. <code>page_titles</code>. Restricts to filters of one tab; useful when the UI wants the "All" subset of a tab.</td></tr>
+      <tr><td><code>q</code></td><td>string</td><td>Substring search on URL.</td></tr>
+      <tr><td><code>cursor</code></td><td>opaque</td><td>Returned by previous page's <code>next_cursor</code>; omit for first page.</td></tr>
+      <tr><td><code>limit</code></td><td>int</td><td>Default 100, max 500.</td></tr>
+    </table>
+    <div class="row">
+      <div class="box">
+        <div class="label">Request</div>
+        <pre><code>curl -H "Authorization: Bearer $JWT" \
+  "http://127.0.0.1:3000/v1/crawls/019d98d7-a11a-74f3-ae24-d605bc206dda/urls?filter=title_over_x_characters&limit=3"</code></pre>
+      </div>
+      <div class="box">
+        <div class="label">Response (truncated)</div>
+        <pre><code>{
+  "data": [
+    {
+      "id": "019d98d7-f168-7fa3-9558-a6656811473d",
+      "url": "https://boltrack.in/products/boltrack-shut-off-valve-manually-operated/",
+      "status_code": 200,
+      "content_type": "html",
+      "content_length": 0,
+      "title": "BOLTRACK SHUT OFF VALVE (MANUALLY OPERATED) - Boltrack Engineers",
+      "title_length": 64,
+      "h1_count": 1,
+      "h1_first": "BOLTRACK SHUT OFF\n\t\t\t\tVALVE (MANUALLY OPERATED)",
+      "word_count": 616,
+      "depth": 2,
+      "is_internal": true,
+      "response_time_ms": 425,
+      "crawled_at": "2026-04-17T00:29:42.120719Z"
+    },
+    …
+  ],
+  "next_cursor": null
+}</code></pre>
+      </div>
+    </div>
+  </article>
+
+  <article class="ep">
+    <h3><span class="method GET">GET</span> <span class="path">/v1/crawls/{crawl_id}/urls/{url_id}</span> <span class="pill ok">200</span></h3>
+    <p class="summary">Full detail for one URL, including every filter it matched.</p>
+    <div class="row">
+      <div class="box">
+        <div class="label">Request</div>
+        <pre><code>curl -H "Authorization: Bearer $JWT" \
+  http://127.0.0.1:3000/v1/crawls/019d98d7-a11a-74f3-ae24-d605bc206dda/urls/019d98d7-f168-7fa3-9558-a6656811473d</code></pre>
+      </div>
+      <div class="box">
+        <div class="label">Response</div>
+        <pre><code>{
+  "id": "019d98d7-f168-7fa3-9558-a6656811473d",
+  "url": "https://boltrack.in/products/boltrack-shut-off-valve-manually-operated/",
+  "canonical_url": "https://boltrack.in/products/boltrack-shut-off-valve-manually-operated/",
+  "status_code": 200,
+  "content_type": "html",
+  "meta_description": "Boltrack Engineers: Your trusted source for manually operated shut-off valves…",
+  "meta_description_length": 137,
+  "meta_robots": "index, follow, max-image-preview:large, max-snippet:-1, …",
+  "title": "BOLTRACK SHUT OFF VALVE (MANUALLY OPERATED) - Boltrack Engineers",
+  "title_length": 64,
+  "h1_count": 1, "h1_first": "BOLTRACK SHUT OFF VALVE (MANUALLY OPERATED)",
+  "h2_count": 4, "h2_first": "Built for Controlled Concrete Flow",
+  "depth": 2,
+  "is_internal": true,
+  "crawled_at": "2026-04-17T00:29:42.120719Z",
+  "findings": [
+    "internal_all",
+    "internal_html",
+    "response_code_all",
+    "response_code_internal_all",
+    "response_code_success",
+    "response_code_internal_success",
+    "title_all",
+    "title_over_x_characters"
+  ]
+}</code></pre>
+      </div>
+    </div>
+  </article>
+
+  <article class="ep">
+    <h3><span class="method GET">GET</span> <span class="path">/v1/crawls/{crawl_id}/urls/{url_id}/inlinks</span></h3>
+    <p class="summary">Every URL that links TO this one, with link text + rel/nofollow.</p>
+  </article>
+  <article class="ep">
+    <h3><span class="method GET">GET</span> <span class="path">/v1/crawls/{crawl_id}/urls/{url_id}/outlinks</span></h3>
+    <p class="summary">Every link FROM this URL — internal and external.</p>
+  </article>
+</section>
+
+<section class="group" id="overview">
+  <h2>Overview</h2>
+  <article class="ep">
+    <h3><span class="method GET">GET</span> <span class="path">/v1/crawls/{crawl_id}/overview</span> <span class="pill ok">200</span></h3>
+    <p class="summary">A flat <code class="inline">filter_key → count</code> map for the whole crawl. The React overview pane renders the tab/filter tree directly from this.</p>
+    <div class="row">
+      <div class="box">
+        <div class="label">Request</div>
+        <pre><code>curl -H "Authorization: Bearer $JWT" \
+  http://127.0.0.1:3000/v1/crawls/019d98d7-a11a-74f3-ae24-d605bc206dda/overview</code></pre>
+      </div>
+      <div class="box">
+        <div class="label">Response</div>
+<pre><code>{
+  "internal_all":                          105,
+  "internal_html":                         105,
+  "response_code_all":                     105,
+  "response_code_client_error":             49,
+  "response_code_internal_all":            105,
+  "response_code_internal_client_error":    49,
+  "response_code_internal_success":         56,
+  "response_code_success":                  56,
+  "title_all":                             105,
+  "title_below_x_characters":               51,
+  "title_over_x_characters":                 9
+}</code></pre>
+      </div>
+    </div>
+  </article>
+</section>
+
+<section class="group" id="errors">
+  <h2>Error envelope</h2>
+  <p class="lead">All errors are JSON. 4xx carry a short <code class="inline">error</code> and <code class="inline">message</code>; 5xx degrade to <code class="inline">{"error":"internal"}</code> — detail is logged server-side with the trace id.</p>
+  <article class="ep">
+    <h3><span class="pill bad">401 Unauthorized</span></h3>
+    <pre><code>{ "error": "unauthorized", "message": "missing or invalid bearer token" }</code></pre>
+  </article>
+  <article class="ep">
+    <h3><span class="pill bad">404 Not Found</span></h3>
+    <pre><code>{ "error": "not_found", "message": "crawl 019d98d7-… not found" }</code></pre>
+  </article>
+  <article class="ep">
+    <h3><span class="pill bad">422 Unprocessable</span></h3>
+    <pre><code>{ "error": "validation", "message": "seed_url must be http(s)" }</code></pre>
+  </article>
+</section>
+
+<hr class="sep" />
+
+<section class="group" id="filterkey">
+  <h2>FilterKey — on-wire shape</h2>
+  <p class="lead">Every filter key in request/response bodies is the same snake_case identifier. The four user-configurable families are parameterized by slot (and, for AI, by provider):</p>
+  <div class="box" style="margin-top: 8px;">
+    <div class="label">Shape</div>
+    <pre><code>// Built-in filters (457 total, one per SF filter)
+"internal_html"
+"title_over_x_characters"
+"response_code_client_error"
+"hreflang_missing_self_reference"
+
+// User-configurable slots (100 each)
+"custom_search_slot_1"    …  "custom_search_slot_100"
+"custom_extractor_slot_1" …  "custom_extractor_slot_100"
+"custom_javascript_slot_1"…  "custom_javascript_slot_100"
+
+// AI extraction slots: 4 providers × 100 = 400
+"ai_openai_slot_1"      …  "ai_openai_slot_100"
+"ai_anthropic_slot_1"   …  "ai_anthropic_slot_100"
+"ai_gemini_slot_1"      …  "ai_gemini_slot_100"
+"ai_ollama_slot_1"      …  "ai_ollama_slot_100"
+
+// Aggregators
+"custom_search_all"
+"custom_extractor_all"
+"custom_javascript_all"
+"ai_all"</code></pre>
+  </div>
+  <p class="note">On the Rust side these are a single <code>FilterKey</code> enum with 457 fixed variants and 4 parameterized variants (<code>CustomSearchSlot(u8)</code>, <code>CustomExtractorSlot(u8)</code>, <code>CustomJavaScriptSlot(u8)</code>, <code>AiSlot(AiProvider, u8)</code>). Slot numbers are validated to <code>1..=100</code> on deserialize — out-of-range slots return 422.</p>
+</section>
+
+</main>
+</body>
+</html>
