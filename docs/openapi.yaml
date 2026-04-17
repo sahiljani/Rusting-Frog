@@ -11,7 +11,7 @@ info:
     **Tenancy.** `tenant_id` is taken from the JWT `tenant_id` claim; callers never
     pass it. All reads and writes are scoped to the caller's tenant.
 
-    **Implementation progress.** Batches 1–8 of the evaluator roll-out are wired:
+    **Implementation progress.** Batches 1–9 of the evaluator roll-out are wired:
       - *Batch 1 — response/title/meta/H1/H2* (19 filter keys): `response_code_*`,
         `internal_*`, `external_*`, `title_*`, `meta_descripton_*`,
         `meta_keywords_*`, `h1_*`, `h2_*`.
@@ -46,6 +46,19 @@ info:
         deferred until response headers are persisted on `CrawlUrl`;
         mobile layout filters (target-size, font-size, content sizing)
         deferred to the render worker.
+      - *Batch 9 — integration-blocked tabs* (7 tabs, 0 live
+        filter keys). Registers stub evaluators for the tabs whose
+        findings only exist once an external data source is
+        connected: `analytics` (GA4 API),
+        `search_console` (GSC API), `link_metrics` (Moz /
+        Majestic / Ahrefs), `ai` (per-tenant AI provider),
+        `custom_search` / `custom_extraction` /
+        `custom_java_script` (user-authored slots 1..100). The
+        stubs emit no findings, which keeps the `/overview`
+        rollup honest — these tabs show 0 until the integration
+        lands — while still exposing the full 33-tab catalog to
+        clients and reserving the evaluator trait slot for the
+        real implementation.
       - *Batch 8 — accessibility* (13 static-HTML rule filters plus
         the candidate bucket). Runs the DOM-only subset of the axe-core
         rule set that doesn't need computed styles or layout:
@@ -120,7 +133,7 @@ info:
 
     **This spec is hand-written** — a Swagger UI app in `../swagger-ui/` loads it
     and issues requests against the Rust server at `http://localhost:3000`.
-  version: "0.8.0"
+  version: "0.9.0"
   contact:
     name: sf-clone-rust
     url: https://github.com/sahiljani/Rusting-Frog

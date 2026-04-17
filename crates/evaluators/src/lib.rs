@@ -7,6 +7,7 @@ pub mod external;
 pub mod headings;
 pub mod hreflang;
 pub mod images;
+pub mod integrations;
 pub mod internal;
 pub mod javascript;
 pub mod links;
@@ -77,5 +78,12 @@ pub fn phase1_evaluators() -> Vec<Box<dyn Evaluator>> {
         Box::new(pagespeed::PageSpeedEvaluator),
         Box::new(parity::ParityEvaluator),
         Box::new(accessibility::AccessibilityEvaluator),
+        Box::new(integrations::AnalyticsEvaluator),
+        Box::new(integrations::SearchConsoleEvaluator),
+        Box::new(integrations::LinkMetricsEvaluator),
+        Box::new(integrations::CustomSearchEvaluator),
+        Box::new(integrations::CustomExtractionEvaluator),
+        Box::new(integrations::CustomJavaScriptEvaluator),
+        Box::new(integrations::AiEvaluator),
     ]
 }
