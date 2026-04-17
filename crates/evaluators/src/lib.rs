@@ -1,3 +1,4 @@
+pub mod amp;
 pub mod canonicals;
 pub mod content;
 pub mod directives;
@@ -6,6 +7,7 @@ pub mod headings;
 pub mod hreflang;
 pub mod images;
 pub mod internal;
+pub mod javascript;
 pub mod links;
 pub mod meta_description;
 pub mod meta_keywords;
@@ -14,6 +16,7 @@ pub mod page_titles;
 pub mod pagination;
 pub mod response_codes;
 pub mod security;
+pub mod sitemaps;
 pub mod url;
 pub mod validation;
 
@@ -63,5 +66,8 @@ pub fn phase1_evaluators() -> Vec<Box<dyn Evaluator>> {
         Box::new(security::SecurityEvaluator),
         Box::new(validation::ValidationEvaluator),
         Box::new(mobile::MobileEvaluator),
+        Box::new(sitemaps::SitemapsEvaluator),
+        Box::new(amp::AmpEvaluator),
+        Box::new(javascript::JavaScriptEvaluator),
     ]
 }

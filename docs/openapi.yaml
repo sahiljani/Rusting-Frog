@@ -11,7 +11,7 @@ info:
     **Tenancy.** `tenant_id` is taken from the JWT `tenant_id` claim; callers never
     pass it. All reads and writes are scoped to the caller's tenant.
 
-    **Implementation progress.** Batches 1–5 of the evaluator roll-out are wired:
+    **Implementation progress.** Batches 1–6 of the evaluator roll-out are wired:
       - *Batch 1 — response/title/meta/H1/H2* (19 filter keys): `response_code_*`,
         `internal_*`, `external_*`, `title_*`, `meta_descripton_*`,
         `meta_keywords_*`, `h1_*`, `h2_*`.
@@ -46,6 +46,23 @@ info:
         deferred until response headers are persisted on `CrawlUrl`;
         mobile layout filters (target-size, font-size, content sizing)
         deferred to the render worker.
+      - *Batch 6 — sitemaps / AMP / JavaScript* (14 filter keys):
+        `sitemaps_all` (every HTML page flagged until XML sitemap
+        fetching lands; cross-URL sitemap filters — orphan, non-indexable,
+        missing-from-sitemap — deferred to post-crawl analysis),
+        `amp_*` (all, indexable, contains-disallowed-html covering
+        `<iframe>`/`<object>`/`<embed>`/non-AMP `<script>`,
+        missing-doctype, missing-head/body, missing-canonical,
+        missing-charset, missing-viewport, missing-amp-script,
+        missing-amp-boilerplate; AMP detected via `<html amp>` or
+        `<html ⚡>` U+26A1 attribute), `javascript_*` (all,
+        contains-js-content for any `<script>` element,
+        old-ajax-crawling-scheme for `#!` URLs or
+        `_escaped_fragment_=` query, old-ajax-crawling-meta-fragment-tag
+        for `<meta name="fragment" content="!">`). AMP validation beyond
+        structural markers (amp-layout, amp-boilerplate CSS checks) and
+        JavaScript-specific filters requiring the render-worker
+        (js-rendered-content, blocked-resource) are deferred.
 
     A handful of cross-URL filters (e.g. `canonicals_unlinked`,
     `pagination_pagination_loop`, `canonicals_non_indexable_canonical`,
@@ -63,7 +80,7 @@ info:
 
     **This spec is hand-written** — a Swagger UI app in `../swagger-ui/` loads it
     and issues requests against the Rust server at `http://localhost:3000`.
-  version: "0.5.0"
+  version: "0.6.0"
   contact:
     name: sf-clone-rust
     url: https://github.com/sahiljani/Rusting-Frog
@@ -495,6 +512,87 @@ paths:
                         status_code: 200
                         is_internal: true
                         title: Mobile alternate
+                    next_cursor: null
+                amp_all:
+                  summary: filter=amp_all (fixture — both AMP fixtures)
+                  value:
+                    data:
+                      - url: http://localhost:8181/amp-bad.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: AMP with multiple structural issues
+                      - url: http://localhost:8181/amp-good.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: AMP good
+                    next_cursor: null
+                amp_contains_disallowed_html:
+                  summary: filter=amp_contains_disallowed_html (iframe on AMP)
+                  value:
+                    data:
+                      - url: http://localhost:8181/amp-bad.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: AMP with multiple structural issues
+                        h1_first: AMP no canonical, no charset, no viewport, no amp script, no boilerplate, plus an iframe
+                    next_cursor: null
+                amp_missing_canonical:
+                  summary: filter=amp_missing_canonical (fixture — 1 row)
+                  value:
+                    data:
+                      - url: http://localhost:8181/amp-bad.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: AMP with multiple structural issues
+                    next_cursor: null
+                javascript_contains_js_content:
+                  summary: filter=javascript_contains_js_content (any <script> element)
+                  value:
+                    data:
+                      - url: http://localhost:8181/amp-good.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: AMP good
+                      - url: http://localhost:8181/js-fragment.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: Old AJAX fragment meta
+                      - url: http://localhost:8181/security-mixed.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: Mixed content example
+                    next_cursor: null
+                javascript_old_ajax_crawling_scheme:
+                  summary: filter=javascript_old_ajax_crawling_scheme (_escaped_fragment_ link)
+                  value:
+                    data:
+                      - url: http://localhost:8181/js-fragment.html?_escaped_fragment_=state
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: Old AJAX fragment meta
+                    next_cursor: null
+                javascript_old_ajax_crawling_meta_fragment_tag:
+                  summary: filter=javascript_old_ajax_crawling_meta_fragment_tag (<meta name=fragment content=!>)
+                  value:
+                    data:
+                      - url: http://localhost:8181/js-fragment.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: Old AJAX fragment meta
+                      - url: http://localhost:8181/js-fragment.html?_escaped_fragment_=state
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: Old AJAX fragment meta
                     next_cursor: null
 
   /v1/crawls/{crawl_id}/urls/{url_id}:
