@@ -187,7 +187,7 @@ impl CrawlPipeline {
                     depth: entry.depth as i32,
                     title: pr.title.clone(),
                     title_length: pr.title_length,
-                    title_pixel_width: None,
+                    title_pixel_width: pr.title_pixel_width,
                     meta_description: pr.meta_description.clone(),
                     meta_description_length: pr.meta_description_length,
                     h1_first: pr.h1_first.clone(),
@@ -389,23 +389,38 @@ impl CrawlPipeline {
         let ct = format!("{:?}", content_type).to_lowercase();
         let now = chrono::Utc::now();
 
-        let (title, title_len, meta_desc, meta_desc_len, h1, h1c, h2, h2c, wc, canonical, robots) =
-            match parse_result {
-                Some(pr) => (
-                    pr.title.as_deref(),
-                    pr.title_length,
-                    pr.meta_description.as_deref(),
-                    pr.meta_description_length,
-                    pr.h1_first.as_deref(),
-                    pr.h1_count,
-                    pr.h2_first.as_deref(),
-                    pr.h2_count,
-                    Some(pr.word_count),
-                    pr.canonical_url.as_deref(),
-                    pr.meta_robots.as_deref(),
-                ),
-                None => (None, None, None, None, None, 0, None, 0, None, None, None),
-            };
+        let (
+            title,
+            title_len,
+            title_px,
+            meta_desc,
+            meta_desc_len,
+            h1,
+            h1c,
+            h2,
+            h2c,
+            wc,
+            canonical,
+            robots,
+        ) = match parse_result {
+            Some(pr) => (
+                pr.title.as_deref(),
+                pr.title_length,
+                pr.title_pixel_width,
+                pr.meta_description.as_deref(),
+                pr.meta_description_length,
+                pr.h1_first.as_deref(),
+                pr.h1_count,
+                pr.h2_first.as_deref(),
+                pr.h2_count,
+                Some(pr.word_count),
+                pr.canonical_url.as_deref(),
+                pr.meta_robots.as_deref(),
+            ),
+            None => (
+                None, None, None, None, None, None, 0, None, 0, None, None, None,
+            ),
+        };
 
         // Persist response headers as a JSON array of [name, value] pairs so
         // downstream /headers + /cookies endpoints can read them without a
@@ -444,14 +459,14 @@ impl CrawlPipeline {
             r#"
             INSERT INTO crawl_urls (
                 id, crawl_id, url, url_hash, content_type, status_code,
-                is_internal, depth, title, title_length, meta_description,
-                meta_description_length, h1_first, h1_count, h2_first, h2_count,
-                word_count, response_time_ms, content_length, canonical_url,
-                meta_robots, response_headers, final_url, crawled_at,
-                raw_html, content_hash, structured_data
+                is_internal, depth, title, title_length, title_pixel_width,
+                meta_description, meta_description_length, h1_first, h1_count,
+                h2_first, h2_count, word_count, response_time_ms, content_length,
+                canonical_url, meta_robots, response_headers, final_url,
+                crawled_at, raw_html, content_hash, structured_data
             ) VALUES (
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-                $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27
+                $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28
             )
             ON CONFLICT (crawl_id, url_hash) DO NOTHING
             "#,
@@ -465,6 +480,7 @@ impl CrawlPipeline {
             depth,
             title,
             title_len,
+            title_px,
             meta_desc,
             meta_desc_len,
             h1,

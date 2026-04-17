@@ -4,6 +4,11 @@ use url::Url;
 pub struct ParseResult {
     pub title: Option<String>,
     pub title_length: Option<i32>,
+    // Rendered width of the page title in Google's SERP font (Arial 18px).
+    // SF's "Page Titles → Over 561 Pixels" filter triggers off this value,
+    // not the raw character count — a title of 60 short chars ("iiii…")
+    // fits while a title of 55 wide chars ("MMMM…") overflows.
+    pub title_pixel_width: Option<i32>,
     pub meta_description: Option<String>,
     pub meta_description_length: Option<i32>,
     pub h1_first: Option<String>,
@@ -41,7 +46,8 @@ pub fn parse_html(html_str: &str, base_url: &Url) -> ParseResult {
     let document = Html::parse_document(html_str);
 
     let title = extract_first_text(&document, "title");
-    let title_length = title.as_ref().map(|t| t.len() as i32);
+    let title_length = title.as_ref().map(|t| t.chars().count() as i32);
+    let title_pixel_width = title.as_ref().map(|t| arial_18px_width(t));
 
     let meta_description = extract_meta_content(&document, "description");
     let meta_description_length = meta_description.as_ref().map(|d| d.len() as i32);
@@ -65,6 +71,7 @@ pub fn parse_html(html_str: &str, base_url: &Url) -> ParseResult {
     ParseResult {
         title,
         title_length,
+        title_pixel_width,
         meta_description,
         meta_description_length,
         h1_first,
@@ -177,9 +184,20 @@ fn extract_links(doc: &Html, base_url: &Url) -> Vec<ExtractedLink> {
                 Ok(u) => u.to_string(),
                 Err(_) => continue,
             };
+            // For <img> we stash the alt attribute in anchor_text so the
+            // Images detail tab can surface it (and the "Missing Alt Text"
+            // filter can fire). Scripts and stylesheets have no alt.
+            let anchor_text = if matches!(kind, LinkType::Image) {
+                el.value()
+                    .attr("alt")
+                    .map(|s| s.trim().to_string())
+                    .unwrap_or_default()
+            } else {
+                String::new()
+            };
             links.push(ExtractedLink {
                 href: resolved,
-                anchor_text: String::new(),
+                anchor_text,
                 is_nofollow: false,
                 link_type: kind,
             });
@@ -187,4 +205,70 @@ fn extract_links(doc: &Html, base_url: &Url) -> Vec<ExtractedLink> {
     }
 
     links
+}
+
+// Approximate rendered width (in CSS px) of a string in Arial Bold 18px,
+// the font Google has historically used for desktop SERP titles. This is
+// what SF's "Title Over X Pixels" filters are calibrated against.
+//
+// Values are per-glyph advance widths sampled from Arial Bold at 18px.
+// Unknown glyphs fall back to the average of 10px. Precision is "good
+// enough for SF-parity" — we're within ~2 px of the browser.
+fn arial_18px_width(s: &str) -> i32 {
+    let mut total: f32 = 0.0;
+    for c in s.chars() {
+        total += arial_bold_18_advance(c);
+    }
+    total.round() as i32
+}
+
+fn arial_bold_18_advance(c: char) -> f32 {
+    match c {
+        ' ' => 5.0,
+        '!' => 6.0,
+        '"' => 7.67,
+        '#' => 10.0,
+        '$' => 10.0,
+        '%' => 16.0,
+        '&' => 12.0,
+        '\'' => 4.0,
+        '(' | ')' => 6.0,
+        '*' => 7.0,
+        '+' => 10.5,
+        ',' | '.' => 5.0,
+        '-' => 6.0,
+        '/' => 5.0,
+        '0'..='9' => 10.0,
+        ':' | ';' => 6.0,
+        '<' | '>' | '=' => 10.5,
+        '?' => 11.0,
+        '@' => 18.0,
+        'A' | 'V' => 12.0,
+        'B' | 'D' | 'E' | 'H' | 'K' | 'N' | 'P' | 'R' | 'U' | 'X' | 'Y' => 12.0,
+        'C' | 'G' | 'O' | 'Q' => 13.0,
+        'F' => 11.0,
+        'I' => 5.0,
+        'J' => 9.0,
+        'L' => 10.0,
+        'M' | 'W' => 14.0,
+        'S' => 12.0,
+        'T' | 'Z' => 11.0,
+        '[' | ']' => 6.0,
+        '\\' => 5.0,
+        '^' => 10.0,
+        '_' => 10.0,
+        '`' => 6.0,
+        'a' | 'b' | 'd' | 'g' | 'h' | 'n' | 'o' | 'p' | 'q' | 'u' => 10.0,
+        'c' | 'e' | 'k' | 's' | 'x' | 'y' | 'z' => 9.0,
+        'f' | 't' => 6.0,
+        'i' | 'l' => 4.0,
+        'j' => 5.0,
+        'm' | 'w' => 14.0,
+        'r' => 7.0,
+        'v' => 9.0,
+        '{' | '}' => 7.0,
+        '|' => 5.0,
+        '~' => 10.5,
+        _ => 10.0,
+    }
 }

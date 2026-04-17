@@ -133,7 +133,7 @@ info:
 
     **This spec is hand-written** — a Swagger UI app in `../swagger-ui/` loads it
     and issues requests against the Rust server at `http://localhost:3000`.
-  version: "0.15.0"
+  version: "0.16.0"
   contact:
     name: sf-clone-rust
     url: https://github.com/sahiljani/Rusting-Frog
@@ -1088,9 +1088,9 @@ paths:
       summary: Image Details — every image this page references
       description: |
         Feeds SF's "Image Details" detail sub-tab. Each row is an outlink
-        whose target content-type is an image. `alt_text` is the anchor
-        text captured at link-write time (empty for plain `<img>` until
-        Batch B adds dedicated alt capture).
+        whose target content-type is an image. `alt_text` is the `alt=""`
+        attribute captured off the `<img>` tag at parse time — used by
+        SF's "Images → Missing Alt Text" filter.
       responses:
         "200":
           description: OK
@@ -1884,7 +1884,14 @@ components:
         - $ref: "#/components/schemas/UrlRow"
         - type: object
           properties:
-            title_pixel_width: { type: integer, nullable: true }
+            title_pixel_width:
+              type: integer
+              nullable: true
+              description: >
+                Rendered width of the page title in Arial Bold 18px (the
+                desktop SERP font Google uses). Populated on every HTML URL
+                with a non-empty `<title>`. SF's "Over 561 Pixels" filter
+                is calibrated against this value.
             meta_description: { type: string, nullable: true }
             meta_description_length: { type: integer, nullable: true }
             h2_first: { type: string, nullable: true }
