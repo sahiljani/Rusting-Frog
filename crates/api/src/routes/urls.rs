@@ -51,7 +51,8 @@ async fn list_urls(
             SELECT u.id, u.url, u.status_code, u.content_type,
                    u.is_internal, u.depth, u.title, u.title_length,
                    u.h1_first, u.h1_count, u.word_count,
-                   u.response_time_ms, u.content_length, u.crawled_at
+                   u.response_time_ms, u.content_length, u.crawled_at,
+                   u.indexability, u.indexability_status
             FROM crawl_urls u
             JOIN crawl_url_findings f ON f.crawl_url_id = u.id
             WHERE u.crawl_id = $1 AND f.filter_key = $2
@@ -83,6 +84,8 @@ async fn list_urls(
                     "response_time_ms": r.response_time_ms,
                     "content_length": r.content_length,
                     "crawled_at": r.crawled_at,
+                    "indexability": r.indexability,
+                    "indexability_status": r.indexability_status,
                 })
             })
             .collect();
@@ -98,7 +101,8 @@ async fn list_urls(
         SELECT id, url, status_code, content_type,
                is_internal, depth, title, title_length,
                h1_first, h1_count, word_count,
-               response_time_ms, content_length, crawled_at
+               response_time_ms, content_length, crawled_at,
+               indexability, indexability_status
         FROM crawl_urls
         WHERE crawl_id = $1
         ORDER BY url
@@ -128,6 +132,8 @@ async fn list_urls(
                 "response_time_ms": r.response_time_ms,
                 "content_length": r.content_length,
                 "crawled_at": r.crawled_at,
+                "indexability": r.indexability,
+                "indexability_status": r.indexability_status,
             })
         })
         .collect();
@@ -153,7 +159,8 @@ async fn get_url_detail(
                meta_description_pixel_width,
                h1_first, h1_count, h2_first, h2_count,
                word_count, response_time_ms, content_length,
-               redirect_url, canonical_url, meta_robots, crawled_at
+               redirect_url, canonical_url, meta_robots, crawled_at,
+               indexability, indexability_status
         FROM crawl_urls
         WHERE id = $1 AND crawl_id = $2
         "#,
@@ -197,6 +204,8 @@ async fn get_url_detail(
         "canonical_url": row.canonical_url,
         "meta_robots": row.meta_robots,
         "crawled_at": row.crawled_at,
+        "indexability": row.indexability,
+        "indexability_status": row.indexability_status,
         "findings": filter_keys,
     })))
 }

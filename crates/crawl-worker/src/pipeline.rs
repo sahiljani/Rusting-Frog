@@ -459,6 +459,15 @@ impl CrawlPipeline {
             _ => serde_json::Value::Array(vec![]),
         };
 
+        let (indexability, indexability_status) = compute_indexability(
+            fetch.status_code,
+            content_type,
+            url,
+            &fetch.headers,
+            robots,
+            canonical,
+        );
+
         sqlx::query!(
             r#"
             INSERT INTO crawl_urls (
@@ -468,10 +477,12 @@ impl CrawlPipeline {
                 meta_description_pixel_width, h1_first, h1_count,
                 h2_first, h2_count, word_count, response_time_ms, content_length,
                 canonical_url, meta_robots, response_headers, final_url,
-                crawled_at, raw_html, content_hash, structured_data
+                crawled_at, raw_html, content_hash, structured_data,
+                indexability, indexability_status
             ) VALUES (
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-                $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29
+                $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29,
+                $30, $31
             )
             ON CONFLICT (crawl_id, url_hash) DO NOTHING
             "#,
@@ -504,6 +515,8 @@ impl CrawlPipeline {
             raw_html_opt,
             content_hash_opt.as_deref(),
             structured_data_json,
+            indexability,
+            indexability_status,
         )
         .execute(&self.db)
         .await?;
@@ -548,10 +561,14 @@ impl CrawlPipeline {
             r#"
             INSERT INTO crawl_urls (
                 id, crawl_id, url, url_hash, content_type, is_internal, depth,
-                crawled_at, blocked_by_robots
+                crawled_at, blocked_by_robots, indexability, indexability_status
             )
-            VALUES ($1, $2, $3, $4, 'unknown', $5, $6, $7, TRUE)
-            ON CONFLICT (crawl_id, url_hash) DO UPDATE SET blocked_by_robots = TRUE
+            VALUES ($1, $2, $3, $4, 'unknown', $5, $6, $7, TRUE,
+                    'Non-Indexable', 'Blocked by Robots.txt')
+            ON CONFLICT (crawl_id, url_hash) DO UPDATE SET
+                blocked_by_robots = TRUE,
+                indexability = 'Non-Indexable',
+                indexability_status = 'Blocked by Robots.txt'
             "#,
             url_id.as_uuid(),
             self.crawl_id.as_uuid(),
@@ -682,4 +699,58 @@ fn sha256_normalised(body: &str) -> Vec<u8> {
     let mut hasher = Sha256::new();
     hasher.update(out.as_bytes());
     hasher.finalize().to_vec()
+}
+
+// Classifies a fetched URL as Indexable vs Non-Indexable and records the
+// reason that knocked it out. Order matters: the first matching rule wins
+// because that's how SF reports it (a redirected noindex page surfaces as
+// "Redirected", not "Noindex"). Returns (indexability, status_reason).
+fn compute_indexability(
+    status_code: u16,
+    content_type: &ContentType,
+    url: &str,
+    headers: &[(String, String)],
+    meta_robots: Option<&str>,
+    canonical_url: Option<&str>,
+) -> (&'static str, &'static str) {
+    // 3xx => Redirected (even if the final target is 200)
+    if (300..400).contains(&status_code) {
+        return ("Non-Indexable", "Redirected");
+    }
+    // 4xx/5xx => HTTP Error
+    if status_code >= 400 {
+        return ("Non-Indexable", "HTTP Error");
+    }
+
+    // X-Robots-Tag: noindex (case-insensitive header name, value may be a
+    // CSV like "noindex, nofollow"). We only look for the "noindex" token.
+    for (k, v) in headers {
+        if k.eq_ignore_ascii_case("x-robots-tag") && v.to_ascii_lowercase().contains("noindex") {
+            return ("Non-Indexable", "Blocked by X-Robots-Tag");
+        }
+    }
+
+    if let Some(mr) = meta_robots {
+        if mr.to_ascii_lowercase().contains("noindex") {
+            return ("Non-Indexable", "Noindex");
+        }
+    }
+
+    // Canonicalised: canonical points somewhere other than this URL. We
+    // compare after trimming a trailing slash since SF treats "/foo" and
+    // "/foo/" as the same URL.
+    if let Some(can) = canonical_url {
+        let norm_self = url.trim_end_matches('/');
+        let norm_can = can.trim_end_matches('/');
+        if !can.is_empty() && norm_can != norm_self {
+            return ("Non-Indexable", "Canonicalised");
+        }
+    }
+
+    // Non-HTML binary content is not considered indexable by SF.
+    if !matches!(content_type, ContentType::Html) {
+        return ("Non-Indexable", "Non-HTML");
+    }
+
+    ("Indexable", "Indexable")
 }

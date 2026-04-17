@@ -133,7 +133,7 @@ info:
 
     **This spec is hand-written** — a Swagger UI app in `../swagger-ui/` loads it
     and issues requests against the Rust server at `http://localhost:3000`.
-  version: "0.17.0"
+  version: "0.18.0"
   contact:
     name: sf-clone-rust
     url: https://github.com/sahiljani/Rusting-Frog
@@ -1877,6 +1877,22 @@ components:
         response_time_ms: { type: integer, nullable: true }
         content_length: { type: integer, nullable: true }
         crawled_at: { type: string, format: date-time, nullable: true }
+        indexability:
+          type: string
+          nullable: true
+          enum: [Indexable, Non-Indexable]
+          description: >
+            Two-value verdict SF puts in the main grid's Indexability column.
+            `null` only on URLs crawled before Batch I shipped.
+        indexability_status:
+          type: string
+          nullable: true
+          description: >
+            Human-readable reason a URL was classified. One of `Indexable`,
+            `Noindex`, `Canonicalised`, `Redirected`, `HTTP Error`,
+            `Blocked by Robots.txt`, `Blocked by X-Robots-Tag`, `Non-HTML`.
+            First matching rule wins — a redirected noindex URL surfaces as
+            `Redirected`, not `Noindex`.
       required: [id, url]
 
     UrlDetail:
