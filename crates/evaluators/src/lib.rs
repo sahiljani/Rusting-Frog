@@ -1,5 +1,8 @@
+pub mod external;
 pub mod headings;
+pub mod images;
 pub mod internal;
+pub mod links;
 pub mod meta_description;
 pub mod meta_keywords;
 pub mod page_titles;
@@ -33,11 +36,14 @@ pub trait Evaluator: Send + Sync {
 pub fn phase1_evaluators() -> Vec<Box<dyn Evaluator>> {
     vec![
         Box::new(internal::InternalEvaluator),
+        Box::new(external::ExternalEvaluator),
         Box::new(response_codes::ResponseCodeEvaluator),
         Box::new(page_titles::PageTitleEvaluator),
         Box::new(meta_description::MetaDescriptionEvaluator),
         Box::new(meta_keywords::MetaKeywordsEvaluator),
         Box::new(headings::H1Evaluator),
         Box::new(headings::H2Evaluator),
+        Box::new(images::ImagesEvaluator),
+        Box::new(links::LinksEvaluator),
     ]
 }

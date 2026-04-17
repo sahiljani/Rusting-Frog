@@ -19,6 +19,10 @@ pub struct CrawlConfig {
     pub meta_description: MetaDescriptionConfig,
     #[serde(default)]
     pub headings: HeadingsConfig,
+    #[serde(default)]
+    pub images: ImagesConfig,
+    #[serde(default)]
+    pub links: LinksConfig,
 }
 
 impl Default for CrawlConfig {
@@ -31,6 +35,8 @@ impl Default for CrawlConfig {
             page_title: PageTitleConfig::default(),
             meta_description: MetaDescriptionConfig::default(),
             headings: HeadingsConfig::default(),
+            images: ImagesConfig::default(),
+            links: LinksConfig::default(),
         }
     }
 }
@@ -143,6 +149,38 @@ impl Default for HeadingsConfig {
         Self {
             max_h1_length: 70,
             max_h2_length: 70,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImagesConfig {
+    pub max_size_kb: u32,
+    pub max_alt_length: u32,
+}
+
+impl Default for ImagesConfig {
+    fn default() -> Self {
+        Self {
+            max_size_kb: 100,
+            max_alt_length: 100,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LinksConfig {
+    pub max_crawl_depth: u32,
+    pub high_internal_outlinks: u32,
+    pub high_external_outlinks: u32,
+}
+
+impl Default for LinksConfig {
+    fn default() -> Self {
+        Self {
+            max_crawl_depth: 4,
+            high_internal_outlinks: 100,
+            high_external_outlinks: 10,
         }
     }
 }
