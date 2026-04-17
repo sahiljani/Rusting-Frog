@@ -16,6 +16,7 @@ pub fn routes() -> Router<AppState> {
         .route("/crawls/{crawl_id}/urls/{url_id}/inlinks", get(get_inlinks))
         .route("/crawls/{crawl_id}/urls/{url_id}/outlinks", get(get_outlinks))
         .route("/crawls/{crawl_id}/urls/{url_id}/images", get(get_images))
+        .route("/crawls/{crawl_id}/urls/{url_id}/resources", get(get_resources))
         .route("/crawls/{crawl_id}/urls/{url_id}/serp", get(get_serp))
         .route("/crawls/{crawl_id}/urls/{url_id}/headers", get(get_headers))
         .route("/crawls/{crawl_id}/urls/{url_id}/cookies", get(get_cookies))
@@ -311,6 +312,59 @@ async fn get_images(
         .collect();
 
     Ok(Json(serde_json::json!(images)))
+}
+
+// Feeds the "Resources" per-URL detail tab. Returns every script /
+// stylesheet / image URL the page loaded, whether or not we actually
+// fetched the asset ourselves — SF's Resources tab is a pure inventory of
+// what the HTML referenced. Grouped into per-type buckets so the UI can
+// render a tabbed table without client-side filtering.
+async fn get_resources(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path((crawl_id, url_id)): Path<(Uuid, Uuid)>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    verify_crawl_ownership(&state, &auth, &crawl_id).await?;
+
+    let page_url: Option<String> = sqlx::query_scalar!(
+        "SELECT url FROM crawl_urls WHERE id = $1 AND crawl_id = $2",
+        &url_id,
+        &crawl_id,
+    )
+    .fetch_optional(&state.db)
+    .await?;
+    let page_url = page_url.ok_or_else(|| ApiError::not_found("url not found"))?;
+
+    let rows = sqlx::query!(
+        r#"
+        SELECT url, resource_type
+        FROM crawl_url_resources
+        WHERE source_url_id = $1 AND crawl_id = $2
+        ORDER BY resource_type, url
+        "#,
+        &url_id,
+        &crawl_id,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    let mut counts_by_type: std::collections::BTreeMap<String, i64> =
+        std::collections::BTreeMap::new();
+    let mut resources: Vec<serde_json::Value> = Vec::with_capacity(rows.len());
+    for r in rows {
+        *counts_by_type.entry(r.resource_type.clone()).or_insert(0) += 1;
+        resources.push(serde_json::json!({
+            "url": r.url,
+            "type": r.resource_type,
+        }));
+    }
+
+    Ok(Json(serde_json::json!({
+        "url": page_url,
+        "count": resources.len(),
+        "counts_by_type": counts_by_type,
+        "resources": resources,
+    })))
 }
 
 /// Feeds Screaming Frog's "SERP Snippet" detail sub-tab. Returns the raw

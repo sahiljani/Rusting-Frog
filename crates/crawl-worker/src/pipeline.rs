@@ -244,6 +244,24 @@ impl CrawlPipeline {
                         .ok(); // best-effort, don't fail the crawl
                     }
                 }
+
+                // Write page resources. Unlike link edges these are stored
+                // regardless of whether the target was crawled, so external
+                // CDN scripts/stylesheets still appear in the Resources
+                // detail tab.
+                for link in &pr.links {
+                    let rtype = match link.link_type {
+                        parser::LinkType::Script => Some("script"),
+                        parser::LinkType::Stylesheet => Some("stylesheet"),
+                        parser::LinkType::Image => Some("image"),
+                        _ => None,
+                    };
+                    if let Some(rtype) = rtype {
+                        self.write_resource(&url_id, &link.href, rtype)
+                            .await
+                            .ok();
+                    }
+                }
             } else {
                 // Non-HTML: still run evaluators that don't need parsed HTML
                 let crawl_url = sf_core::crawl::CrawlUrl {
@@ -545,6 +563,27 @@ impl CrawlPipeline {
         .execute(&self.db)
         .await?;
 
+        Ok(())
+    }
+
+    async fn write_resource(
+        &self,
+        source_url_id: &CrawlUrlId,
+        url: &str,
+        resource_type: &str,
+    ) -> Result<()> {
+        sqlx::query!(
+            r#"
+            INSERT INTO crawl_url_resources (crawl_id, source_url_id, url, resource_type)
+            VALUES ($1, $2, $3, $4)
+            "#,
+            self.crawl_id.as_uuid(),
+            source_url_id.as_uuid(),
+            url,
+            resource_type,
+        )
+        .execute(&self.db)
+        .await?;
         Ok(())
     }
 

@@ -133,7 +133,7 @@ info:
 
     **This spec is hand-written** — a Swagger UI app in `../swagger-ui/` loads it
     and issues requests against the Rust server at `http://localhost:3000`.
-  version: "0.14.0"
+  version: "0.15.0"
   contact:
     name: sf-clone-rust
     url: https://github.com/sahiljani/Rusting-Frog
@@ -1119,6 +1119,64 @@ paths:
                       size_bytes: 0
                       response_time_ms: 68
                       alt_text: ""
+
+  /v1/crawls/{crawl_id}/urls/{url_id}/resources:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlIdAsCrawl" }
+      - { $ref: "#/components/parameters/UrlId" }
+    get:
+      tags: [urls]
+      summary: Resources (CSS/JS/images/fonts) referenced by this page
+      description: |
+        Every `<script src>`, `<link rel=stylesheet href>` and `<img src>`
+        found on the page, whether or not the asset itself was crawled.
+        This mirrors SF's "Resources" per-URL detail tab — a pure
+        inventory of what the HTML referenced, including external CDN
+        URLs the crawler never visited.
+
+        `counts_by_type` is the small rollup the UI uses for its tabbed
+        badge count; `resources` is the flat list sorted by type then URL.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, count, counts_by_type, resources]
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                    description: The page URL whose resources are listed.
+                  count:
+                    type: integer
+                    description: Total number of resources on this page.
+                  counts_by_type:
+                    type: object
+                    additionalProperties: { type: integer }
+                  resources:
+                    type: array
+                    items:
+                      type: object
+                      required: [url, type]
+                      properties:
+                        url:  { type: string, format: uri }
+                        type: { type: string, enum: [script, stylesheet, image, font, iframe, other] }
+              example:
+                url: "https://github.com/"
+                count: 38
+                counts_by_type:
+                  image: 12
+                  script: 18
+                  stylesheet: 8
+                resources:
+                  - type: image
+                    url: "https://github.githubassets.com/images/modules/site/home/hero-glow.webp"
+                  - type: script
+                    url: "https://github.githubassets.com/assets/vendors-node_modules-lit-html-lit-html-js-node_modules-primer-live-region-element-dist--4f5e1e.js"
+                  - type: stylesheet
+                    url: "https://github.githubassets.com/assets/light-0eace2597ca3.css"
 
   /v1/crawls/{crawl_id}/urls/{url_id}/serp:
     parameters:
