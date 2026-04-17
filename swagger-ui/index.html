@@ -14,6 +14,7 @@
       gap: 12px;
       align-items: center;
       border-bottom: 2px solid #f0663f;
+      flex-wrap: wrap;
     }
     .sf-topbar h1 { font-size: 16px; margin: 0; font-weight: 600; }
     .sf-topbar .sf-dot {
@@ -27,7 +28,7 @@
       background: #0d1117; color: #fff;
       border: 1px solid #30363d; border-radius: 6px;
       padding: 6px 10px; font-family: ui-monospace, monospace; font-size: 12px;
-      min-width: 360px;
+      min-width: 280px;
     }
     .sf-topbar button {
       background: #f0663f; color: #fff;
@@ -35,9 +36,58 @@
       cursor: pointer; font-size: 13px;
     }
     .sf-topbar button:hover { background: #d85425; }
+    .sf-topbar button.sf-secondary { background: #238636; }
+    .sf-topbar button.sf-secondary:hover { background: #2ea043; }
     .sf-spacer { flex: 1; }
     .sf-hint { font-size: 12px; color: #8b949e; }
     #swagger-ui { padding-top: 8px; }
+
+    /* Run-all results panel */
+    .sf-runall {
+      display: none;
+      position: fixed; right: 20px; top: 72px; bottom: 20px;
+      width: 480px; background: #0d1117; color: #c9d1d9;
+      border: 1px solid #30363d; border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      z-index: 9999; display: none; flex-direction: column;
+    }
+    .sf-runall.open { display: flex; }
+    .sf-runall header {
+      padding: 10px 14px; border-bottom: 1px solid #30363d;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sf-runall header h2 { margin: 0; font-size: 14px; font-weight: 600; color: #fff; }
+    .sf-runall header .sf-close {
+      margin-left: auto; background: transparent; color: #c9d1d9;
+      border: 1px solid #30363d;
+    }
+    .sf-runall .sf-summary {
+      padding: 8px 14px; font-family: ui-monospace, monospace; font-size: 12px;
+      border-bottom: 1px solid #30363d;
+    }
+    .sf-runall .sf-rows {
+      overflow-y: auto; font-family: ui-monospace, monospace; font-size: 12px;
+      flex: 1;
+    }
+    .sf-runall .sf-row {
+      padding: 6px 14px; border-bottom: 1px solid #161b22;
+      display: grid; grid-template-columns: 28px 46px 1fr 50px;
+      gap: 8px; align-items: center;
+    }
+    .sf-runall .sf-row.pass { background: rgba(63,185,80,0.06); }
+    .sf-runall .sf-row.fail { background: rgba(248,81,73,0.10); }
+    .sf-runall .sf-row.skip { background: rgba(139,148,158,0.05); color: #8b949e; }
+    .sf-runall .sf-method {
+      display: inline-block; text-align: center;
+      font-weight: 600; padding: 2px 4px; border-radius: 4px;
+      font-size: 10px; color: #fff;
+    }
+    .sf-runall .sf-method.GET { background: #1f6feb; }
+    .sf-runall .sf-method.POST { background: #238636; }
+    .sf-runall .sf-method.DELETE { background: #da3633; }
+    .sf-runall .sf-status { text-align: right; font-variant-numeric: tabular-nums; }
+    .sf-runall .sf-path { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sf-runall .sf-icon { text-align: center; }
   </style>
 </head>
 <body>
@@ -46,10 +96,22 @@
     <span class="sf-hint"><span id="sf-health-dot" class="sf-dot"></span><span id="sf-health-label">probing</span></span>
     <span class="sf-spacer"></span>
     <label>Server: <input id="sf-server" type="text" value="http://localhost:3000"></label>
-    <label>JWT: <input id="sf-jwt" type="text" placeholder="paste token (or /set-jwt)" style="min-width:240px"></label>
+    <label>JWT: <input id="sf-jwt" type="text" placeholder="paste token" style="min-width:220px"></label>
     <button id="sf-apply">Apply</button>
+    <button id="sf-runall" class="sf-secondary" title="Hit every GET endpoint in one shot and summarize pass/fail">Run all (smoke)</button>
   </div>
+
   <div id="swagger-ui"></div>
+
+  <div id="sf-runall-panel" class="sf-runall" role="dialog" aria-label="Smoke test results">
+    <header>
+      <h2>Smoke test</h2>
+      <span id="sf-runall-spinner" class="sf-hint"></span>
+      <button class="sf-close" id="sf-runall-close">Close</button>
+    </header>
+    <div class="sf-summary" id="sf-runall-summary">—</div>
+    <div class="sf-rows" id="sf-runall-rows"></div>
+  </div>
 
   <script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-bundle.js"></script>
   <script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-standalone-preset.js"></script>
@@ -118,6 +180,131 @@
 
     document.getElementById("sf-apply").addEventListener("click", boot);
     boot();
+
+    // -------------------------------------------------------------------------
+    // Run all (smoke)
+    // -------------------------------------------------------------------------
+    // Strategy: discover IDs by walking the read chain, then hit every GET
+    // operation the spec declares. POST/DELETE are skipped (destructive) but
+    // shown as "skip" rows so you can see the full coverage map.
+    const panel   = document.getElementById("sf-runall-panel");
+    const rows    = document.getElementById("sf-runall-rows");
+    const summary = document.getElementById("sf-runall-summary");
+    const spinner = document.getElementById("sf-runall-spinner");
+
+    document.getElementById("sf-runall-close").addEventListener("click", () => {
+      panel.classList.remove("open");
+    });
+
+    function addRow({ method, path, status, ok, skipped, note }) {
+      const row = document.createElement("div");
+      row.className = "sf-row " + (skipped ? "skip" : ok ? "pass" : "fail");
+      row.innerHTML = `
+        <span class="sf-icon">${skipped ? "•" : ok ? "✅" : "❌"}</span>
+        <span class="sf-method ${method}">${method}</span>
+        <span class="sf-path" title="${path}${note ? ' — ' + note : ''}">${path}${note ? ' <small>(' + note + ')</small>' : ''}</span>
+        <span class="sf-status">${skipped ? "—" : status}</span>
+      `;
+      rows.appendChild(row);
+      rows.scrollTop = rows.scrollHeight;
+    }
+
+    async function discoverIds(server, headers) {
+      const ids = {};
+      // projects
+      const pr = await fetch(server + "/v1/projects", { headers });
+      if (pr.ok) {
+        const projects = await pr.json();
+        if (Array.isArray(projects) && projects.length) {
+          ids.project_id = projects[0].id;
+        }
+      }
+      if (!ids.project_id) return ids;
+      // crawls for that project
+      const cr = await fetch(server + `/v1/projects/${ids.project_id}/crawls`, { headers });
+      if (cr.ok) {
+        const crawls = await cr.json();
+        if (Array.isArray(crawls) && crawls.length) ids.crawl_id = crawls[0].id;
+      }
+      if (!ids.crawl_id) return ids;
+      // urls for that crawl (just one)
+      const ur = await fetch(server + `/v1/crawls/${ids.crawl_id}/urls?limit=1`, { headers });
+      if (ur.ok) {
+        const body = await ur.json();
+        const data = body && body.data;
+        if (Array.isArray(data) && data.length) ids.url_id = data[0].id;
+      }
+      return ids;
+    }
+
+    function resolvePath(path, ids) {
+      let out = path;
+      let missing = [];
+      out = out.replace(/\{(\w+)\}/g, (_, name) => {
+        if (name === "id" && path.includes("/projects/{id}")) return ids.project_id || (missing.push(name), _);
+        if (name === "id" && path.includes("/crawls/{id}")) return ids.crawl_id || (missing.push(name), _);
+        if (name === "project_id") return ids.project_id || (missing.push(name), _);
+        if (name === "crawl_id") return ids.crawl_id || (missing.push(name), _);
+        if (name === "url_id") return ids.url_id || (missing.push(name), _);
+        missing.push(name);
+        return _;
+      });
+      return { resolved: out, missing };
+    }
+
+    async function runAll() {
+      panel.classList.add("open");
+      rows.innerHTML = "";
+      summary.textContent = "discovering ids…";
+      spinner.textContent = "running…";
+
+      const server = document.getElementById("sf-server").value.trim();
+      const jwt    = document.getElementById("sf-jwt").value.trim();
+      const headers = jwt ? { Authorization: "Bearer " + jwt } : {};
+
+      const specResp = await fetch(SPEC_URL);
+      const spec = jsyaml.load(await specResp.text());
+
+      const ids = await discoverIds(server, headers);
+      summary.textContent = `server=${server}  ids=${JSON.stringify(ids)}`;
+
+      let pass = 0, fail = 0, skipped = 0;
+      const entries = [];
+      for (const [path, methods] of Object.entries(spec.paths || {})) {
+        for (const [method, _] of Object.entries(methods)) {
+          if (!["get","post","delete","patch","put"].includes(method)) continue;
+          entries.push({ method: method.toUpperCase(), path });
+        }
+      }
+
+      for (const { method, path } of entries) {
+        if (method !== "GET") {
+          addRow({ method, path, skipped: true, note: "write method — skipped" });
+          skipped++;
+          continue;
+        }
+        const { resolved, missing } = resolvePath(path, ids);
+        if (missing.length) {
+          addRow({ method, path, skipped: true, note: "no " + missing.join(",") });
+          skipped++;
+          continue;
+        }
+        try {
+          const r = await fetch(server + resolved, { method, headers });
+          const ok = r.ok;
+          addRow({ method, path: resolved, status: r.status, ok });
+          if (ok) pass++; else fail++;
+        } catch (e) {
+          addRow({ method, path: resolved, status: "ERR", ok: false, note: String(e.message || e) });
+          fail++;
+        }
+      }
+
+      spinner.textContent = "";
+      summary.textContent = `pass=${pass}  fail=${fail}  skipped=${skipped}  total=${entries.length}`;
+    }
+
+    document.getElementById("sf-runall").addEventListener("click", runAll);
   </script>
 </body>
 </html>
