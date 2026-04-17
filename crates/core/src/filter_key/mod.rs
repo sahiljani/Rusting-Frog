@@ -25,10 +25,13 @@ mod deprecated;
 mod display;
 mod filter_key_type;
 mod i18n;
+mod issue_details;
 mod serde_key;
 mod severity;
 mod tab;
 mod watermark;
+
+pub use issue_details::{IssuePriority, IssueType};
 
 /// Which AI provider a user-configurable AI-extraction slot targets.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

@@ -133,7 +133,7 @@ info:
 
     **This spec is hand-written** — a Swagger UI app in `../swagger-ui/` loads it
     and issues requests against the Rust server at `http://localhost:3000`.
-  version: "0.9.0"
+  version: "0.10.0"
   contact:
     name: sf-clone-rust
     url: https://github.com/sahiljani/Rusting-Frog
@@ -935,6 +935,288 @@ paths:
                     images_missing_alt_text: 5
                     images_missing_size_attributes: 52
                     images_background_images: 58
+
+  /v1/crawls/{crawl_id}/urls/{url_id}/images:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlIdAsCrawl" }
+      - { $ref: "#/components/parameters/UrlId" }
+    get:
+      tags: [urls]
+      summary: Image Details — every image this page references
+      description: |
+        Feeds SF's "Image Details" detail sub-tab. Each row is an outlink
+        whose target content-type is an image. `alt_text` is the anchor
+        text captured at link-write time (empty for plain `<img>` until
+        Batch B adds dedicated alt capture).
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:               { type: string, format: uuid }
+                    url:              { type: string, format: uri }
+                    status_code:      { type: integer, nullable: true }
+                    content_type:     { type: string, nullable: true }
+                    size_bytes:       { type: integer, nullable: true }
+                    response_time_ms: { type: integer, nullable: true }
+                    alt_text:         { type: string, nullable: true }
+              examples:
+                boltrack:
+                  summary: page with 7 image references
+                  value:
+                    - id: "019d9b74-cae0-7820-b9ff-e75383f6c246"
+                      url: "https://boltrack.in/wp-content/uploads/2026/03/06-removebg.png"
+                      status_code: 200
+                      content_type: "image"
+                      size_bytes: 0
+                      response_time_ms: 68
+                      alt_text: ""
+
+  /v1/crawls/{crawl_id}/urls/{url_id}/serp:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlIdAsCrawl" }
+      - { $ref: "#/components/parameters/UrlId" }
+    get:
+      tags: [urls]
+      summary: SERP Snippet — live preview + truncation measurements
+      description: |
+        Returns the title + description fields alongside SF's derived
+        measurements (character count, pixel width, remaining budget,
+        truncated flag) so the UI can render a Google-style SERP
+        preview. Thresholds match SF defaults: title 567px / 55 chars;
+        description 1020px / 150 chars. `breadcrumb` is host + path
+        segments for the URL (`api.whatsapp.com > send`).
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, breadcrumb, title, description]
+                properties:
+                  url: { type: string, format: uri }
+                  breadcrumb:
+                    type: array
+                    items: { type: string }
+                  title:
+                    type: object
+                    properties:
+                      value:            { type: string, nullable: true }
+                      length_chars:     { type: integer }
+                      length_pixels:    { type: integer }
+                      max_chars:        { type: integer }
+                      max_pixels:       { type: integer }
+                      remaining_chars:  { type: integer }
+                      remaining_pixels: { type: integer }
+                      truncated:        { type: boolean }
+                  description:
+                    type: object
+                    properties:
+                      value:                 { type: string, nullable: true }
+                      length_chars:          { type: integer }
+                      length_pixels_approx:  { type: integer }
+                      max_chars:             { type: integer }
+                      max_pixels:            { type: integer }
+                      remaining_chars:       { type: integer }
+                      remaining_pixels:      { type: integer }
+                      truncated:             { type: boolean }
+              examples:
+                whatsapp_share:
+                  value:
+                    url: "https://api.whatsapp.com/send"
+                    breadcrumb: ["api.whatsapp.com", "send"]
+                    title:
+                      value: "Share on WhatsApp"
+                      length_chars: 23
+                      length_pixels: 0
+                      max_chars: 55
+                      max_pixels: 567
+                      remaining_chars: 32
+                      remaining_pixels: 567
+                      truncated: false
+                    description:
+                      value: "Use WhatsApp to share."
+                      length_chars: 15
+                      length_pixels_approx: 105
+                      max_chars: 150
+                      max_pixels: 1020
+                      remaining_chars: 135
+                      remaining_pixels: 915
+                      truncated: false
+
+  /v1/crawls/{crawl_id}/reports:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlIdAsCrawl" }
+    get:
+      tags: [reports]
+      summary: Catalog of available reports for this crawl
+      description: |
+        Returns the full list of report keys the API can generate for
+        this crawl — groups match SF's top-menu Reports submenu
+        (Redirects, Canonicals, Pagination, Hreflang, Security, SERP,
+        Links, Structured Data, JavaScript, PageSpeed, Mobile,
+        Accessibility, HTTP Headers, Cookies). Reports not yet wired to
+        captured data (http-headers, cookies, redirect chains, segments)
+        are listed and return `rows: []` with a `notes` field.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reports:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        key:   { type: string }
+                        title: { type: string }
+                        group: { type: string }
+
+  /v1/crawls/{crawl_id}/reports/{report_key}:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlIdAsCrawl" }
+      - in: path
+        name: report_key
+        required: true
+        schema: { type: string }
+        description: One of the keys from `/reports`.
+      - in: query
+        name: format
+        schema: { type: string, enum: [json, csv], default: json }
+      - in: query
+        name: limit
+        schema: { type: integer, default: 10000 }
+    get:
+      tags: [reports]
+      summary: Run a report and return rows (JSON or CSV)
+      description: |
+        JSON response envelope:
+        ```
+        { key, title, group, count, columns[], rows[], notes? }
+        ```
+        CSV response: `Content-Type: text/csv; charset=utf-8`,
+        `Content-Disposition: attachment; filename="<report_key>.csv"`.
+        Columns are stable per report_key.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              examples:
+                canonicals_non_indexable:
+                  value:
+                    key: "canonicals_non_indexable"
+                    title: "Canonicals: Non-Indexable"
+                    group: "Canonicals"
+                    count: 2
+                    columns: ["source_url", "canonical_url", "dest_status_code", "dest_meta_robots"]
+                    rows:
+                      - source_url: "https://example.com/a"
+                        canonical_url: "https://example.com/x"
+                        dest_status_code: 404
+                        dest_meta_robots: null
+                site_structure:
+                  value:
+                    key: "site_structure"
+                    title: "Site Structure"
+                    group: "Overview"
+                    count: 5
+                    columns: ["depth", "urls"]
+                    rows:
+                      - { depth: 0, urls: 1 }
+                      - { depth: 1, urls: 42 }
+                      - { depth: 2, urls: 103 }
+                      - { depth: 3, urls: 48 }
+                      - { depth: 4, urls: 14 }
+            text/csv:
+              schema: { type: string }
+              examples:
+                redirects_all:
+                  value: |
+                    url,status_code,redirect_url
+                    https://example.com/old,301,https://example.com/new
+        "404":
+          description: Unknown report_key (or crawl not owned by tenant).
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+
+  /v1/crawls/{crawl_id}/issues:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlIdAsCrawl" }
+    get:
+      tags: [reports]
+      summary: Issues tab — SF-style findings rollup with description + how-to-fix
+      description: |
+        Feeds Screaming Frog's right-hand "Issues" panel. Groups
+        findings by filter_key, classifies each row as Issue /
+        Warning / Opportunity, and attaches hand-curated
+        description + how-to-fix copy from the port of SF's
+        editorial strings. Sorted by type severity then URL count
+        descending.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [summary, total_urls, items]
+                properties:
+                  summary:
+                    type: object
+                    properties:
+                      issues:        { type: integer }
+                      warnings:      { type: integer }
+                      opportunities: { type: integer }
+                      info:          { type: integer }
+                      total:         { type: integer, description: issues+warnings+opportunities }
+                  total_urls: { type: integer }
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        filter_key:       { type: string }
+                        issue_name:       { type: string }
+                        issue_type:       { type: string, enum: [Issue, Warning, Opportunity] }
+                        priority:         { type: string, nullable: true, enum: [High, Medium, Low] }
+                        urls:             { type: integer }
+                        percent_of_total: { type: number }
+                        description:      { type: string, nullable: true }
+                        how_to_fix:       { type: string, nullable: true }
+              examples:
+                boltrack:
+                  summary: live crawl, 208 URLs
+                  value:
+                    summary: { issues: 41, warnings: 6, opportunities: 4, info: 50, total: 51 }
+                    total_urls: 208
+                    items:
+                      - filter_key: "meta_keywords_missing"
+                        issue_name: "Meta Keywords: Missing"
+                        issue_type: "Issue"
+                        priority: "Medium"
+                        urls: 106
+                        percent_of_total: 51.0
+                        description: "Pages without a <meta name=\"keywords\"> tag. Note: Google has ignored meta keywords since 2009 — this filter is surfaced only for completeness and legacy tooling compatibility."
+                        how_to_fix: "No action required for Google. If you target Yandex or other engines that still honour the tag, add <meta name=\"keywords\" content=\"…\">."
+                      - filter_key: "hreflang_missing"
+                        issue_name: "Hreflang: Missing"
+                        issue_type: "Issue"
+                        priority: "Medium"
+                        urls: 105
+                        percent_of_total: 50.5
+                        description: "Pages in an internationalised site that have no hreflang annotation. Without hreflang, Google may serve the wrong language to users."
+                        how_to_fix: "Add hreflang annotations pointing at every language/region variant, including a self-reference and an x-default fallback."
 
 components:
   securitySchemes:

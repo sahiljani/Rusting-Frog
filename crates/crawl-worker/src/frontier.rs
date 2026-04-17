@@ -24,13 +24,16 @@ impl Frontier {
         }
     }
 
-    pub fn add(&mut self, url: Url, depth: u32) -> bool {
+    pub fn add(&mut self, mut url: Url, depth: u32) -> bool {
         if depth > self.max_depth {
             return false;
         }
         if self.seen.len() as u64 >= self.max_urls {
             return false;
         }
+        // Fragments never reach the server — collapse them so `/` and `/#home`
+        // are treated as the same URL. Matches Screaming Frog behaviour.
+        url.set_fragment(None);
         let normalized = normalize_url(&url);
         if self.seen.contains(&normalized) {
             return false;
@@ -54,9 +57,14 @@ impl Frontier {
 }
 
 fn normalize_url(url: &Url) -> String {
-    let mut s = url.as_str().to_string();
-    if s.ends_with('/') {
-        s.pop();
+    // Scheme + host are case-insensitive per RFC 3986; path/query are not.
+    let scheme = url.scheme().to_ascii_lowercase();
+    let host = url.host_str().map(|h| h.to_ascii_lowercase()).unwrap_or_default();
+    let port = url.port().map(|p| format!(":{p}")).unwrap_or_default();
+    let mut path = url.path().to_string();
+    if path.len() > 1 && path.ends_with('/') {
+        path.pop();
     }
-    s.to_lowercase()
+    let query = url.query().map(|q| format!("?{q}")).unwrap_or_default();
+    format!("{scheme}://{host}{port}{path}{query}")
 }

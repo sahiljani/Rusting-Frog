@@ -2,6 +2,7 @@ use axum::extract::{Path, Query, State};
 use axum::routing::get;
 use axum::{Json, Router};
 use serde::Deserialize;
+use url::Url;
 use uuid::Uuid;
 
 use crate::app_state::AppState;
@@ -14,6 +15,8 @@ pub fn routes() -> Router<AppState> {
         .route("/crawls/{crawl_id}/urls/{url_id}", get(get_url_detail))
         .route("/crawls/{crawl_id}/urls/{url_id}/inlinks", get(get_inlinks))
         .route("/crawls/{crawl_id}/urls/{url_id}/outlinks", get(get_outlinks))
+        .route("/crawls/{crawl_id}/urls/{url_id}/images", get(get_images))
+        .route("/crawls/{crawl_id}/urls/{url_id}/serp", get(get_serp))
         .route("/crawls/{crawl_id}/overview", get(get_overview))
 }
 
@@ -258,6 +261,134 @@ async fn get_outlinks(
         .collect();
 
     Ok(Json(serde_json::json!(links)))
+}
+
+/// Feeds Screaming Frog's "Image Details" detail sub-tab — every image
+/// referenced from this URL (linked via <img src>, etc). We approximate
+/// "referenced images" as outlinks whose target was classified as an image
+/// by the content-type sniffer. Columns match what SF shows.
+async fn get_images(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path((crawl_id, url_id)): Path<(Uuid, Uuid)>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    verify_crawl_ownership(&state, &auth, &crawl_id).await?;
+    let rows = sqlx::query!(
+        r#"
+        SELECT u.id, u.url, u.status_code, u.content_type,
+               u.content_length, u.response_time_ms, l.anchor_text
+        FROM crawl_links l
+        JOIN crawl_urls u ON u.id = l.target_url_id
+        WHERE l.source_url_id = $1
+          AND l.crawl_id = $2
+          AND u.content_type = 'image'
+        ORDER BY u.url
+        "#,
+        &url_id,
+        &crawl_id,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    let images: Vec<serde_json::Value> = rows
+        .into_iter()
+        .map(|r| {
+            serde_json::json!({
+                "id": r.id,
+                "url": r.url,
+                "status_code": r.status_code,
+                "content_type": r.content_type,
+                "size_bytes": r.content_length,
+                "response_time_ms": r.response_time_ms,
+                "alt_text": r.anchor_text,
+            })
+        })
+        .collect();
+
+    Ok(Json(serde_json::json!(images)))
+}
+
+/// Feeds Screaming Frog's "SERP Snippet" detail sub-tab. Returns the raw
+/// fields plus SF's derived measurements (length, pixel width, display
+/// truncation) for title + description so the UI can render a live preview
+/// matching the Google SERP layout.
+async fn get_serp(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path((crawl_id, url_id)): Path<(Uuid, Uuid)>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    verify_crawl_ownership(&state, &auth, &crawl_id).await?;
+    let row = sqlx::query!(
+        r#"
+        SELECT url, title, title_length, title_pixel_width,
+               meta_description, meta_description_length
+        FROM crawl_urls
+        WHERE id = $1 AND crawl_id = $2
+        "#,
+        &url_id,
+        &crawl_id,
+    )
+    .fetch_optional(&state.db)
+    .await?
+    .ok_or_else(|| ApiError::not_found("URL not found"))?;
+
+    // SERP layout thresholds taken from Screaming Frog defaults.
+    const TITLE_MAX_PIXELS: i32 = 567;
+    const DESC_MAX_PIXELS: i32 = 1020;
+    const TITLE_MAX_CHARS: i32 = 55;
+    const DESC_MAX_CHARS: i32 = 150;
+
+    let title_px = row.title_pixel_width.unwrap_or(0);
+    let title_len = row.title_length.unwrap_or(0);
+    let desc_len = row.meta_description_length.unwrap_or(0);
+    // We don't persist desc pixel width yet; approximate as chars × 7 as a
+    // lightweight proxy. This matches SF's eyeballed average for
+    // proportional fonts closely enough for UI truncation previews.
+    let desc_px = desc_len * 7;
+
+    let title_remaining_chars = TITLE_MAX_CHARS - title_len;
+    let title_remaining_px = TITLE_MAX_PIXELS - title_px;
+    let desc_remaining_chars = DESC_MAX_CHARS - desc_len;
+    let desc_remaining_px = DESC_MAX_PIXELS - desc_px;
+
+    let breadcrumb: Vec<String> = Url::parse(&row.url)
+        .ok()
+        .map(|u| {
+            let host = u.host_str().unwrap_or("").to_string();
+            let segs: Vec<String> = u
+                .path_segments()
+                .map(|it| it.filter(|s| !s.is_empty()).map(String::from).collect())
+                .unwrap_or_default();
+            let mut out = vec![host];
+            out.extend(segs);
+            out
+        })
+        .unwrap_or_default();
+
+    Ok(Json(serde_json::json!({
+        "url": row.url,
+        "breadcrumb": breadcrumb,
+        "title": {
+            "value": row.title,
+            "length_chars": title_len,
+            "length_pixels": title_px,
+            "max_chars": TITLE_MAX_CHARS,
+            "max_pixels": TITLE_MAX_PIXELS,
+            "remaining_chars": title_remaining_chars,
+            "remaining_pixels": title_remaining_px,
+            "truncated": title_px > TITLE_MAX_PIXELS,
+        },
+        "description": {
+            "value": row.meta_description,
+            "length_chars": desc_len,
+            "length_pixels_approx": desc_px,
+            "max_chars": DESC_MAX_CHARS,
+            "max_pixels": DESC_MAX_PIXELS,
+            "remaining_chars": desc_remaining_chars,
+            "remaining_pixels": desc_remaining_px,
+            "truncated": desc_px > DESC_MAX_PIXELS,
+        }
+    })))
 }
 
 async fn get_overview(

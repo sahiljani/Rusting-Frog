@@ -1,6 +1,9 @@
 pub mod catalog;
 pub mod crawls;
+pub mod dev;
+pub mod issues;
 pub mod projects;
+pub mod reports;
 pub mod urls;
 
 use axum::Router;
@@ -18,9 +21,15 @@ pub fn router(state: AppState) -> Router {
 }
 
 fn api_routes() -> Router<AppState> {
-    Router::new()
+    let mut r = Router::new()
         .merge(projects::routes())
         .merge(crawls::routes())
         .merge(urls::routes())
         .merge(catalog::routes())
+        .merge(reports::routes())
+        .merge(issues::routes());
+    if std::env::var("SF_DEV_MODE").ok().as_deref() == Some("1") {
+        r = r.merge(dev::routes());
+    }
+    r
 }
