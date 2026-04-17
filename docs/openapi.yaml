@@ -11,12 +11,25 @@ info:
     **Tenancy.** `tenant_id` is taken from the JWT `tenant_id` claim; callers never
     pass it. All reads and writes are scoped to the caller's tenant.
 
-    **Implementation progress.** Batches 1–2 of the evaluator roll-out are wired:
+    **Implementation progress.** Batches 1–3 of the evaluator roll-out are wired:
       - *Batch 1 — response/title/meta/H1/H2* (19 filter keys): `response_code_*`,
         `internal_*`, `external_*`, `title_*`, `meta_descripton_*`,
         `meta_keywords_*`, `h1_*`, `h2_*`.
       - *Batch 2 — images / links / external* (32 filter keys): `images_*`,
         `links_*`, full `external_*` split by content-type.
+      - *Batch 3 — canonicals / pagination / directives* (34 filter keys):
+        `canonicals_*` (self-ref, canonicalised, missing, multiple,
+        conflicting, relative, fragment, invalid, outside-head),
+        `pagination_*` (contains, first-page, paginated-2-plus,
+        not-in-anchor, multiple), `directives_*` (every robots token —
+        index/noindex/follow/nofollow/none/noarchive/nosnippet/
+        max-snippet/max-image-preview/max-video-preview/noodp/noydir/
+        noimageindex/notranslate/unavailable-after/refresh/outside-head).
+
+    A handful of cross-URL filters (e.g. `canonicals_unlinked`,
+    `pagination_pagination_loop`, `canonicals_non_indexable_canonical`)
+    are intentionally deferred to the post-crawl analysis pass — they
+    need the complete URL graph to evaluate safely.
 
     Filter keys that aren't yet implemented will return 0 counts in
     `/overview` and an empty `data` array when used as a grid filter —
@@ -27,7 +40,7 @@ info:
 
     **This spec is hand-written** — a Swagger UI app in `../swagger-ui/` loads it
     and issues requests against the Rust server at `http://localhost:3000`.
-  version: "0.2.0"
+  version: "0.3.0"
   contact:
     name: sf-clone-rust
     url: https://github.com/sahiljani/Rusting-Frog
@@ -476,6 +489,43 @@ paths:
                 type: object
                 additionalProperties: { type: integer }
               examples:
+                fixture_batch3:
+                  summary: local fixture site with Batch 3 pages (146 URLs)
+                  value:
+                    canonicals_all: 146
+                    canonicals_missing: 141
+                    canonicals_contains_canonical: 5
+                    canonicals_canonicalised: 3
+                    canonicals_self_referencing: 1
+                    canonicals_multiple: 1
+                    canonicals_multiple_conflicting: 1
+                    canonicals_canonical_is_relative: 1
+                    canonicals_invalid_attributes: 1
+                    canonicals_contains_fragment_url: 1
+                    canonicals_outside_head: 1
+                    pagination_all: 146
+                    pagination_contains_pagination: 3
+                    pagination_first_page: 2
+                    pagination_paginated_2_plus: 1
+                    pagination_pagination_not_in_anchor: 1
+                    pagination_multiple_pagination_urls: 1
+                    directives_all: 146
+                    directives_index: 1
+                    directives_noindex: 2
+                    directives_follow: 1
+                    directives_nofollow: 1
+                    directives_none: 1
+                    directives_noarchive: 1
+                    directives_nosnippet: 1
+                    directives_max_snippet: 1
+                    directives_max_image_preview: 1
+                    directives_max_video_preview: 1
+                    directives_noodp: 1
+                    directives_noimageindex: 1
+                    directives_notranslate: 1
+                    directives_unavailable_after: 1
+                    directives_refresh: 1
+                    directives_outside_head: 1
                 boltrack:
                   summary: boltrack.in (210 URLs, implemented filters only)
                   value:

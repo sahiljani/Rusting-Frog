@@ -1,3 +1,5 @@
+pub mod canonicals;
+pub mod directives;
 pub mod external;
 pub mod headings;
 pub mod images;
@@ -6,6 +8,7 @@ pub mod links;
 pub mod meta_description;
 pub mod meta_keywords;
 pub mod page_titles;
+pub mod pagination;
 pub mod response_codes;
 
 use sf_core::config::CrawlConfig;
@@ -45,5 +48,8 @@ pub fn phase1_evaluators() -> Vec<Box<dyn Evaluator>> {
         Box::new(headings::H2Evaluator),
         Box::new(images::ImagesEvaluator),
         Box::new(links::LinksEvaluator),
+        Box::new(canonicals::CanonicalsEvaluator),
+        Box::new(pagination::PaginationEvaluator),
+        Box::new(directives::DirectivesEvaluator),
     ]
 }
