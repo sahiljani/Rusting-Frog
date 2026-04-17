@@ -63,6 +63,10 @@ services:
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in /opt/sf-clone/.env}
       LISTEN_ADDR: 0.0.0.0:3000
       RUST_LOG: ${RUST_LOG:-info}
+      # Exposes /v1/dev/token which mints a signed JWT without a login.
+      # Leave blank/unset on real prod — set to 1 on the shared staging
+      # host so the React UI can auto-auth while Laravel proxy isn't wired.
+      SF_DEV_MODE: ${SF_DEV_MODE:-}
     # No host-level ports mapping: traffic enters via the nginx `ui`
     # service which proxies /v1/* to api:3000 on the internal network.
     # Re-expose this only if Laravel needs direct access from outside.
