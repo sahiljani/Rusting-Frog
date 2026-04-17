@@ -23,6 +23,10 @@ pub struct CrawlConfig {
     pub images: ImagesConfig,
     #[serde(default)]
     pub links: LinksConfig,
+    #[serde(default)]
+    pub url: UrlConfig,
+    #[serde(default)]
+    pub content: ContentConfig,
 }
 
 impl Default for CrawlConfig {
@@ -37,6 +41,8 @@ impl Default for CrawlConfig {
             headings: HeadingsConfig::default(),
             images: ImagesConfig::default(),
             links: LinksConfig::default(),
+            url: UrlConfig::default(),
+            content: ContentConfig::default(),
         }
     }
 }
@@ -181,6 +187,34 @@ impl Default for LinksConfig {
             max_crawl_depth: 4,
             high_internal_outlinks: 100,
             high_external_outlinks: 10,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UrlConfig {
+    pub max_length: u32,
+}
+
+impl Default for UrlConfig {
+    fn default() -> Self {
+        Self { max_length: 115 }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ContentConfig {
+    pub min_word_count: u32,
+    pub readability_difficult: f64,
+    pub readability_very_difficult: f64,
+}
+
+impl Default for ContentConfig {
+    fn default() -> Self {
+        Self {
+            min_word_count: 200,
+            readability_difficult: 12.0,
+            readability_very_difficult: 16.0,
         }
     }
 }

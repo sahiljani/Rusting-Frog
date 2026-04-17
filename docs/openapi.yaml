@@ -11,7 +11,7 @@ info:
     **Tenancy.** `tenant_id` is taken from the JWT `tenant_id` claim; callers never
     pass it. All reads and writes are scoped to the caller's tenant.
 
-    **Implementation progress.** Batches 1–3 of the evaluator roll-out are wired:
+    **Implementation progress.** Batches 1–4 of the evaluator roll-out are wired:
       - *Batch 1 — response/title/meta/H1/H2* (19 filter keys): `response_code_*`,
         `internal_*`, `external_*`, `title_*`, `meta_descripton_*`,
         `meta_keywords_*`, `h1_*`, `h2_*`.
@@ -25,11 +25,22 @@ info:
         index/noindex/follow/nofollow/none/noarchive/nosnippet/
         max-snippet/max-image-preview/max-video-preview/noodp/noydir/
         noimageindex/notranslate/unavailable-after/refresh/outside-head).
+      - *Batch 4 — hreflang / URL / content* (23 filter keys):
+        `hreflang_*` (contains, missing, missing-xdefault,
+        missing-self-reference, multiple-entries, incorrect-language-codes,
+        outside-head, not-using-canonical), `url_*` (underscores, uppercase,
+        parameters, over-x-characters, multiple-slashes, repetitive-path,
+        contains-space, non-ascii-characters, internal-search-url,
+        ga-tracking-parameters), `content_*` (low-content-pages,
+        lorem-ipsum-placeholder, readability-difficult + very-difficult
+        via Flesch–Kincaid).
 
     A handful of cross-URL filters (e.g. `canonicals_unlinked`,
-    `pagination_pagination_loop`, `canonicals_non_indexable_canonical`)
-    are intentionally deferred to the post-crawl analysis pass — they
-    need the complete URL graph to evaluate safely.
+    `pagination_pagination_loop`, `canonicals_non_indexable_canonical`,
+    `hreflang_missing_return_links`, `hreflang_non_200_hreflang_urls`,
+    `content_duplicates`, `content_near_duplicates`) are intentionally
+    deferred to the post-crawl analysis pass — they need the complete
+    URL graph or a MinHash index built over all pages.
 
     Filter keys that aren't yet implemented will return 0 counts in
     `/overview` and an empty `data` array when used as a grid filter —
@@ -40,7 +51,7 @@ info:
 
     **This spec is hand-written** — a Swagger UI app in `../swagger-ui/` loads it
     and issues requests against the Rust server at `http://localhost:3000`.
-  version: "0.3.0"
+  version: "0.4.0"
   contact:
     name: sf-clone-rust
     url: https://github.com/sahiljani/Rusting-Frog
@@ -342,9 +353,25 @@ paths:
         `filter=images_missing_alt_text` returns every URL that had at
         least one `<img>` missing usable alt text.
 
-        **Implemented filter keys (Batches 1 + 2):** see the
+        **Implemented filter keys (Batches 1–4):** see the
         `/v1/catalog/tabs` catalog. Any filter key is accepted, but
         un-implemented keys will return an empty `data` array.
+
+        **Batch 4 usage examples** (validated against the local fixture
+        site `http://localhost:8181/` with 172 crawled URLs):
+          - `filter=hreflang_missing_xdefault` — returns pages that have
+            hreflang tags but no `x-default` entry.
+          - `filter=hreflang_not_using_canonical` — hreflang set AND the
+            canonical `<link>` points to a different URL than the page
+            itself (Google recommends only placing hreflang on the
+            canonical version).
+          - `filter=url_ga_tracking_parameters` — URLs whose query string
+            carries `utm_*`, `gclid`, `fbclid`, or `mc_cid`.
+          - `filter=url_internal_search_url` — URLs that look like
+            internal-site-search results (path contains `/search`/`/find`
+            or query has `q=`/`s=`/`search=`/`query=`/`keyword=`).
+          - `filter=content_readability_very_difficult` — body prose with
+            a Flesch–Kincaid grade level ≥ 16.0.
       responses:
         "200":
           description: OK
@@ -383,6 +410,49 @@ paths:
                         depth: 0
                         title: Suspended Platform Rental Ahmedabad - Boltrack Engineers
                         h1_count: 1
+                    next_cursor: null
+                hreflang_not_using_canonical:
+                  summary: filter=hreflang_not_using_canonical (fixture — 1 row)
+                  value:
+                    data:
+                      - id: 019d99ec-d055-7cc1-945e-6b112ae50633
+                        url: http://localhost:8181/hreflang-not-canonical.html
+                        status_code: 200
+                        content_type: html
+                        is_internal: true
+                        depth: 1
+                        title: Hreflang page not using canonical
+                        title_length: 33
+                        h1_first: Hreflang on non-canonical page
+                        h1_count: 1
+                        word_count: 4
+                        response_time_ms: 314
+                        content_length: 413
+                        crawled_at: 2026-04-17T05:32:07.125987Z
+                    next_cursor: null
+                url_ga_tracking_parameters:
+                  summary: filter=url_ga_tracking_parameters (fixture — 2 rows)
+                  value:
+                    data:
+                      - url: http://localhost:8181/page2.html?utm_source=newsletter&utm_medium=email
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                      - url: http://localhost:8181/page3.html?gclid=abc123
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                    next_cursor: null
+                content_readability_very_difficult:
+                  summary: filter=content_readability_very_difficult (fixture — 1 row)
+                  value:
+                    data:
+                      - url: http://localhost:8181/hard-readability.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: Hard to read
+                        h1_first: Dense Prose
                     next_cursor: null
 
   /v1/crawls/{crawl_id}/urls/{url_id}:
