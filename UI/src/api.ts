@@ -32,6 +32,82 @@ export function clearToken() {
   }
 }
 
+// ---- Crawl history (local-only, ids + metadata, never full payloads) ----
+
+const HISTORY_KEY = 'sf-clone.history.v1';
+const LAST_CRAWL_KEY = 'sf-clone.last_crawl.v1';
+const HISTORY_MAX = 25;
+
+export interface CrawlHistoryEntry {
+  crawl_id: string;
+  project_id: string;
+  seed_url: string;
+  name: string;
+  created_at: string; // ISO
+}
+
+export function getHistory(): CrawlHistoryEntry[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr.filter(
+      (e): e is CrawlHistoryEntry =>
+        typeof e === 'object' && e && typeof e.crawl_id === 'string',
+    );
+  } catch {
+    return [];
+  }
+}
+
+export function recordHistory(entry: CrawlHistoryEntry) {
+  try {
+    const existing = getHistory().filter((e) => e.crawl_id !== entry.crawl_id);
+    const next = [entry, ...existing].slice(0, HISTORY_MAX);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+    localStorage.setItem(LAST_CRAWL_KEY, entry.crawl_id);
+  } catch {
+    /* ignore — quota / private-mode */
+  }
+}
+
+export function getLastCrawlId(): string | null {
+  try {
+    return localStorage.getItem(LAST_CRAWL_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setLastCrawlId(id: string | null) {
+  try {
+    if (id) localStorage.setItem(LAST_CRAWL_KEY, id);
+    else localStorage.removeItem(LAST_CRAWL_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function removeHistoryEntry(crawlId: string) {
+  try {
+    const filtered = getHistory().filter((e) => e.crawl_id !== crawlId);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(filtered));
+    if (getLastCrawlId() === crawlId) setLastCrawlId(null);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function clearHistory() {
+  try {
+    localStorage.removeItem(HISTORY_KEY);
+    localStorage.removeItem(LAST_CRAWL_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function hasStoredToken(): boolean {
   const stored = readStoredToken();
   if (!stored) return false;

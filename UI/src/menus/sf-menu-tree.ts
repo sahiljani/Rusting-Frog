@@ -31,11 +31,12 @@ export const SF_MENUS: TopMenu[] = [
     docKey: 'menu.file',
     items: [
       { label: 'New Crawl', shortcut: 'Ctrl+N', action: { kind: 'command', id: 'file.new' } },
-      { label: 'Open Recent', disabled: true, action: { kind: 'placeholder' } },
+      { label: 'History…', shortcut: 'Ctrl+H', action: { kind: 'command', id: 'file.history' } },
       { separator: true, label: '' },
       { label: 'Save As…', disabled: true, action: { kind: 'placeholder' } },
       { separator: true, label: '' },
       { label: 'Clear Saved Token', action: { kind: 'command', id: 'file.clear_token' } },
+      { label: 'Clear History', action: { kind: 'command', id: 'file.clear_history' } },
       { separator: true, label: '' },
       { label: 'Exit', disabled: true, action: { kind: 'placeholder' } },
     ],

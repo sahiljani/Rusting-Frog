@@ -13,15 +13,20 @@ import { Sidebar, type FilterSel } from '@/components/Sidebar';
 import { DataGrid } from '@/components/DataGrid';
 import { DetailPane } from '@/components/DetailPane';
 import { StatusFooter } from '@/components/StatusFooter';
+import { HistoryDialog } from '@/components/HistoryDialog';
 import {
+  clearHistory,
   clearToken,
   createProject,
   fetchTabs,
   getCrawl,
+  getLastCrawlId,
   getOverview,
   listUrls,
   pauseCrawl,
+  recordHistory,
   resumeCrawl,
+  setLastCrawlId,
   startCrawl,
   stopCrawl,
   type CrawlStatus,
@@ -43,6 +48,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const pollRef = useRef<number | null>(null);
 
@@ -88,6 +94,38 @@ export default function App() {
 
   useEffect(() => () => stopPolling(), [stopPolling]);
 
+  const loadCrawl = useCallback(
+    async (crawlId: string) => {
+      setError(null);
+      setRows([]);
+      setSel(null);
+      setSelectedUrlId(null);
+      setOverview({});
+      try {
+        const [c, ov] = await Promise.all([getCrawl(crawlId), getOverview(crawlId)]);
+        setCrawl(c);
+        setOverview(ov);
+        setLastCrawlId(c.id);
+        if (c.status === 'running' || c.status === 'queued') {
+          startPolling(c.id);
+        }
+      } catch (e) {
+        setError(`Could not load crawl ${crawlId.slice(0, 8)}: ${(e as Error).message}`);
+        setLastCrawlId(null);
+      }
+    },
+    [startPolling],
+  );
+
+  // Restore last crawl from localStorage once on mount.
+  useEffect(() => {
+    const id = getLastCrawlId();
+    if (!id) return;
+    void loadCrawl(id);
+    // loadCrawl is stable via its deps; we intentionally run only on first mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const onStart = useCallback(async () => {
     setError(null);
     setBusy(true);
@@ -110,6 +148,13 @@ export default function App() {
       const cr = await startCrawl(p.id);
       const initial = await getCrawl(cr.id);
       setCrawl(initial);
+      recordHistory({
+        crawl_id: cr.id,
+        project_id: p.id,
+        seed_url: u,
+        name,
+        created_at: new Date().toISOString(),
+      });
       startPolling(cr.id);
     } catch (e) {
       setError((e as Error).message);
@@ -189,10 +234,18 @@ export default function App() {
           setSel(null);
           setSelectedUrlId(null);
           setOverview({});
+          setLastCrawlId(null);
+          break;
+        case 'file.history':
+          setHistoryOpen(true);
           break;
         case 'file.clear_token':
           clearToken();
           setError('Saved token cleared. A fresh one will mint on next request.');
+          break;
+        case 'file.clear_history':
+          clearHistory();
+          setError('Crawl history cleared.');
           break;
         case 'mode.spider':
           break; // already in Spider mode
@@ -283,6 +336,12 @@ export default function App() {
         </div>
 
         <StatusFooter crawl={crawl} />
+
+        <HistoryDialog
+          open={historyOpen}
+          onOpenChange={setHistoryOpen}
+          onLoad={(id) => void loadCrawl(id)}
+        />
 
         <Dialog open={configOpen} onOpenChange={setConfigOpen}>
           <DialogContent>
