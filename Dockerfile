@@ -9,8 +9,15 @@
 # ---- builder ----
 FROM rust:1.88-slim-bookworm AS builder
 
+# libssl-dev: `openssl-sys` (transitive via reqwest default features) needs
+# the OpenSSL headers at compile time. pkg-config: lets the build script
+# discover them. ca-certificates + clang: sometimes pulled in by other
+# -sys crates (cheap to include).
 RUN apt-get update \
- && apt-get install -y --no-install-recommends pkg-config ca-certificates \
+ && apt-get install -y --no-install-recommends \
+        pkg-config \
+        libssl-dev \
+        ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -37,7 +44,10 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 FROM debian:bookworm-slim AS runtime
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates tini \
+ && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        libssl3 \
+        tini \
  && rm -rf /var/lib/apt/lists/* \
  && groupadd --system sf \
  && useradd --system --gid sf --home-dir /app --shell /usr/sbin/nologin sf
