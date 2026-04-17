@@ -28,6 +28,17 @@ fi
 
 cd /opt/sf-clone
 
+# Sync docker-compose.prod.yml from the commit we're deploying. Avoids
+# having to SCP onto the host whenever we add a service or change a
+# port. Repo is public so no auth needed; if we ever make it private,
+# swap this for an `aws s3 cp` from a private bucket.
+if [[ "$IMAGE_TAG" != "latest" ]]; then
+    echo "==> syncing docker-compose.prod.yml for ${IMAGE_TAG}"
+    curl -fsSL -o docker-compose.prod.yml.new \
+        "https://raw.githubusercontent.com/sahiljani/Rusting-Frog/${IMAGE_TAG}/docker-compose.prod.yml"
+    mv docker-compose.prod.yml.new docker-compose.prod.yml
+fi
+
 echo "==> logging into ECR (${IMAGE_REGISTRY})"
 aws ecr get-login-password --region "$AWS_REGION" \
   | docker login --username AWS --password-stdin "$IMAGE_REGISTRY"

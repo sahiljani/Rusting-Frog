@@ -21,6 +21,10 @@ permissions:
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
   ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+  # Second ECR repo for the React SPA bundle. Default matches the
+  # docker-compose.prod.yml default so a repo-variable isn't strictly
+  # required, just override if you renamed the repo in ECR.
+  ECR_REPOSITORY_UI: ${{ vars.ECR_REPOSITORY_UI || 'sf-clone-ui' }}
 
 jobs:
   build-push:
@@ -54,7 +58,7 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
-      - name: Build + push
+      - name: Build + push api image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -62,8 +66,24 @@ jobs:
           tags: |
             ${{ steps.image.outputs.uri }}
             ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+          provenance: false
+
+      # The UI image is a separate ECR repo (sf-clone-ui) so rolling back
+      # the frontend or backend independently is a matter of re-deploying
+      # with a different IMAGE_TAG. scope=ui on the cache keeps the node
+      # layers from evicting the Rust ones.
+      - name: Build + push ui image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./UI
+          push: true
+          tags: |
+            ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_UI }}:${{ steps.image.outputs.tag }}
+            ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_UI }}:latest
+          cache-from: type=gha,scope=ui
+          cache-to: type=gha,mode=max,scope=ui
           provenance: false
 
   deploy:
