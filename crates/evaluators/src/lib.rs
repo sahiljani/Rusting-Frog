@@ -1,3 +1,4 @@
+pub mod accessibility;
 pub mod amp;
 pub mod canonicals;
 pub mod content;
@@ -75,5 +76,6 @@ pub fn phase1_evaluators() -> Vec<Box<dyn Evaluator>> {
         Box::new(structured_data::StructuredDataEvaluator),
         Box::new(pagespeed::PageSpeedEvaluator),
         Box::new(parity::ParityEvaluator),
+        Box::new(accessibility::AccessibilityEvaluator),
     ]
 }

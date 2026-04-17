@@ -11,7 +11,7 @@ info:
     **Tenancy.** `tenant_id` is taken from the JWT `tenant_id` claim; callers never
     pass it. All reads and writes are scoped to the caller's tenant.
 
-    **Implementation progress.** Batches 1–7 of the evaluator roll-out are wired:
+    **Implementation progress.** Batches 1–8 of the evaluator roll-out are wired:
       - *Batch 1 — response/title/meta/H1/H2* (19 filter keys): `response_code_*`,
         `internal_*`, `external_*`, `title_*`, `meta_descripton_*`,
         `meta_keywords_*`, `h1_*`, `h2_*`.
@@ -46,6 +46,30 @@ info:
         deferred until response headers are persisted on `CrawlUrl`;
         mobile layout filters (target-size, font-size, content sizing)
         deferred to the render worker.
+      - *Batch 8 — accessibility* (13 static-HTML rule filters plus
+        the candidate bucket). Runs the DOM-only subset of the axe-core
+        rule set that doesn't need computed styles or layout:
+        `accessibility_all`, `accessibility_rule_html_has_lang`,
+        `accessibility_rule_html_lang_valid` (BCP-47-shaped check),
+        `accessibility_rule_document_title` (missing or empty),
+        `accessibility_rule_page_has_heading_one`,
+        `accessibility_rule_meta_refresh`,
+        `accessibility_rule_image_alt` (missing `alt` attribute —
+        empty alt is treated as intentional/decorative and not
+        flagged),
+        `accessibility_rule_frame_title` (iframe missing non-empty
+        `title`), `accessibility_rule_button_name` /
+        `accessibility_rule_link_name` (no accessible name via
+        text, `aria-label`, `aria-labelledby`, `title`, or
+        descendant `<img alt>`), `accessibility_rule_input_image_alt`,
+        `accessibility_rule_blink`, `accessibility_rule_marquee`.
+        The remaining ~90 axe rule filters and the three score
+        buckets (poor / needs-improvement / good) need
+        color-contrast calculation, layout-aware target-size /
+        landmark / region checks, or full ARIA state resolution —
+        all of which require the headless-Chromium render worker
+        to run `axe.run()` against the rendered page. Those stay
+        deferred to the render-worker integration.
       - *Batch 7 — structured-data / PageSpeed / Parity* (9 real
         filter keys + 2 candidate-bucket stubs): `structured_data_*`
         (all, contains-structured-data, missing-structured-data,
@@ -96,7 +120,7 @@ info:
 
     **This spec is hand-written** — a Swagger UI app in `../swagger-ui/` loads it
     and issues requests against the Rust server at `http://localhost:3000`.
-  version: "0.7.0"
+  version: "0.8.0"
   contact:
     name: sf-clone-rust
     url: https://github.com/sahiljani/Rusting-Frog
@@ -654,6 +678,66 @@ paths:
                         status_code: 200
                         is_internal: true
                         title: RDFa fixture
+                    next_cursor: null
+                accessibility_rule_html_lang_valid:
+                  summary: filter=accessibility_rule_html_lang_valid (fixture — 1 row)
+                  value:
+                    data:
+                      - url: http://localhost:8181/a11y-bad-lang.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: a11y bad lang
+                    next_cursor: null
+                accessibility_rule_blink:
+                  summary: filter=accessibility_rule_blink (<blink> element)
+                  value:
+                    data:
+                      - url: http://localhost:8181/a11y-iframe-button-blink.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: a11y iframe + button + blink + marquee
+                    next_cursor: null
+                accessibility_rule_frame_title:
+                  summary: filter=accessibility_rule_frame_title (iframe without title)
+                  value:
+                    data:
+                      - url: http://localhost:8181/a11y-iframe-button-blink.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: a11y iframe + button + blink + marquee
+                      - url: http://localhost:8181/amp-bad.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: AMP with multiple structural issues
+                    next_cursor: null
+                accessibility_rule_button_name:
+                  summary: filter=accessibility_rule_button_name (button with no accessible name)
+                  value:
+                    data:
+                      - url: http://localhost:8181/a11y-iframe-button-blink.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: a11y iframe + button + blink + marquee
+                    next_cursor: null
+                accessibility_rule_link_name:
+                  summary: filter=accessibility_rule_link_name (empty-text <a href>)
+                  value:
+                    data:
+                      - url: http://localhost:8181/
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: T
+                      - url: http://localhost:8181/a11y-iframe-button-blink.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: a11y iframe + button + blink + marquee
                     next_cursor: null
 
   /v1/crawls/{crawl_id}/urls/{url_id}:
