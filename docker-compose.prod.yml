@@ -1,0 +1,97 @@
+# Production compose file. Unlike docker-compose.yml this never builds —
+# api/worker/migrations all pull the same prebuilt image from ECR. The
+# tag is controlled by the deploy workflow via ${IMAGE_TAG}, so a
+# rollback is: IMAGE_TAG=<old-sha> docker compose -f docker-compose.prod.yml up -d
+#
+# Bring up manually on a fresh host:
+#   cd /opt/sf-clone
+#   $(aws ecr get-login-password --region $AWS_REGION | \
+#       docker login --username AWS --password-stdin $IMAGE_REGISTRY)
+#   IMAGE_TAG=latest docker compose -f docker-compose.prod.yml up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sf}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in /opt/sf-clone/.env}
+      POSTGRES_DB: ${POSTGRES_DB:-sf_clone}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sf} -d ${POSTGRES_DB:-sf_clone}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: {max-size: "20m", max-file: "3"}
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: {max-size: "20m", max-file: "3"}
+
+  migrations:
+    image: ${IMAGE_REGISTRY}/${IMAGE_REPO}:${IMAGE_TAG:-latest}
+    command: ["sf-migrations"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-sf}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-sf_clone}
+      RUST_LOG: ${RUST_LOG:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    image: ${IMAGE_REGISTRY}/${IMAGE_REPO}:${IMAGE_TAG:-latest}
+    command: ["sf-api"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-sf}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-sf_clone}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in /opt/sf-clone/.env}
+      LISTEN_ADDR: 0.0.0.0:3000
+      RUST_LOG: ${RUST_LOG:-info}
+    ports:
+      - "${API_PORT:-3000}:3000"
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: {max-size: "20m", max-file: "3"}
+
+  worker:
+    image: ${IMAGE_REGISTRY}/${IMAGE_REPO}:${IMAGE_TAG:-latest}
+    command: ["sf-crawl-worker"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-sf}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-sf_clone}
+      REDIS_URL: redis://redis:6379
+      RUST_LOG: ${RUST_LOG:-info}
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: {max-size: "20m", max-file: "3"}
+
+volumes:
+  pgdata:
+  redisdata:

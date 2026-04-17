@@ -1,0 +1,60 @@
+name: ci
+
+# PRs get the full gate. Main branch pushes also run CI *before* deploy.yml
+# kicks in, so a red CI blocks production via the required-status-check
+# branch protection rule (set that up in repo settings).
+on:
+  pull_request:
+  push:
+    branches: ["**"]
+
+# Cancel in-flight CI for the same ref when a new commit arrives.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  # Committed .sqlx/ means we never need a live DB at compile time.
+  SQLX_OFFLINE: "true"
+
+jobs:
+  rust:
+    name: fmt + clippy + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: cargo fmt
+        run: cargo fmt --all -- --check
+
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+      - name: cargo test
+        run: cargo test --workspace --all-features --no-fail-fast
+
+  docker:
+    name: docker build (verify only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      # Build the runtime image but DON'T push — CI just proves the
+      # Dockerfile is green so deploy.yml can't get ambushed by a
+      # broken build on main.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
