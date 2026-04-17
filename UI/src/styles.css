@@ -88,4 +88,23 @@
   .status-redir { @apply text-orange-600 font-semibold; }
   .status-err { @apply text-red-600 font-semibold; }
   .status-unk { @apply text-muted-foreground; }
+
+  /* Slim always-visible horizontal scrollbar for the detail tab strip. */
+  .sf-tabs-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .sf-tabs-scroll::-webkit-scrollbar {
+    height: 6px;
+  }
+  .sf-tabs-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .sf-tabs-scroll::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+  .sf-tabs-scroll::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
 }

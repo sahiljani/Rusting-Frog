@@ -43,6 +43,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const pollRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -241,6 +242,8 @@ export default function App() {
               setSelectedUrlId(null);
             }}
             tabTotals={tabTotals}
+            collapsed={sidebarCollapsed}
+            onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
           />
 
           {!crawl ? (

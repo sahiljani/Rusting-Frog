@@ -1,6 +1,7 @@
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { TabDef, OverviewCounts } from '@/api';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +15,8 @@ interface Props {
   sel: FilterSel;
   onSelect: (sel: FilterSel) => void;
   tabTotals: Record<string, number>;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
 }
 
 function severityVariant(sev: string): 'issue' | 'warning' | 'opportunity' | 'stat' {
@@ -21,6 +24,11 @@ function severityVariant(sev: string): 'issue' | 'warning' | 'opportunity' | 'st
   if (sev === 'warning') return 'warning';
   if (sev === 'opportunity') return 'opportunity';
   return 'stat';
+}
+
+function tabInitial(display: string): string {
+  const first = display.trim().charAt(0);
+  return first ? first.toUpperCase() : '?';
 }
 
 export function Sidebar({
@@ -31,11 +39,76 @@ export function Sidebar({
   sel,
   onSelect,
   tabTotals,
+  collapsed,
+  onToggleCollapsed,
 }: Props) {
+  if (collapsed) {
+    return (
+      <aside className="flex h-full w-10 shrink-0 flex-col border-r border-border bg-background">
+        <button
+          type="button"
+          onClick={onToggleCollapsed}
+          title="Expand sidebar"
+          className="flex h-8 items-center justify-center border-b border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+        <ScrollArea className="flex-1">
+          <div className="flex flex-col items-center gap-0.5 py-2">
+            {tabs.map((t) => {
+              const total = tabTotals[t.key] ?? 0;
+              const isActiveTab = t.key === sel?.tabKey;
+              return (
+                <Tooltip key={t.key}>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onToggleCollapsed();
+                        setExpanded((x) => ({ ...x, [t.key]: true }));
+                      }}
+                      className={cn(
+                        'relative flex h-7 w-7 items-center justify-center rounded text-[10px] font-semibold',
+                        isActiveTab
+                          ? 'bg-primary/10 text-primary'
+                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                      )}
+                    >
+                      {tabInitial(t.display_name)}
+                      {total > 0 && (
+                        <span className="absolute -right-0.5 -top-0.5 inline-flex h-3 min-w-3 items-center justify-center rounded-full bg-severity-stat px-[3px] text-[8px] font-medium leading-none text-white">
+                          {total > 99 ? '99+' : total}
+                        </span>
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    {t.display_name}
+                    {total > 0 && <span className="ml-1 text-muted-foreground">({total})</span>}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+        </ScrollArea>
+      </aside>
+    );
+  }
+
   return (
     <aside className="flex h-full w-[280px] shrink-0 flex-col border-r border-border bg-background">
-      <div className="border-b border-border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-        Overview
+      <div className="flex items-center justify-between border-b border-border px-3 py-1.5">
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+          Overview
+        </span>
+        <button
+          type="button"
+          onClick={onToggleCollapsed}
+          title="Collapse sidebar"
+          className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+        >
+          <ChevronLeft className="h-3.5 w-3.5" />
+        </button>
       </div>
       <ScrollArea className="flex-1">
         {tabs.length === 0 && (

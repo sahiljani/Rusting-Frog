@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { InfoTip } from './InfoTip';
 import type {
   CookiesPayload,
@@ -183,7 +182,7 @@ export function DetailPane({ crawlId, urlId }: Props) {
         onValueChange={(v) => setTab(v as TabKey)}
         className="flex min-h-0 flex-1 flex-col"
       >
-        <ScrollArea className="shrink-0 border-b border-border">
+        <div className="sf-tabs-scroll shrink-0 overflow-x-auto overflow-y-hidden border-b border-border">
           <TabsList className="inline-flex w-max border-0">
             <TabsTrigger value="overview">
               Overview <InfoTip field="detail.overview" className="ml-1" />
@@ -216,7 +215,7 @@ export function DetailPane({ crawlId, urlId }: Props) {
               Structured <InfoTip field="detail.structured_data" className="ml-1" />
             </TabsTrigger>
           </TabsList>
-        </ScrollArea>
+        </div>
 
         <div className="min-h-0 flex-1 overflow-auto">
           {err && (
