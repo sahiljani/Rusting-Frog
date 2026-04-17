@@ -11,6 +11,11 @@ pub struct ParseResult {
     pub title_pixel_width: Option<i32>,
     pub meta_description: Option<String>,
     pub meta_description_length: Option<i32>,
+    // Rendered width of the meta description in Arial 13px — the font
+    // Google uses for the SERP snippet body. Paired with the title's
+    // pixel width; feeds SF's "Over 990 Pixels" filter and the /serp
+    // endpoint's truncation calculation.
+    pub meta_description_pixel_width: Option<i32>,
     pub h1_first: Option<String>,
     pub h1_count: i32,
     pub h2_first: Option<String>,
@@ -50,7 +55,10 @@ pub fn parse_html(html_str: &str, base_url: &Url) -> ParseResult {
     let title_pixel_width = title.as_ref().map(|t| arial_18px_width(t));
 
     let meta_description = extract_meta_content(&document, "description");
-    let meta_description_length = meta_description.as_ref().map(|d| d.len() as i32);
+    let meta_description_length = meta_description.as_ref().map(|d| d.chars().count() as i32);
+    let meta_description_pixel_width = meta_description
+        .as_ref()
+        .map(|d| arial_13px_regular_width(d));
 
     let h1s = extract_all_text(&document, "h1");
     let h1_first = h1s.first().cloned();
@@ -74,6 +82,7 @@ pub fn parse_html(html_str: &str, base_url: &Url) -> ParseResult {
         title_pixel_width,
         meta_description,
         meta_description_length,
+        meta_description_pixel_width,
         h1_first,
         h1_count,
         h2_first,
@@ -218,6 +227,19 @@ fn arial_18px_width(s: &str) -> i32 {
     let mut total: f32 = 0.0;
     for c in s.chars() {
         total += arial_bold_18_advance(c);
+    }
+    total.round() as i32
+}
+
+// Approximate rendered width (in CSS px) of a string in Arial Regular 13px,
+// the font Google uses for the SERP description body. Computed by scaling
+// the Bold-18 advance table down — regular is ~87% the width of bold, and
+// 13/18 = 0.722, so the combined scale is ~0.63. Close enough for SF's
+// "Over 990 Pixels" filter, which is itself a soft threshold.
+fn arial_13px_regular_width(s: &str) -> i32 {
+    let mut total: f32 = 0.0;
+    for c in s.chars() {
+        total += arial_bold_18_advance(c) * 0.63;
     }
     total.round() as i32
 }

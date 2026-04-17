@@ -100,6 +100,7 @@ pub struct CrawlUrl {
     pub title_pixel_width: Option<i32>,
     pub meta_description: Option<String>,
     pub meta_description_length: Option<i32>,
+    pub meta_description_pixel_width: Option<i32>,
     pub h1_first: Option<String>,
     pub h1_count: i32,
     pub h2_first: Option<String>,

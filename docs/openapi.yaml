@@ -133,7 +133,7 @@ info:
 
     **This spec is hand-written** — a Swagger UI app in `../swagger-ui/` loads it
     and issues requests against the Rust server at `http://localhost:3000`.
-  version: "0.16.0"
+  version: "0.17.0"
   contact:
     name: sf-clone-rust
     url: https://github.com/sahiljani/Rusting-Frog
@@ -1221,7 +1221,7 @@ paths:
                     properties:
                       value:                 { type: string, nullable: true }
                       length_chars:          { type: integer }
-                      length_pixels_approx:  { type: integer }
+                      length_pixels:         { type: integer }
                       max_chars:             { type: integer }
                       max_pixels:            { type: integer }
                       remaining_chars:       { type: integer }
@@ -1244,7 +1244,7 @@ paths:
                     description:
                       value: "Use WhatsApp to share."
                       length_chars: 15
-                      length_pixels_approx: 105
+                      length_pixels: 105
                       max_chars: 150
                       max_pixels: 1020
                       remaining_chars: 135
@@ -1894,6 +1894,14 @@ components:
                 is calibrated against this value.
             meta_description: { type: string, nullable: true }
             meta_description_length: { type: integer, nullable: true }
+            meta_description_pixel_width:
+              type: integer
+              nullable: true
+              description: >
+                Rendered width of the meta description in Arial 13px, the
+                font Google uses for the SERP snippet body. SF's
+                "Meta Description → Over 990 Pixels" filter fires when
+                this exceeds ~990 px.
             h2_first: { type: string, nullable: true }
             h2_count: { type: integer }
             redirect_url: { type: string, nullable: true }

@@ -190,6 +190,7 @@ impl CrawlPipeline {
                     title_pixel_width: pr.title_pixel_width,
                     meta_description: pr.meta_description.clone(),
                     meta_description_length: pr.meta_description_length,
+                    meta_description_pixel_width: pr.meta_description_pixel_width,
                     h1_first: pr.h1_first.clone(),
                     h1_count: pr.h1_count,
                     h2_first: pr.h2_first.clone(),
@@ -278,6 +279,7 @@ impl CrawlPipeline {
                     title_pixel_width: None,
                     meta_description: None,
                     meta_description_length: None,
+                    meta_description_pixel_width: None,
                     h1_first: None,
                     h1_count: 0,
                     h2_first: None,
@@ -395,6 +397,7 @@ impl CrawlPipeline {
             title_px,
             meta_desc,
             meta_desc_len,
+            meta_desc_px,
             h1,
             h1c,
             h2,
@@ -409,6 +412,7 @@ impl CrawlPipeline {
                 pr.title_pixel_width,
                 pr.meta_description.as_deref(),
                 pr.meta_description_length,
+                pr.meta_description_pixel_width,
                 pr.h1_first.as_deref(),
                 pr.h1_count,
                 pr.h2_first.as_deref(),
@@ -418,7 +422,7 @@ impl CrawlPipeline {
                 pr.meta_robots.as_deref(),
             ),
             None => (
-                None, None, None, None, None, None, 0, None, 0, None, None, None,
+                None, None, None, None, None, None, None, 0, None, 0, None, None, None,
             ),
         };
 
@@ -460,13 +464,14 @@ impl CrawlPipeline {
             INSERT INTO crawl_urls (
                 id, crawl_id, url, url_hash, content_type, status_code,
                 is_internal, depth, title, title_length, title_pixel_width,
-                meta_description, meta_description_length, h1_first, h1_count,
+                meta_description, meta_description_length,
+                meta_description_pixel_width, h1_first, h1_count,
                 h2_first, h2_count, word_count, response_time_ms, content_length,
                 canonical_url, meta_robots, response_headers, final_url,
                 crawled_at, raw_html, content_hash, structured_data
             ) VALUES (
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-                $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28
+                $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29
             )
             ON CONFLICT (crawl_id, url_hash) DO NOTHING
             "#,
@@ -483,6 +488,7 @@ impl CrawlPipeline {
             title_px,
             meta_desc,
             meta_desc_len,
+            meta_desc_px,
             h1,
             h1c,
             h2,

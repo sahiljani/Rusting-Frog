@@ -150,6 +150,7 @@ async fn get_url_detail(
         SELECT id, url, status_code, content_type,
                is_internal, depth, title, title_length, title_pixel_width,
                meta_description, meta_description_length,
+               meta_description_pixel_width,
                h1_first, h1_count, h2_first, h2_count,
                word_count, response_time_ms, content_length,
                redirect_url, canonical_url, meta_robots, crawled_at
@@ -184,6 +185,7 @@ async fn get_url_detail(
         "title_pixel_width": row.title_pixel_width,
         "meta_description": row.meta_description,
         "meta_description_length": row.meta_description_length,
+        "meta_description_pixel_width": row.meta_description_pixel_width,
         "h1_first": row.h1_first,
         "h1_count": row.h1_count,
         "h2_first": row.h2_first,
@@ -380,7 +382,8 @@ async fn get_serp(
     let row = sqlx::query!(
         r#"
         SELECT url, title, title_length, title_pixel_width,
-               meta_description, meta_description_length
+               meta_description, meta_description_length,
+               meta_description_pixel_width
         FROM crawl_urls
         WHERE id = $1 AND crawl_id = $2
         "#,
@@ -400,10 +403,7 @@ async fn get_serp(
     let title_px = row.title_pixel_width.unwrap_or(0);
     let title_len = row.title_length.unwrap_or(0);
     let desc_len = row.meta_description_length.unwrap_or(0);
-    // We don't persist desc pixel width yet; approximate as chars × 7 as a
-    // lightweight proxy. This matches SF's eyeballed average for
-    // proportional fonts closely enough for UI truncation previews.
-    let desc_px = desc_len * 7;
+    let desc_px = row.meta_description_pixel_width.unwrap_or(0);
 
     let title_remaining_chars = TITLE_MAX_CHARS - title_len;
     let title_remaining_px = TITLE_MAX_PIXELS - title_px;
@@ -440,7 +440,7 @@ async fn get_serp(
         "description": {
             "value": row.meta_description,
             "length_chars": desc_len,
-            "length_pixels_approx": desc_px,
+            "length_pixels": desc_px,
             "max_chars": DESC_MAX_CHARS,
             "max_pixels": DESC_MAX_PIXELS,
             "remaining_chars": desc_remaining_chars,

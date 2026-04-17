@@ -137,6 +137,7 @@ mod tests {
             title_pixel_width: None,
             meta_description: None,
             meta_description_length: None,
+            meta_description_pixel_width: None,
             h1_first: None,
             h1_count: 0,
             h2_first: None,
