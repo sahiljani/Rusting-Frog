@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        WITH RECURSIVE chain AS (\n            SELECT u.url AS source,\n                   CASE\n                     WHEN u.status_code BETWEEN 300 AND 399 THEN u.redirect_url\n                     WHEN u.canonical_url IS NOT NULL AND u.canonical_url <> u.url THEN u.canonical_url\n                     ELSE NULL\n                   END AS next,\n                   ARRAY[u.url]::text[] AS path,\n                   1::int AS hops,\n                   CASE\n                     WHEN u.status_code BETWEEN 300 AND 399 THEN 'redirect'\n                     WHEN u.canonical_url IS NOT NULL AND u.canonical_url <> u.url THEN 'canonical'\n                     ELSE 'none'\n                   END::text AS kind\n            FROM crawl_urls u\n            WHERE u.crawl_id = $1\n              AND (\n                (u.status_code BETWEEN 300 AND 399 AND u.redirect_url IS NOT NULL)\n                OR (u.canonical_url IS NOT NULL AND u.canonical_url <> u.url)\n              )\n            UNION ALL\n            SELECT c.source,\n                   CASE\n                     WHEN n.status_code BETWEEN 300 AND 399 THEN n.redirect_url\n                     WHEN n.canonical_url IS NOT NULL AND n.canonical_url <> n.url THEN n.canonical_url\n                     ELSE NULL\n                   END,\n                   c.path || n.url,\n                   c.hops + 1,\n                   c.kind\n            FROM chain c\n            JOIN crawl_urls n\n              ON n.crawl_id = $1 AND n.url = c.next\n            WHERE c.hops < 10\n              AND c.next IS NOT NULL\n              AND NOT (n.url = ANY(c.path))\n              AND (\n                (n.status_code BETWEEN 300 AND 399 AND n.redirect_url IS NOT NULL)\n                OR (n.canonical_url IS NOT NULL AND n.canonical_url <> n.url)\n              )\n        ),\n        terminated AS (\n            SELECT DISTINCT ON (source) source, path, next AS terminal, hops\n            FROM chain\n            ORDER BY source, hops DESC\n        )\n        SELECT source, path, terminal, hops\n        FROM terminated\n        WHERE hops >= 2\n        ORDER BY hops DESC, source\n        LIMIT $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "source",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "path",
+        "type_info": "TextArray"
+      },
+      {
+        "ordinal": 2,
+        "name": "terminal",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "hops",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "15d7e5bdccf8b0ef359699dd9cebfd35eafb268e47d43b90a99301f0cdaf8cae"
+}

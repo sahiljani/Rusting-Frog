@@ -55,15 +55,15 @@ impl Evaluator for JavaScriptEvaluator {
             None => return findings,
         };
 
-        if let Some(sel) = Selector::parse("script").ok() {
-            if parsed.select(&sel).next().is_some() {
-                findings.push(Finding {
-                    filter_key: FilterKey::JavaScriptContainsJsContent,
-                });
-            }
+        if let Ok(sel) = Selector::parse("script")
+            && parsed.select(&sel).next().is_some()
+        {
+            findings.push(Finding {
+                filter_key: FilterKey::JavaScriptContainsJsContent,
+            });
         }
 
-        if let Some(sel) = Selector::parse(r#"meta[name="fragment"]"#).ok() {
+        if let Ok(sel) = Selector::parse(r#"meta[name="fragment"]"#) {
             let has_fragment_meta = parsed.select(&sel).any(|el| {
                 el.value()
                     .attr("content")

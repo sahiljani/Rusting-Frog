@@ -810,36 +810,33 @@ impl FilterKey {
 
     /// Parse a serde key back into a FilterKey. Returns `None` for unknown strings.
     pub fn from_serde_key(s: &str) -> Option<Self> {
-        if let Some(rest) = s.strip_prefix("custom_search_slot_") {
-            if let Ok(n) = rest.parse::<u8>() {
-                if (1..=100).contains(&n) {
-                    return Some(Self::CustomSearchSlot(n));
-                }
-            }
+        if let Some(rest) = s.strip_prefix("custom_search_slot_")
+            && let Ok(n) = rest.parse::<u8>()
+            && (1..=100).contains(&n)
+        {
+            return Some(Self::CustomSearchSlot(n));
         }
-        if let Some(rest) = s.strip_prefix("custom_extractor_slot_") {
-            if let Ok(n) = rest.parse::<u8>() {
-                if (1..=100).contains(&n) {
-                    return Some(Self::CustomExtractorSlot(n));
-                }
-            }
+        if let Some(rest) = s.strip_prefix("custom_extractor_slot_")
+            && let Ok(n) = rest.parse::<u8>()
+            && (1..=100).contains(&n)
+        {
+            return Some(Self::CustomExtractorSlot(n));
         }
-        if let Some(rest) = s.strip_prefix("custom_javascript_slot_") {
-            if let Ok(n) = rest.parse::<u8>() {
-                if (1..=100).contains(&n) {
-                    return Some(Self::CustomJavaScriptSlot(n));
-                }
-            }
+        if let Some(rest) = s.strip_prefix("custom_javascript_slot_")
+            && let Ok(n) = rest.parse::<u8>()
+            && (1..=100).contains(&n)
+        {
+            return Some(Self::CustomJavaScriptSlot(n));
         }
-        if let Some(rest) = s.strip_prefix("ai_") {
-            if let Some(idx) = rest.find("_slot_") {
-                let provider = &rest[..idx];
-                let n_str = &rest[idx + "_slot_".len()..];
-                if let (Some(p), Ok(n)) = (AiProvider::parse(provider), n_str.parse::<u8>()) {
-                    if (1..=100).contains(&n) {
-                        return Some(Self::AiSlot(p, n));
-                    }
-                }
+        if let Some(rest) = s.strip_prefix("ai_")
+            && let Some(idx) = rest.find("_slot_")
+        {
+            let provider = &rest[..idx];
+            let n_str = &rest[idx + "_slot_".len()..];
+            if let (Some(p), Ok(n)) = (AiProvider::parse(provider), n_str.parse::<u8>())
+                && (1..=100).contains(&n)
+            {
+                return Some(Self::AiSlot(p, n));
             }
         }
         match s {

@@ -19,7 +19,9 @@ pub struct Claims {
 #[derive(Debug)]
 pub struct AuthUser {
     pub tenant_id: TenantId,
+    #[allow(dead_code)]
     pub user_id: String,
+    #[allow(dead_code)]
     pub scopes: Vec<String>,
 }
 

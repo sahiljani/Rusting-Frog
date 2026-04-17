@@ -70,6 +70,11 @@ const REPORTS: &[ReportDef] = &[
         title: "Site Structure",
         group: "Overview",
     },
+    ReportDef {
+        key: "crawl_path",
+        title: "Crawl Path",
+        group: "Overview",
+    },
     // Redirects
     ReportDef {
         key: "redirects_all",
@@ -110,6 +115,11 @@ const REPORTS: &[ReportDef] = &[
     ReportDef {
         key: "canonicals_non_indexable",
         title: "Canonicals: Non-Indexable",
+        group: "Canonicals",
+    },
+    ReportDef {
+        key: "canonical_chains",
+        title: "Canonical Chains",
         group: "Canonicals",
     },
     // Pagination
@@ -189,10 +199,20 @@ const REPORTS: &[ReportDef] = &[
         title: "Mobile: All",
         group: "Mobile",
     },
+    ReportDef {
+        key: "mobile_summary",
+        title: "Mobile: Summary",
+        group: "Mobile",
+    },
     // Accessibility
     ReportDef {
         key: "accessibility_all",
         title: "Accessibility: All",
+        group: "Accessibility",
+    },
+    ReportDef {
+        key: "accessibility_summary",
+        title: "Accessibility: Summary",
         group: "Accessibility",
     },
     // Deferred — crawler must capture headers/cookies first
@@ -202,8 +222,18 @@ const REPORTS: &[ReportDef] = &[
         group: "HTTP Headers",
     },
     ReportDef {
+        key: "http_headers_summary",
+        title: "HTTP Headers: Summary",
+        group: "HTTP Headers",
+    },
+    ReportDef {
         key: "cookies_all",
         title: "Cookies: All",
+        group: "Cookies",
+    },
+    ReportDef {
+        key: "cookies_summary",
+        title: "Cookies: Summary",
         group: "Cookies",
     },
 ];
@@ -284,24 +314,20 @@ async fn build_report(
             Some("Segments feature not yet implemented".into()),
         )),
         "site_structure" => report_site_structure(state, crawl_id, limit).await,
+        "crawl_path" => report_crawl_path(state, crawl_id, limit).await,
 
         "redirects_all" => report_redirects_all(state, crawl_id, limit).await,
-        "redirect_chains" => Ok((
-            vec!["source", "chain", "final_status"],
-            vec![],
-            Some("Multi-hop chains require crawler to persist redirect chain; single-hop redirects available via 'redirects_all'".into()),
-        )),
-        "redirect_and_canonical_chains" => Ok((
-            vec!["source", "chain", "final_status"],
-            vec![],
-            Some("Requires redirect-chain + canonical-chain persistence (future crawler work)".into()),
-        )),
+        "redirect_chains" => report_redirect_chains(state, crawl_id, limit).await,
+        "redirect_and_canonical_chains" => {
+            report_redirect_and_canonical_chains(state, crawl_id, limit).await
+        }
         "redirects_to_error" => report_redirects_to_error(state, crawl_id, limit).await,
 
         "canonicals_all" => report_canonicals_all(state, crawl_id, limit).await,
         "canonicals_missing" => report_finding(state, crawl_id, "canonicals_missing", limit).await,
         "canonicals_self_referencing" => report_canonicals_self(state, crawl_id, limit).await,
         "canonicals_non_indexable" => report_canonicals_non_indexable(state, crawl_id, limit).await,
+        "canonical_chains" => report_canonical_chains(state, crawl_id, limit).await,
 
         "pagination_non_200" => report_pagination_non_200(state, crawl_id, limit).await,
         "pagination_unlinked" => report_finding(state, crawl_id, "pagination_unlinked_pages", limit).await,
@@ -323,10 +349,16 @@ async fn build_report(
         "pagespeed_all" => report_finding(state, crawl_id, "pagespeed_all", limit).await,
 
         "mobile_all" => report_finding(state, crawl_id, "mobile_all", limit).await,
+        "mobile_summary" => report_category_summary(state, crawl_id, "mobile", limit).await,
         "accessibility_all" => report_finding(state, crawl_id, "accessibility_all", limit).await,
+        "accessibility_summary" => {
+            report_category_summary(state, crawl_id, "accessibility", limit).await
+        }
 
         "http_headers_all" => report_http_headers(state, crawl_id, limit).await,
+        "http_headers_summary" => report_http_headers_summary(state, crawl_id, limit).await,
         "cookies_all" => report_cookies(state, crawl_id, limit).await,
+        "cookies_summary" => report_cookies_summary(state, crawl_id, limit).await,
 
         other => Err(ApiError::not_found(format!("unknown report '{}'", other))),
     }
@@ -934,6 +966,485 @@ async fn report_cookies(
             "secure",
             "http_only",
             "same_site",
+        ],
+        data,
+        None,
+    ))
+}
+
+/// BFS from the seed URL (depth=0) to each discovered internal URL. We follow
+/// crawl_links edges and surface the shortest path found by depth. Per SF's
+/// Crawl Path report this helps trace how a target URL was discovered.
+async fn report_crawl_path(
+    state: &AppState,
+    crawl_id: &Uuid,
+    limit: i64,
+) -> Result<ReportOutput, ApiError> {
+    let rows = sqlx::query!(
+        r#"
+        WITH RECURSIVE seeds AS (
+            SELECT id, url, depth
+            FROM crawl_urls
+            WHERE crawl_id = $1 AND depth = 0
+        ),
+        walk AS (
+            SELECT s.id AS url_id,
+                   s.url AS url,
+                   0::int AS steps,
+                   ARRAY[s.url]::text[] AS path
+            FROM seeds s
+            UNION ALL
+            SELECT u.id, u.url, w.steps + 1, w.path || u.url
+            FROM walk w
+            JOIN crawl_links l ON l.source_url_id = w.url_id AND l.crawl_id = $1
+            JOIN crawl_urls u ON u.id = l.target_url_id
+            WHERE w.steps < 10
+              AND NOT (u.url = ANY(w.path))
+        ),
+        shortest AS (
+            SELECT DISTINCT ON (url_id) url_id, url, steps, path
+            FROM walk
+            ORDER BY url_id, steps ASC
+        )
+        SELECT url, steps, path
+        FROM shortest
+        ORDER BY steps, url
+        LIMIT $2
+        "#,
+        crawl_id,
+        limit,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    let data: Vec<Value> = rows
+        .into_iter()
+        .map(|r| {
+            json!({
+                "url": r.url,
+                "steps": r.steps,
+                "path": r.path.unwrap_or_default().join(" → "),
+            })
+        })
+        .collect();
+    Ok((vec!["url", "steps", "path"], data, None))
+}
+
+/// Walk canonical_url references to a terminal node (self-canonical or
+/// unresolved). Detects chains of length ≥ 2 and surfaces the full chain.
+async fn report_canonical_chains(
+    state: &AppState,
+    crawl_id: &Uuid,
+    limit: i64,
+) -> Result<ReportOutput, ApiError> {
+    let rows = sqlx::query!(
+        r#"
+        WITH RECURSIVE chain AS (
+            SELECT u.url AS source,
+                   u.canonical_url AS next,
+                   ARRAY[u.url]::text[] AS path,
+                   1::int AS hops
+            FROM crawl_urls u
+            WHERE u.crawl_id = $1
+              AND u.canonical_url IS NOT NULL
+              AND u.canonical_url <> u.url
+            UNION ALL
+            SELECT c.source,
+                   n.canonical_url,
+                   c.path || n.url,
+                   c.hops + 1
+            FROM chain c
+            JOIN crawl_urls n
+              ON n.crawl_id = $1 AND n.url = c.next
+            WHERE c.hops < 10
+              AND n.canonical_url IS NOT NULL
+              AND n.canonical_url <> n.url
+              AND NOT (n.url = ANY(c.path))
+        ),
+        terminated AS (
+            SELECT DISTINCT ON (source) source, path, next AS terminal, hops
+            FROM chain
+            ORDER BY source, hops DESC
+        )
+        SELECT source, path, terminal, hops
+        FROM terminated
+        WHERE hops >= 2
+        ORDER BY hops DESC, source
+        LIMIT $2
+        "#,
+        crawl_id,
+        limit,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    let data: Vec<Value> = rows
+        .into_iter()
+        .map(|r| {
+            let mut chain = r.path.unwrap_or_default();
+            if let Some(t) = r.terminal.as_ref() {
+                chain.push(t.clone());
+            }
+            json!({
+                "source": r.source,
+                "hops": r.hops,
+                "terminal": r.terminal,
+                "chain": chain.join(" → "),
+            })
+        })
+        .collect();
+    Ok((vec!["source", "hops", "terminal", "chain"], data, None))
+}
+
+/// Multi-hop redirect chains (3xx → 3xx → … → terminal).
+async fn report_redirect_chains(
+    state: &AppState,
+    crawl_id: &Uuid,
+    limit: i64,
+) -> Result<ReportOutput, ApiError> {
+    let rows = sqlx::query!(
+        r#"
+        WITH RECURSIVE chain AS (
+            SELECT u.url AS source,
+                   u.redirect_url AS next,
+                   ARRAY[u.url]::text[] AS path,
+                   1::int AS hops,
+                   u.status_code AS start_status
+            FROM crawl_urls u
+            WHERE u.crawl_id = $1
+              AND u.status_code BETWEEN 300 AND 399
+              AND u.redirect_url IS NOT NULL
+            UNION ALL
+            SELECT c.source,
+                   n.redirect_url,
+                   c.path || n.url,
+                   c.hops + 1,
+                   c.start_status
+            FROM chain c
+            JOIN crawl_urls n
+              ON n.crawl_id = $1 AND n.url = c.next
+            WHERE c.hops < 10
+              AND n.status_code BETWEEN 300 AND 399
+              AND n.redirect_url IS NOT NULL
+              AND NOT (n.url = ANY(c.path))
+        ),
+        terminated AS (
+            SELECT DISTINCT ON (source) source, path, next AS terminal, hops, start_status
+            FROM chain
+            ORDER BY source, hops DESC
+        )
+        SELECT t.source,
+               t.path,
+               t.terminal,
+               t.hops,
+               t.start_status,
+               dst.status_code AS terminal_status
+        FROM terminated t
+        LEFT JOIN crawl_urls dst ON dst.crawl_id = $1 AND dst.url = t.terminal
+        WHERE t.hops >= 2
+        ORDER BY t.hops DESC, t.source
+        LIMIT $2
+        "#,
+        crawl_id,
+        limit,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    let data: Vec<Value> = rows
+        .into_iter()
+        .map(|r| {
+            let mut chain = r.path.unwrap_or_default();
+            if let Some(t) = r.terminal.as_ref() {
+                chain.push(t.clone());
+            }
+            json!({
+                "source": r.source,
+                "hops": r.hops,
+                "start_status": r.start_status,
+                "terminal": r.terminal,
+                "terminal_status": r.terminal_status,
+                "chain": chain.join(" → "),
+            })
+        })
+        .collect();
+    Ok((
+        vec![
+            "source",
+            "hops",
+            "start_status",
+            "terminal",
+            "terminal_status",
+            "chain",
+        ],
+        data,
+        None,
+    ))
+}
+
+/// Walk the combined redirect OR canonical chain — SF's "Redirect &
+/// Canonical Chains" report. A node is followed via redirect_url if the
+/// current URL is a 3xx, otherwise via canonical_url when present and
+/// different from self.
+async fn report_redirect_and_canonical_chains(
+    state: &AppState,
+    crawl_id: &Uuid,
+    limit: i64,
+) -> Result<ReportOutput, ApiError> {
+    let rows = sqlx::query!(
+        r#"
+        WITH RECURSIVE chain AS (
+            SELECT u.url AS source,
+                   CASE
+                     WHEN u.status_code BETWEEN 300 AND 399 THEN u.redirect_url
+                     WHEN u.canonical_url IS NOT NULL AND u.canonical_url <> u.url THEN u.canonical_url
+                     ELSE NULL
+                   END AS next,
+                   ARRAY[u.url]::text[] AS path,
+                   1::int AS hops,
+                   CASE
+                     WHEN u.status_code BETWEEN 300 AND 399 THEN 'redirect'
+                     WHEN u.canonical_url IS NOT NULL AND u.canonical_url <> u.url THEN 'canonical'
+                     ELSE 'none'
+                   END::text AS kind
+            FROM crawl_urls u
+            WHERE u.crawl_id = $1
+              AND (
+                (u.status_code BETWEEN 300 AND 399 AND u.redirect_url IS NOT NULL)
+                OR (u.canonical_url IS NOT NULL AND u.canonical_url <> u.url)
+              )
+            UNION ALL
+            SELECT c.source,
+                   CASE
+                     WHEN n.status_code BETWEEN 300 AND 399 THEN n.redirect_url
+                     WHEN n.canonical_url IS NOT NULL AND n.canonical_url <> n.url THEN n.canonical_url
+                     ELSE NULL
+                   END,
+                   c.path || n.url,
+                   c.hops + 1,
+                   c.kind
+            FROM chain c
+            JOIN crawl_urls n
+              ON n.crawl_id = $1 AND n.url = c.next
+            WHERE c.hops < 10
+              AND c.next IS NOT NULL
+              AND NOT (n.url = ANY(c.path))
+              AND (
+                (n.status_code BETWEEN 300 AND 399 AND n.redirect_url IS NOT NULL)
+                OR (n.canonical_url IS NOT NULL AND n.canonical_url <> n.url)
+              )
+        ),
+        terminated AS (
+            SELECT DISTINCT ON (source) source, path, next AS terminal, hops
+            FROM chain
+            ORDER BY source, hops DESC
+        )
+        SELECT source, path, terminal, hops
+        FROM terminated
+        WHERE hops >= 2
+        ORDER BY hops DESC, source
+        LIMIT $2
+        "#,
+        crawl_id,
+        limit,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    let data: Vec<Value> = rows
+        .into_iter()
+        .map(|r| {
+            let mut chain = r.path.unwrap_or_default();
+            if let Some(t) = r.terminal.as_ref() {
+                chain.push(t.clone());
+            }
+            json!({
+                "source": r.source,
+                "hops": r.hops,
+                "terminal": r.terminal,
+                "chain": chain.join(" → "),
+            })
+        })
+        .collect();
+    Ok((vec!["source", "hops", "terminal", "chain"], data, None))
+}
+
+/// Aggregate finding counts under a filter-key prefix (e.g. "mobile",
+/// "accessibility"). Mirrors SF's category "Summary" report which groups
+/// violations by rule.
+async fn report_category_summary(
+    state: &AppState,
+    crawl_id: &Uuid,
+    prefix: &str,
+    limit: i64,
+) -> Result<ReportOutput, ApiError> {
+    let pattern = format!("{}_%", prefix);
+    let rows = sqlx::query!(
+        r#"
+        SELECT filter_key, COUNT(*) AS "count!",
+               COUNT(DISTINCT crawl_url_id) AS "urls!"
+        FROM crawl_url_findings
+        WHERE crawl_id = $1 AND filter_key LIKE $2
+        GROUP BY filter_key
+        ORDER BY COUNT(*) DESC, filter_key
+        LIMIT $3
+        "#,
+        crawl_id,
+        pattern,
+        limit,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    let data: Vec<Value> = rows
+        .into_iter()
+        .map(|r| json!({ "filter_key": r.filter_key, "count": r.count, "urls": r.urls }))
+        .collect();
+    Ok((vec!["filter_key", "count", "urls"], data, None))
+}
+
+/// Counts each response-header name across the crawl — SF's HTTP Header
+/// Summary. Name matching is case-insensitive to fold the usual header
+/// capitalization variants together.
+async fn report_http_headers_summary(
+    state: &AppState,
+    crawl_id: &Uuid,
+    limit: i64,
+) -> Result<ReportOutput, ApiError> {
+    let rows = sqlx::query!(
+        r#"
+        SELECT response_headers
+        FROM crawl_urls
+        WHERE crawl_id = $1 AND jsonb_array_length(response_headers) > 0
+        "#,
+        crawl_id,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    use std::collections::BTreeMap;
+    let mut counts: BTreeMap<String, (u64, u64)> = BTreeMap::new();
+    for r in rows {
+        let Some(arr) = r.response_headers.as_array() else {
+            continue;
+        };
+        let mut seen_on_url: std::collections::BTreeSet<String> =
+            std::collections::BTreeSet::new();
+        for pair in arr {
+            let Some(p) = pair.as_array() else { continue };
+            let name = p
+                .first()
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_ascii_lowercase();
+            if name.is_empty() {
+                continue;
+            }
+            let entry = counts.entry(name.clone()).or_insert((0, 0));
+            entry.0 += 1;
+            if seen_on_url.insert(name) {
+                entry.1 += 1;
+            }
+        }
+    }
+
+    let mut data: Vec<Value> = counts
+        .into_iter()
+        .map(|(name, (occurrences, urls))| {
+            json!({ "header": name, "occurrences": occurrences, "urls": urls })
+        })
+        .collect();
+    data.sort_by(|a, b| {
+        let ao = a.get("occurrences").and_then(|v| v.as_u64()).unwrap_or(0);
+        let bo = b.get("occurrences").and_then(|v| v.as_u64()).unwrap_or(0);
+        bo.cmp(&ao)
+    });
+    data.truncate(limit as usize);
+    Ok((vec!["header", "occurrences", "urls"], data, None))
+}
+
+/// Distinct cookies seen (grouped by name + domain) with per-cookie issue
+/// flags (Secure / HttpOnly / SameSite=None). Matches SF's Cookie Summary.
+async fn report_cookies_summary(
+    state: &AppState,
+    crawl_id: &Uuid,
+    limit: i64,
+) -> Result<ReportOutput, ApiError> {
+    let rows = sqlx::query!(
+        r#"
+        SELECT response_headers
+        FROM crawl_urls
+        WHERE crawl_id = $1 AND jsonb_array_length(response_headers) > 0
+        "#,
+        crawl_id,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    #[derive(Default)]
+    struct Agg {
+        urls: u64,
+        secure_count: u64,
+        http_only_count: u64,
+        samesite_none_count: u64,
+    }
+    use std::collections::BTreeMap;
+    let mut summary: BTreeMap<(String, String), Agg> = BTreeMap::new();
+    for r in rows {
+        let Some(arr) = r.response_headers.as_array() else {
+            continue;
+        };
+        for pair in arr {
+            let Some(p) = pair.as_array() else { continue };
+            let name = p.first().and_then(|v| v.as_str()).unwrap_or("");
+            if !name.eq_ignore_ascii_case("set-cookie") {
+                continue;
+            }
+            let raw = p.get(1).and_then(|v| v.as_str()).unwrap_or("");
+            let parsed = parse_set_cookie_report(raw);
+            let cookie_name = parsed.0;
+            let domain = parsed.2.unwrap_or_default();
+            let entry = summary.entry((cookie_name, domain)).or_default();
+            entry.urls += 1;
+            if parsed.5 {
+                entry.secure_count += 1;
+            }
+            if parsed.6 {
+                entry.http_only_count += 1;
+            }
+            if matches!(parsed.7.as_deref(), Some(s) if s.eq_ignore_ascii_case("None")) {
+                entry.samesite_none_count += 1;
+            }
+        }
+    }
+
+    let mut data: Vec<Value> = summary
+        .into_iter()
+        .map(|((name, domain), agg)| {
+            json!({
+                "name": name,
+                "domain": domain,
+                "occurrences": agg.urls,
+                "secure": agg.secure_count,
+                "http_only": agg.http_only_count,
+                "samesite_none": agg.samesite_none_count,
+            })
+        })
+        .collect();
+    data.sort_by(|a, b| {
+        let ao = a.get("occurrences").and_then(|v| v.as_u64()).unwrap_or(0);
+        let bo = b.get("occurrences").and_then(|v| v.as_u64()).unwrap_or(0);
+        bo.cmp(&ao)
+    });
+    data.truncate(limit as usize);
+    Ok((
+        vec![
+            "name",
+            "domain",
+            "occurrences",
+            "secure",
+            "http_only",
+            "samesite_none",
         ],
         data,
         None,

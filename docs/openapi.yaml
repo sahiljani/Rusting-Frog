@@ -1521,11 +1521,28 @@ paths:
         this crawl — groups match SF's top-menu Reports submenu
         (Redirects, Canonicals, Pagination, Hreflang, Security, SERP,
         Links, Structured Data, JavaScript, PageSpeed, Mobile,
-        Accessibility, HTTP Headers, Cookies). As of 0.11.0, the
-        `http_headers_all` and `cookies_all` reports are wired to real
-        crawler-captured header data; a small number of reports (redirect
-        chains, segment rollups) remain stubs and return `rows: []` with
-        a `notes` field until their upstream data is captured.
+        Accessibility, HTTP Headers, Cookies).
+
+        As of 0.13.0 the following reports are new or upgraded from
+        stubs (all DB-derived, no crawler change required):
+
+        * `crawl_path` — recursive BFS from the seed URL (depth=0) over
+          `crawl_links` edges, returns shortest `steps` + arrow-joined
+          `path` per discovered URL.
+        * `canonical_chains` — follows `canonical_url` references of
+          length ≥ 2 up to ten hops, guards against cycles.
+        * `redirect_chains` — follows `3xx → redirect_url` hops, returns
+          `start_status` + final `terminal_status` and the chain string.
+        * `redirect_and_canonical_chains` — mixed redirect/canonical walk
+          per SF's Redirect & Canonical Chains report.
+        * `http_headers_summary` — response header occurrence counts
+          (case-folded) with per-URL cardinality.
+        * `cookies_summary` — per `(name, domain)` Set-Cookie aggregate
+          with Secure/HttpOnly/SameSite-None counters.
+        * `accessibility_summary`, `mobile_summary` — finding rollups by
+          filter_key for that category.
+
+        Still stubbed (requires crawler-side work): `segments_overview`.
       responses:
         "200":
           description: OK
@@ -1611,6 +1628,88 @@ paths:
                       - { url: "https://example.com/", name: "content-type",      value: "text/html" }
                       - { url: "https://example.com/", name: "server",            value: "cloudflare" }
                       - { url: "https://example.com/", name: "cache-control",     value: "max-age=1914" }
+                crawl_path:
+                  summary: crawl_path — BFS path from seed to each URL
+                  value:
+                    key: "crawl_path"
+                    title: "Crawl Path"
+                    group: "Overview"
+                    count: 2
+                    columns: ["url", "steps", "path"]
+                    rows:
+                      - { url: "https://example.com/",        steps: 0, path: "https://example.com/" }
+                      - { url: "https://example.com/a/b",     steps: 2, path: "https://example.com/ → https://example.com/a → https://example.com/a/b" }
+                redirect_chains:
+                  summary: redirect_chains — multi-hop 3xx chains
+                  value:
+                    key: "redirect_chains"
+                    title: "Redirect Chains"
+                    group: "Redirects"
+                    count: 1
+                    columns: ["source", "hops", "start_status", "terminal", "terminal_status", "chain"]
+                    rows:
+                      - source: "https://example.com/old"
+                        hops: 2
+                        start_status: 301
+                        terminal: "https://example.com/new"
+                        terminal_status: 200
+                        chain: "https://example.com/old → https://example.com/tmp → https://example.com/new"
+                canonical_chains:
+                  summary: canonical_chains — canonical-to-canonical hops ≥ 2
+                  value:
+                    key: "canonical_chains"
+                    title: "Canonical Chains"
+                    group: "Canonicals"
+                    count: 1
+                    columns: ["source", "hops", "terminal", "chain"]
+                    rows:
+                      - source: "https://example.com/a"
+                        hops: 2
+                        terminal: "https://example.com/c"
+                        chain: "https://example.com/a → https://example.com/b → https://example.com/c"
+                http_headers_summary:
+                  summary: http_headers_summary — occurrence + URL counts per header name
+                  value:
+                    key: "http_headers_summary"
+                    title: "HTTP Headers: Summary"
+                    group: "HTTP Headers"
+                    count: 3
+                    columns: ["header", "occurrences", "urls"]
+                    rows:
+                      - { header: "content-type",  occurrences: 124, urls: 124 }
+                      - { header: "server",        occurrences: 124, urls: 124 }
+                      - { header: "cache-control", occurrences: 88,  urls: 88  }
+                cookies_summary:
+                  summary: cookies_summary — per (name, domain) cookie rollup
+                  value:
+                    key: "cookies_summary"
+                    title: "Cookies: Summary"
+                    group: "Cookies"
+                    count: 1
+                    columns: ["name", "domain", "occurrences", "secure", "http_only", "samesite_none"]
+                    rows:
+                      - { name: "_octo", domain: ".github.com", occurrences: 12, secure: 12, http_only: 0, samesite_none: 0 }
+                accessibility_summary:
+                  summary: accessibility_summary — finding rollup per accessibility_* filter
+                  value:
+                    key: "accessibility_summary"
+                    title: "Accessibility: Summary"
+                    group: "Accessibility"
+                    count: 2
+                    columns: ["filter_key", "count", "urls"]
+                    rows:
+                      - { filter_key: "accessibility_wcag2aa_violation", count: 31, urls: 14 }
+                      - { filter_key: "accessibility_rule_tabindex",     count: 9,  urls: 9  }
+                mobile_summary:
+                  summary: mobile_summary — finding rollup per mobile_* filter
+                  value:
+                    key: "mobile_summary"
+                    title: "Mobile: Summary"
+                    group: "Mobile"
+                    count: 1
+                    columns: ["filter_key", "count", "urls"]
+                    rows:
+                      - { filter_key: "mobile_viewport_not_set", count: 7, urls: 7 }
                 cookies_all:
                   summary: cookies_all — parsed Set-Cookie attributes per row
                   value:

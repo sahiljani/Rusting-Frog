@@ -2,7 +2,6 @@ use axum::extract::{Path, Query, State};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
-use sf_core::crawl::CrawlStatus;
 use sf_core::id::CrawlId;
 use uuid::Uuid;
 
@@ -310,7 +309,8 @@ struct SitemapQuery {
 // parser to the browser. Case-insensitive on directive names; preserves
 // original path strings verbatim so globs survive the round-trip.
 fn parse_robots_groups(body: &str) -> Vec<serde_json::Value> {
-    let mut groups: Vec<(Vec<String>, Vec<String>, Vec<String>, Vec<String>)> = Vec::new();
+    type RobotsGroup = (Vec<String>, Vec<String>, Vec<String>, Vec<String>);
+    let mut groups: Vec<RobotsGroup> = Vec::new();
     let mut current_uas: Vec<String> = Vec::new();
     let mut current_disallow: Vec<String> = Vec::new();
     let mut current_allow: Vec<String> = Vec::new();

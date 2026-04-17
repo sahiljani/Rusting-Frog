@@ -104,10 +104,10 @@ impl Evaluator for SecurityEvaluator {
         if let Some(sel) = &form_sel {
             for el in parsed.select(sel) {
                 has_form = true;
-                if let Some(action) = el.value().attr("action") {
-                    if action.trim().to_ascii_lowercase().starts_with("http://") {
-                        saw_form_insecure = true;
-                    }
+                if let Some(action) = el.value().attr("action")
+                    && action.trim().to_ascii_lowercase().starts_with("http://")
+                {
+                    saw_form_insecure = true;
                 }
             }
         }

@@ -79,12 +79,12 @@ impl Evaluator for AmpEvaluator {
             filter_key: FilterKey::AmpAll,
         }];
 
-        if let Some(sc) = url.status_code {
-            if sc != 200 {
-                findings.push(Finding {
-                    filter_key: FilterKey::AmpNon200,
-                });
-            }
+        if let Some(sc) = url.status_code
+            && sc != 200
+        {
+            findings.push(Finding {
+                filter_key: FilterKey::AmpNon200,
+            });
         }
 
         let is_noindex = url
@@ -100,16 +100,15 @@ impl Evaluator for AmpEvaluator {
             },
         });
 
-        if let Some(raw) = ctx.html {
-            if !raw
+        if let Some(raw) = ctx.html
+            && !raw
                 .trim_start()
                 .to_ascii_lowercase()
                 .starts_with("<!doctype html")
-            {
-                findings.push(Finding {
-                    filter_key: FilterKey::AmpMissingDoctype,
-                });
-            }
+        {
+            findings.push(Finding {
+                filter_key: FilterKey::AmpMissingDoctype,
+            });
         }
 
         let first_or_empty = |sel: &str| {
@@ -186,24 +185,24 @@ impl Evaluator for AmpEvaluator {
         // Inline <script> without any AMP attribute is disallowed
         // (except for JSON-LD). Spot-check by finding non-async scripts
         // with no custom-element attribute and no type="application/ld+json".
-        if !has_disallowed {
-            if let Some(sel) = Selector::parse("script").ok() {
-                for el in parsed.select(&sel) {
-                    let v = el.value();
-                    let is_amp_runtime = v
-                        .attr("src")
-                        .map(|s| s.contains("cdn.ampproject.org"))
-                        .unwrap_or(false);
-                    let is_ld_json = v
-                        .attr("type")
-                        .map(|t| t.eq_ignore_ascii_case("application/ld+json"))
-                        .unwrap_or(false);
-                    let is_custom_element =
-                        v.attr("custom-element").is_some() || v.attr("custom-template").is_some();
-                    if !is_amp_runtime && !is_ld_json && !is_custom_element {
-                        has_disallowed = true;
-                        break;
-                    }
+        if !has_disallowed
+            && let Ok(sel) = Selector::parse("script")
+        {
+            for el in parsed.select(&sel) {
+                let v = el.value();
+                let is_amp_runtime = v
+                    .attr("src")
+                    .map(|s| s.contains("cdn.ampproject.org"))
+                    .unwrap_or(false);
+                let is_ld_json = v
+                    .attr("type")
+                    .map(|t| t.eq_ignore_ascii_case("application/ld+json"))
+                    .unwrap_or(false);
+                let is_custom_element =
+                    v.attr("custom-element").is_some() || v.attr("custom-template").is_some();
+                if !is_amp_runtime && !is_ld_json && !is_custom_element {
+                    has_disallowed = true;
+                    break;
                 }
             }
         }

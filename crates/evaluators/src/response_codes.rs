@@ -28,7 +28,7 @@ impl Evaluator for ResponseCodeEvaluator {
                     filter_key: FilterKey::ResponseCodeNoResponse,
                 });
             }
-            Some(c) if c == 0 => {
+            Some(0) => {
                 findings.push(Finding {
                     filter_key: FilterKey::ResponseCodeBlocked,
                 });
@@ -67,7 +67,7 @@ impl Evaluator for ResponseCodeEvaluator {
                         filter_key: FilterKey::ResponseCodeInternalNoResponse,
                     });
                 }
-                Some(c) if c == 0 => {
+                Some(0) => {
                     findings.push(Finding {
                         filter_key: FilterKey::ResponseCodeInternalBlocked,
                     });
@@ -104,7 +104,7 @@ impl Evaluator for ResponseCodeEvaluator {
                         filter_key: FilterKey::ResponseCodeExternalNoResponse,
                     });
                 }
-                Some(c) if c == 0 => {
+                Some(0) => {
                     findings.push(Finding {
                         filter_key: FilterKey::ResponseCodeExternalBlocked,
                     });

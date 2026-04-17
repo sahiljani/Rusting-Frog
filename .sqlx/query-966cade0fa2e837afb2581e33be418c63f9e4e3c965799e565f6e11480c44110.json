@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT response_headers\n        FROM crawl_urls\n        WHERE crawl_id = $1 AND jsonb_array_length(response_headers) > 0\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "response_headers",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "966cade0fa2e837afb2581e33be418c63f9e4e3c965799e565f6e11480c44110"
+}

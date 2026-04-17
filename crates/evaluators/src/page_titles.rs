@@ -92,12 +92,12 @@ fn check_pixel_width(url: &CrawlUrl, config: &CrawlConfig, findings: &mut Vec<Fi
 }
 
 fn check_same_as_h1(title: &str, url: &CrawlUrl, findings: &mut Vec<Finding>) {
-    if let Some(ref h1) = url.h1_first {
-        if title.eq_ignore_ascii_case(h1) {
-            findings.push(Finding {
-                filter_key: FilterKey::TitleSameAsH1,
-            });
-        }
+    if let Some(ref h1) = url.h1_first
+        && title.eq_ignore_ascii_case(h1)
+    {
+        findings.push(Finding {
+            filter_key: FilterKey::TitleSameAsH1,
+        });
     }
 }
 

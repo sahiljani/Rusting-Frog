@@ -40,9 +40,12 @@ pub fn routes() -> Router<AppState> {
 
 #[derive(Debug, Deserialize)]
 pub struct UrlsQuery {
+    #[allow(dead_code)]
     pub tab: Option<String>,
     pub filter: Option<String>,
+    #[allow(dead_code)]
     pub q: Option<String>,
+    #[allow(dead_code)]
     pub cursor: Option<String>,
     pub limit: Option<i64>,
 }

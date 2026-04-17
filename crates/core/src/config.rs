@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 /// Phase 1 crawl configuration.
 /// Stored as JSONB in the `crawl_configs` table.
 /// Matches a subset of SF's 38 config panels (from 11-config-panels-complete.md).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct CrawlConfig {
     #[serde(default)]
     pub speed: SpeedConfig,
@@ -27,24 +27,6 @@ pub struct CrawlConfig {
     pub url: UrlConfig,
     #[serde(default)]
     pub content: ContentConfig,
-}
-
-impl Default for CrawlConfig {
-    fn default() -> Self {
-        Self {
-            speed: SpeedConfig::default(),
-            limits: LimitsConfig::default(),
-            user_agent: UserAgentConfig::default(),
-            robots: RobotsConfig::default(),
-            page_title: PageTitleConfig::default(),
-            meta_description: MetaDescriptionConfig::default(),
-            headings: HeadingsConfig::default(),
-            images: ImagesConfig::default(),
-            links: LinksConfig::default(),
-            url: UrlConfig::default(),
-            content: ContentConfig::default(),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

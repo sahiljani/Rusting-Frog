@@ -130,7 +130,7 @@ impl Evaluator for LinksEvaluator {
                 saw_empty_anchor = true;
             } else if !text.is_empty() {
                 let norm = text.to_ascii_lowercase();
-                let norm = norm.trim_end_matches(|c: char| c == '.' || c == '!' || c == '?');
+                let norm = norm.trim_end_matches(['.', '!', '?']);
                 if NON_DESCRIPTIVE.contains(&norm) {
                     saw_non_descriptive = true;
                 }

@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        WITH RECURSIVE chain AS (\n            SELECT u.url AS source,\n                   u.canonical_url AS next,\n                   ARRAY[u.url]::text[] AS path,\n                   1::int AS hops\n            FROM crawl_urls u\n            WHERE u.crawl_id = $1\n              AND u.canonical_url IS NOT NULL\n              AND u.canonical_url <> u.url\n            UNION ALL\n            SELECT c.source,\n                   n.canonical_url,\n                   c.path || n.url,\n                   c.hops + 1\n            FROM chain c\n            JOIN crawl_urls n\n              ON n.crawl_id = $1 AND n.url = c.next\n            WHERE c.hops < 10\n              AND n.canonical_url IS NOT NULL\n              AND n.canonical_url <> n.url\n              AND NOT (n.url = ANY(c.path))\n        ),\n        terminated AS (\n            SELECT DISTINCT ON (source) source, path, next AS terminal, hops\n            FROM chain\n            ORDER BY source, hops DESC\n        )\n        SELECT source, path, terminal, hops\n        FROM terminated\n        WHERE hops >= 2\n        ORDER BY hops DESC, source\n        LIMIT $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "source",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "path",
+        "type_info": "TextArray"
+      },
+      {
+        "ordinal": 2,
+        "name": "terminal",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "hops",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "5e698ce99cf9739a582086338165fdf9873cdbbbd188169a26d4d9353131b029"
+}

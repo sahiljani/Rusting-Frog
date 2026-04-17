@@ -39,6 +39,7 @@ pub struct ExtractedLink {
 }
 
 #[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
 pub enum LinkType {
     Anchor,
     Image,

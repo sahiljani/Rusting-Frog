@@ -71,21 +71,21 @@ impl Evaluator for AccessibilityEvaluator {
         };
 
         let html_sel = Selector::parse("html").ok();
-        if let Some(sel) = &html_sel {
-            if let Some(html_el) = parsed.select(sel).next() {
-                match html_el.value().attr("lang") {
-                    None => findings.push(Finding {
-                        filter_key: FilterKey::AccessibilityRuleHtmlHasLang,
-                    }),
-                    Some(lang) if !is_bcp47_ish(lang) => findings.push(Finding {
-                        filter_key: FilterKey::AccessibilityRuleHtmlLangValid,
-                    }),
-                    _ => {}
-                }
+        if let Some(sel) = &html_sel
+            && let Some(html_el) = parsed.select(sel).next()
+        {
+            match html_el.value().attr("lang") {
+                None => findings.push(Finding {
+                    filter_key: FilterKey::AccessibilityRuleHtmlHasLang,
+                }),
+                Some(lang) if !is_bcp47_ish(lang) => findings.push(Finding {
+                    filter_key: FilterKey::AccessibilityRuleHtmlLangValid,
+                }),
+                _ => {}
             }
         }
 
-        if let Some(sel) = Selector::parse("title").ok() {
+        if let Ok(sel) = Selector::parse("title") {
             let has_title = parsed
                 .select(&sel)
                 .any(|el| !el.text().collect::<String>().trim().is_empty());
@@ -96,23 +96,23 @@ impl Evaluator for AccessibilityEvaluator {
             }
         }
 
-        if let Some(sel) = Selector::parse("h1").ok() {
-            if parsed.select(&sel).next().is_none() {
-                findings.push(Finding {
-                    filter_key: FilterKey::AccessibilityRulePageHasHeadingOne,
-                });
-            }
+        if let Ok(sel) = Selector::parse("h1")
+            && parsed.select(&sel).next().is_none()
+        {
+            findings.push(Finding {
+                filter_key: FilterKey::AccessibilityRulePageHasHeadingOne,
+            });
         }
 
-        if let Some(sel) = Selector::parse(r#"meta[http-equiv="refresh" i]"#).ok() {
-            if parsed.select(&sel).next().is_some() {
-                findings.push(Finding {
-                    filter_key: FilterKey::AccessibilityRuleMetaRefresh,
-                });
-            }
+        if let Ok(sel) = Selector::parse(r#"meta[http-equiv="refresh" i]"#)
+            && parsed.select(&sel).next().is_some()
+        {
+            findings.push(Finding {
+                filter_key: FilterKey::AccessibilityRuleMetaRefresh,
+            });
         }
 
-        if let Some(sel) = Selector::parse("img").ok() {
+        if let Ok(sel) = Selector::parse("img") {
             let any_missing_alt = parsed
                 .select(&sel)
                 .any(|el| el.value().attr("alt").is_none());
@@ -123,7 +123,7 @@ impl Evaluator for AccessibilityEvaluator {
             }
         }
 
-        if let Some(sel) = Selector::parse("iframe").ok() {
+        if let Ok(sel) = Selector::parse("iframe") {
             let any_bad_frame = parsed.select(&sel).any(|el| {
                 el.value()
                     .attr("title")
@@ -137,23 +137,23 @@ impl Evaluator for AccessibilityEvaluator {
             }
         }
 
-        if let Some(sel) = Selector::parse("button").ok() {
-            if parsed.select(&sel).any(|el| !has_accessible_name(&el)) {
-                findings.push(Finding {
-                    filter_key: FilterKey::AccessibilityRuleButtonName,
-                });
-            }
+        if let Ok(sel) = Selector::parse("button")
+            && parsed.select(&sel).any(|el| !has_accessible_name(&el))
+        {
+            findings.push(Finding {
+                filter_key: FilterKey::AccessibilityRuleButtonName,
+            });
         }
 
-        if let Some(sel) = Selector::parse("a[href]").ok() {
-            if parsed.select(&sel).any(|el| !has_accessible_name(&el)) {
-                findings.push(Finding {
-                    filter_key: FilterKey::AccessibilityRuleLinkName,
-                });
-            }
+        if let Ok(sel) = Selector::parse("a[href]")
+            && parsed.select(&sel).any(|el| !has_accessible_name(&el))
+        {
+            findings.push(Finding {
+                filter_key: FilterKey::AccessibilityRuleLinkName,
+            });
         }
 
-        if let Some(sel) = Selector::parse(r#"input[type="image" i]"#).ok() {
+        if let Ok(sel) = Selector::parse(r#"input[type="image" i]"#) {
             let any_missing = parsed.select(&sel).any(|el| {
                 let alt = el.value().attr("alt").map(|s| s.trim()).unwrap_or("");
                 let aria = el
@@ -170,20 +170,20 @@ impl Evaluator for AccessibilityEvaluator {
             }
         }
 
-        if let Some(sel) = Selector::parse("blink").ok() {
-            if parsed.select(&sel).next().is_some() {
-                findings.push(Finding {
-                    filter_key: FilterKey::AccessibilityRuleBlink,
-                });
-            }
+        if let Ok(sel) = Selector::parse("blink")
+            && parsed.select(&sel).next().is_some()
+        {
+            findings.push(Finding {
+                filter_key: FilterKey::AccessibilityRuleBlink,
+            });
         }
 
-        if let Some(sel) = Selector::parse("marquee").ok() {
-            if parsed.select(&sel).next().is_some() {
-                findings.push(Finding {
-                    filter_key: FilterKey::AccessibilityRuleMarquee,
-                });
-            }
+        if let Ok(sel) = Selector::parse("marquee")
+            && parsed.select(&sel).next().is_some()
+        {
+            findings.push(Finding {
+                filter_key: FilterKey::AccessibilityRuleMarquee,
+            });
         }
 
         findings
@@ -223,10 +223,10 @@ fn is_bcp47_ish(tag: &str) -> bool {
 
 fn has_accessible_name(el: &ElementRef) -> bool {
     let v = el.value();
-    if let Some(label) = v.attr("aria-label") {
-        if !label.trim().is_empty() {
-            return true;
-        }
+    if let Some(label) = v.attr("aria-label")
+        && !label.trim().is_empty()
+    {
+        return true;
     }
     if v.attr("aria-labelledby")
         .map(|s| !s.trim().is_empty())
@@ -245,13 +245,12 @@ fn has_accessible_name(el: &ElementRef) -> bool {
         return true;
     }
     // An <img alt="…"> descendant gives the button/link an accessible name.
-    if let Some(sel) = Selector::parse("img[alt]").ok() {
-        if el
+    if let Ok(sel) = Selector::parse("img[alt]")
+        && el
             .select(&sel)
             .any(|img| !img.value().attr("alt").unwrap_or("").trim().is_empty())
-        {
-            return true;
-        }
+    {
+        return true;
     }
     false
 }

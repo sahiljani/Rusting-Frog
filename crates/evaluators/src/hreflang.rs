@@ -93,10 +93,10 @@ impl Evaluator for HreflangEvaluator {
             codes.push(code);
 
             let href = el.value().attr("href").map(|s| s.trim()).unwrap_or("");
-            if let Some(b) = &base {
-                if let Ok(u) = b.join(href) {
-                    resolved_targets.push(normalize(&u));
-                }
+            if let Some(b) = &base
+                && let Ok(u) = b.join(href)
+            {
+                resolved_targets.push(normalize(&u));
             }
 
             if !ancestor_is_head(el) {
@@ -138,12 +138,12 @@ impl Evaluator for HreflangEvaluator {
             });
         }
 
-        if let Some(self_n) = &self_norm {
-            if !resolved_targets.iter().any(|t| t == self_n) {
-                findings.push(Finding {
-                    filter_key: FilterKey::HreflangMissingSelfReference,
-                });
-            }
+        if let Some(self_n) = &self_norm
+            && !resolved_targets.iter().any(|t| t == self_n)
+        {
+            findings.push(Finding {
+                filter_key: FilterKey::HreflangMissingSelfReference,
+            });
         }
 
         // NotUsingCanonical: hreflang present AND canonical tag points

@@ -51,12 +51,12 @@ impl Evaluator for ValidationEvaluator {
             filter_key: FilterKey::ValidationAll,
         }];
 
-        if let Some(len) = url.content_length {
-            if len > FIFTEEN_MIB {
-                findings.push(Finding {
-                    filter_key: FilterKey::ValidationDocumentOver15Mb,
-                });
-            }
+        if let Some(len) = url.content_length
+            && len > FIFTEEN_MIB
+        {
+            findings.push(Finding {
+                filter_key: FilterKey::ValidationDocumentOver15Mb,
+            });
         }
 
         let parsed = match ctx.parsed {
@@ -98,31 +98,32 @@ impl Evaluator for ValidationEvaluator {
         }
 
         // head-not-first: inspect first element child of <html>.
-        if let Some(sel) = &html_sel {
-            if let Some(html_el) = parsed.select(sel).next() {
-                let first_child = html_el
-                    .children()
-                    .filter_map(scraper::ElementRef::wrap)
-                    .next();
-                if let Some(child) = first_child {
-                    if child.value().name() != "head" && head_count > 0 {
-                        findings.push(Finding {
-                            filter_key: FilterKey::ValidationHeadNotFirstElement,
-                        });
-                    }
-                }
+        if let Some(sel) = &html_sel
+            && let Some(html_el) = parsed.select(sel).next()
+        {
+            let first_child = html_el
+                .children()
+                .filter_map(scraper::ElementRef::wrap)
+                .next();
+            if let Some(child) = first_child
+                && child.value().name() != "head"
+                && head_count > 0
+            {
+                findings.push(Finding {
+                    filter_key: FilterKey::ValidationHeadNotFirstElement,
+                });
             }
         }
 
         // Invalid tags inside <head>. html5ever relocates illegal tags
         // out of <head> into <body>, so inspect the raw HTML substring
         // between the first `<head` open and its matching `</head>`.
-        if let Some(raw) = ctx.html {
-            if has_invalid_head_children(raw) {
-                findings.push(Finding {
-                    filter_key: FilterKey::ValidationInvalidElementsInHead,
-                });
-            }
+        if let Some(raw) = ctx.html
+            && has_invalid_head_children(raw)
+        {
+            findings.push(Finding {
+                filter_key: FilterKey::ValidationInvalidElementsInHead,
+            });
         }
 
         findings

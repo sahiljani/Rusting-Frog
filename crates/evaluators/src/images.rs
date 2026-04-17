@@ -42,12 +42,12 @@ fn evaluate_image_url(url: &CrawlUrl, ctx: &EvalContext) -> Vec<Finding> {
     }];
 
     let max_bytes = (ctx.config.images.max_size_kb as i64) * 1024;
-    if let Some(len) = url.content_length {
-        if len > max_bytes {
-            findings.push(Finding {
-                filter_key: FilterKey::ImagesOverXKb,
-            });
-        }
+    if let Some(len) = url.content_length
+        && len > max_bytes
+    {
+        findings.push(Finding {
+            filter_key: FilterKey::ImagesOverXKb,
+        });
     }
 
     findings

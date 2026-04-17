@@ -75,14 +75,11 @@ impl SitemapCapture {
                             .header("Accept", "application/xml, text/xml;q=0.9, */*;q=0.8")
                             .send()
                             .await
+                            && resp.status().is_success()
+                            && let Ok(child_body) = resp.text().await
+                            && let ParseResult::UrlSet(set) = parse(&child_body)
                         {
-                            if resp.status().is_success() {
-                                if let Ok(child_body) = resp.text().await {
-                                    if let ParseResult::UrlSet(set) = parse(&child_body) {
-                                        urls.extend(set);
-                                    }
-                                }
-                            }
+                            urls.extend(set);
                         }
                     }
                 }
@@ -136,17 +133,17 @@ fn parse(body: &str) -> ParseResult {
                 }
             }
             Ok(Event::Text(e)) => {
-                if in_loc {
-                    if let Ok(s) = e.unescape() {
-                        current.push_str(&s);
-                    }
+                if in_loc
+                    && let Ok(s) = e.unescape()
+                {
+                    current.push_str(&s);
                 }
             }
             Ok(Event::CData(e)) => {
-                if in_loc {
-                    if let Ok(s) = std::str::from_utf8(e.as_ref()) {
-                        current.push_str(s);
-                    }
+                if in_loc
+                    && let Ok(s) = std::str::from_utf8(e.as_ref())
+                {
+                    current.push_str(s);
                 }
             }
             Ok(Event::Eof) => break,

@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use anyhow::{Context, Result};
 use scraper::Html;
 use sf_core::config::CrawlConfig;
@@ -8,7 +6,6 @@ use sf_core::id::{CrawlId, CrawlUrlId};
 use sha2::{Digest, Sha256};
 use sqlx::PgPool;
 use url::Url;
-use uuid::Uuid;
 
 use crate::fetcher::{FetchResult, Fetcher};
 use crate::frontier::Frontier;
@@ -19,6 +16,7 @@ use crate::sitemap::SitemapCapture;
 pub struct CrawlPipeline {
     db: PgPool,
     crawl_id: CrawlId,
+    #[allow(dead_code)]
     tenant_id: String,
     config: CrawlConfig,
     fetcher: Fetcher,
@@ -130,15 +128,14 @@ impl CrawlPipeline {
                 )
                 .fetch_one(&self.db)
                 .await
+                    && matches!(row.status.as_str(), "completed" | "failed" | "cancelled")
                 {
-                    if matches!(row.status.as_str(), "completed" | "failed" | "cancelled") {
-                        tracing::info!(
-                            crawl_id = %self.crawl_id,
-                            status = %row.status,
-                            "external stop signal received — ending fetch loop",
-                        );
-                        break;
-                    }
+                    tracing::info!(
+                        crawl_id = %self.crawl_id,
+                        status = %row.status,
+                        "external stop signal received — ending fetch loop",
+                    );
+                    break;
                 }
                 status_check_countdown = 5;
             } else {
@@ -151,7 +148,7 @@ impl CrawlPipeline {
             // don't crawl" behaviour for disallowed URLs.
             if !gate.is_allowed(&entry.url) {
                 tracing::info!(url = %entry.url, "blocked by robots.txt");
-                self.write_blocked_url(&entry.url.to_string(), entry.depth)
+                self.write_blocked_url(entry.url.as_ref(), entry.depth)
                     .await?;
                 self.urls_crawled += 1;
                 self.update_counters().await?;
@@ -257,7 +254,7 @@ impl CrawlPipeline {
 
                 // Write link edges
                 for link in &pr.links {
-                    if let Ok(link_url) = Url::parse(&link.href) {
+                    if Url::parse(&link.href).is_ok() {
                         self.write_link_edge(
                             &url_id,
                             &link.href,
@@ -460,6 +457,7 @@ impl CrawlPipeline {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     async fn write_crawl_url(
         &self,
         url_id: &CrawlUrlId,
@@ -824,10 +822,10 @@ fn compute_indexability(
         }
     }
 
-    if let Some(mr) = meta_robots {
-        if mr.to_ascii_lowercase().contains("noindex") {
-            return ("Non-Indexable", "Noindex");
-        }
+    if let Some(mr) = meta_robots
+        && mr.to_ascii_lowercase().contains("noindex")
+    {
+        return ("Non-Indexable", "Noindex");
     }
 
     // Canonicalised: canonical points somewhere other than this URL. We
