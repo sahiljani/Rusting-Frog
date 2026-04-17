@@ -11,7 +11,7 @@ info:
     **Tenancy.** `tenant_id` is taken from the JWT `tenant_id` claim; callers never
     pass it. All reads and writes are scoped to the caller's tenant.
 
-    **Implementation progress.** Batches 1–6 of the evaluator roll-out are wired:
+    **Implementation progress.** Batches 1–7 of the evaluator roll-out are wired:
       - *Batch 1 — response/title/meta/H1/H2* (19 filter keys): `response_code_*`,
         `internal_*`, `external_*`, `title_*`, `meta_descripton_*`,
         `meta_keywords_*`, `h1_*`, `h2_*`.
@@ -46,6 +46,22 @@ info:
         deferred until response headers are persisted on `CrawlUrl`;
         mobile layout filters (target-size, font-size, content sizing)
         deferred to the render worker.
+      - *Batch 7 — structured-data / PageSpeed / Parity* (9 real
+        filter keys + 2 candidate-bucket stubs): `structured_data_*`
+        (all, contains-structured-data, missing-structured-data,
+        jsonld-urls for any `<script type="application/ld+json">`,
+        microdata-urls for any `itemscope` element, rdfa-urls for
+        any `typeof` / `property` element, parse-errors when
+        JSON-LD body fails `serde_json::from_str`),
+        `pagespeed_all` + `parity_all` (candidate bucket only —
+        per-audit PageSpeed filters depend on the PSI third-party
+        integration, per-field Parity filters depend on the render
+        worker diffing raw-HTML vs rendered-DOM snapshots, both
+        deferred to later batches). Schema-level structured-data
+        validation (validation-errors/warnings, Google
+        validation-errors/warnings, feature-detected) is deferred —
+        it needs a schema.org registry lookup plus the Google Rich
+        Results classifier.
       - *Batch 6 — sitemaps / AMP / JavaScript* (14 filter keys):
         `sitemaps_all` (every HTML page flagged until XML sitemap
         fetching lands; cross-URL sitemap filters — orphan, non-indexable,
@@ -80,7 +96,7 @@ info:
 
     **This spec is hand-written** — a Swagger UI app in `../swagger-ui/` loads it
     and issues requests against the Rust server at `http://localhost:3000`.
-  version: "0.6.0"
+  version: "0.7.0"
   contact:
     name: sf-clone-rust
     url: https://github.com/sahiljani/Rusting-Frog
@@ -593,6 +609,51 @@ paths:
                         status_code: 200
                         is_internal: true
                         title: Old AJAX fragment meta
+                    next_cursor: null
+                structured_data_jsonld_urls:
+                  summary: filter=structured_data_jsonld_urls (pages with <script type="application/ld+json">)
+                  value:
+                    data:
+                      - url: http://localhost:8181/structured-broken.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: Broken JSON-LD
+                      - url: http://localhost:8181/structured-jsonld.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: Valid JSON-LD
+                    next_cursor: null
+                structured_data_parse_errors:
+                  summary: filter=structured_data_parse_errors (JSON-LD body fails to parse)
+                  value:
+                    data:
+                      - url: http://localhost:8181/structured-broken.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: Broken JSON-LD
+                    next_cursor: null
+                structured_data_microdata_urls:
+                  summary: filter=structured_data_microdata_urls (pages with itemscope elements)
+                  value:
+                    data:
+                      - url: http://localhost:8181/structured-microdata.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: Microdata fixture
+                    next_cursor: null
+                structured_data_rdfa_urls:
+                  summary: filter=structured_data_rdfa_urls (pages with typeof/property attrs)
+                  value:
+                    data:
+                      - url: http://localhost:8181/structured-rdfa.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: RDFa fixture
                     next_cursor: null
 
   /v1/crawls/{crawl_id}/urls/{url_id}:

@@ -13,10 +13,13 @@ pub mod meta_description;
 pub mod meta_keywords;
 pub mod mobile;
 pub mod page_titles;
+pub mod pagespeed;
 pub mod pagination;
+pub mod parity;
 pub mod response_codes;
 pub mod security;
 pub mod sitemaps;
+pub mod structured_data;
 pub mod url;
 pub mod validation;
 
@@ -69,5 +72,8 @@ pub fn phase1_evaluators() -> Vec<Box<dyn Evaluator>> {
         Box::new(sitemaps::SitemapsEvaluator),
         Box::new(amp::AmpEvaluator),
         Box::new(javascript::JavaScriptEvaluator),
+        Box::new(structured_data::StructuredDataEvaluator),
+        Box::new(pagespeed::PageSpeedEvaluator),
+        Box::new(parity::ParityEvaluator),
     ]
 }

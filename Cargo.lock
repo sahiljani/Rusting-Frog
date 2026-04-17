@@ -2551,6 +2551,7 @@ dependencies = [
  "chrono",
  "scraper",
  "serde",
+ "serde_json",
  "sf-core",
  "thiserror",
  "tracing",
