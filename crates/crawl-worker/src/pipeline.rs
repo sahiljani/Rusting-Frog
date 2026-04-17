@@ -149,10 +149,15 @@ impl CrawlPipeline {
                     }
                 }
 
-                // Add discovered links to frontier (internal only)
-                for link in &pr.links {
-                    if let Ok(link_url) = Url::parse(&link.href) {
-                        if self.is_internal(&link_url) {
+                // Enqueue discovered links. We only follow links out of
+                // *internal* pages — once we cross the host boundary the
+                // crawl would be unbounded, so external pages become leaves.
+                // External URLs still get enqueued (and later fetched) so
+                // the External evaluator has rows to fire against, but none
+                // of their outlinks are followed.
+                if is_internal {
+                    for link in &pr.links {
+                        if let Ok(link_url) = Url::parse(&link.href) {
                             self.frontier.add(link_url, entry.depth + 1);
                         }
                     }

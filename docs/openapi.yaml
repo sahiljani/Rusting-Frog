@@ -5,14 +5,29 @@ info:
     Screaming-Frog-compatible SEO crawler backend, in Rust.
 
     **Auth.** Every endpoint requires a Laravel-issued JWT in `Authorization: Bearer <jwt>`.
-    Dev: mint one with `node scripts/mint_jwt.js`.
+    Dev: mint one with `node scripts/mint_jwt.js` (60-minute TTL; claims
+    `tenant_id`, `user_id`, `scopes`).
 
     **Tenancy.** `tenant_id` is taken from the JWT `tenant_id` claim; callers never
     pass it. All reads and writes are scoped to the caller's tenant.
 
+    **Implementation progress.** Batches 1–2 of the evaluator roll-out are wired:
+      - *Batch 1 — response/title/meta/H1/H2* (19 filter keys): `response_code_*`,
+        `internal_*`, `external_*`, `title_*`, `meta_descripton_*`,
+        `meta_keywords_*`, `h1_*`, `h2_*`.
+      - *Batch 2 — images / links / external* (32 filter keys): `images_*`,
+        `links_*`, full `external_*` split by content-type.
+
+    Filter keys that aren't yet implemented will return 0 counts in
+    `/overview` and an empty `data` array when used as a grid filter —
+    they're valid catalog entries, just not evaluated yet.
+
+    **Sample responses** in this spec were captured against
+    `https://boltrack.in/` (see `api-responses/boltrack/` in the repo).
+
     **This spec is hand-written** — a Swagger UI app in `../swagger-ui/` loads it
     and issues requests against the Rust server at `http://localhost:3000`.
-  version: "0.1.0"
+  version: "0.2.0"
   contact:
     name: sf-clone-rust
     url: https://github.com/sahiljani/Rusting-Frog
@@ -72,6 +87,10 @@ paths:
     get:
       tags: [projects]
       summary: List projects for the caller's tenant
+      description: |
+        Returns all projects for the tenant in the JWT. Results are not
+        paginated yet — a tenant is expected to have tens, not thousands,
+        of projects. Sorted by `created_at` descending.
       responses:
         "200":
           description: OK
@@ -80,10 +99,29 @@ paths:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/Project" }
+              examples:
+                boltrack:
+                  summary: Tenant with 2 projects (fixture + boltrack)
+                  value:
+                    - id: 019d99c6-5f95-7c72-b9a0-de12892deeb5
+                      name: boltrack
+                      seed_url: https://boltrack.in/
+                      created_at: 2026-04-17T04:50:07.893885Z
+                      updated_at: 2026-04-17T04:50:07.893885Z
+                    - id: 019d97c1-0000-7000-8000-000000000001
+                      name: fixture
+                      seed_url: http://127.0.0.1:8181/
+                      created_at: 2026-04-16T19:49:00Z
+                      updated_at: 2026-04-16T19:49:00Z
         "401": { $ref: "#/components/responses/Unauthorized" }
     post:
       tags: [projects]
       summary: Create a project
+      description: |
+        Registers a new site for crawling. `seed_url` must be an absolute
+        `http(s)` URL. The seed's scheme + host is what the crawler uses
+        to classify URLs as internal vs. external. Project creation does
+        NOT start a crawl — call `POST /v1/projects/{id}/crawls` next.
       requestBody:
         required: true
         content:
@@ -92,14 +130,22 @@ paths:
             examples:
               example:
                 value:
-                  name: My Site
-                  seed_url: https://example.com/
+                  name: Boltrack
+                  seed_url: https://boltrack.in/
       responses:
         "200":
           description: Created
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Project" }
+              examples:
+                boltrack:
+                  value:
+                    id: 019d99c6-5f95-7c72-b9a0-de12892deeb5
+                    name: boltrack
+                    seed_url: https://boltrack.in/
+                    created_at: 2026-04-17T04:50:07.893885Z
+                    updated_at: 2026-04-17T04:50:07.893885Z
         "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthorized" }
 
@@ -152,12 +198,28 @@ paths:
     post:
       tags: [crawls]
       summary: Start a crawl (async — returns immediately with status=queued)
+      description: |
+        Enqueues a crawl for this project. The HTTP response returns
+        immediately with the new `crawl_id`; actual fetching runs in the
+        `sf-crawl-worker` binary. Poll `GET /v1/crawls/{id}` for progress,
+        or subscribe to the future WebSocket stream at `/v1/crawls/{id}/live`.
+
+        The crawl honours the project's config snapshot at start time
+        (max depth, respect-robots, render flag, etc.). Each URL is
+        fetched, parsed, and evaluated through all implemented evaluator
+        tabs (Batch 1 + 2 at present). Findings land in `crawl_url_findings`.
       responses:
         "200":
           description: Crawl queued
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CrawlStartResponse" }
+              examples:
+                boltrack:
+                  value:
+                    id: 019d99c6-80f0-7251-a548-756acad321d4
+                    status: queued
+                    message: crawl queued
         "404":
           description: Project not found
           $ref: "#/components/responses/NotFound"
@@ -168,12 +230,30 @@ paths:
     get:
       tags: [crawls]
       summary: Get crawl status + counters
+      description: |
+        Returns crawl metadata and lifecycle state. Use this to poll a
+        running crawl — `urls_discovered` grows as the frontier expands
+        and `urls_crawled` grows as fetches complete. When `status =
+        "completed"`, `completed_at` is set and no more URLs will be added.
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CrawlDetail" }
+              examples:
+                boltrack_complete:
+                  summary: Completed boltrack.in crawl (210 URLs, ~110s)
+                  value:
+                    id: 019d99c6-80f0-7251-a548-756acad321d4
+                    project_id: 019d99c6-5f95-7c72-b9a0-de12892deeb5
+                    status: completed
+                    urls_discovered: 213
+                    urls_crawled: 210
+                    seed_urls: ["https://boltrack.in/"]
+                    created_at: 2026-04-17T04:50:16.432606Z
+                    started_at: 2026-04-17T04:50:17.751117Z
+                    completed_at: 2026-04-17T04:52:06.991479Z
         "404": { $ref: "#/components/responses/NotFound" }
 
   /v1/crawls/{id}/pause:
@@ -242,12 +322,55 @@ paths:
     get:
       tags: [urls]
       summary: The main results grid — list URLs, optionally filtered by finding
+      description: |
+        The hot path. Returns a page of URL rows, suitable for rendering
+        the SF-style tabular grid. Pass `filter=<filter_key>` to narrow
+        to only URLs whose findings include that key — e.g.
+        `filter=images_missing_alt_text` returns every URL that had at
+        least one `<img>` missing usable alt text.
+
+        **Implemented filter keys (Batches 1 + 2):** see the
+        `/v1/catalog/tabs` catalog. Any filter key is accepted, but
+        un-implemented keys will return an empty `data` array.
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema: { $ref: "#/components/schemas/UrlGridResponse" }
+              examples:
+                boltrack_unfiltered:
+                  summary: First page of boltrack.in URLs (no filter)
+                  value:
+                    data:
+                      - id: 019d99c6-88f0-7253-b6fc-92ad510fe576
+                        url: https://boltrack.in/
+                        status_code: 200
+                        content_type: html
+                        is_internal: true
+                        depth: 0
+                        title: Suspended Platform Rental Ahmedabad - Boltrack Engineers
+                        title_length: 56
+                        h1_first: WORK AT ANYHEIGHT WITHCONFIDENCE
+                        h1_count: 1
+                        word_count: 1681
+                        response_time_ms: 707
+                        content_length: 0
+                        crawled_at: 2026-04-17T04:50:18.480459Z
+                    next_cursor: null
+                images_missing_alt:
+                  summary: filter=images_missing_alt_text
+                  value:
+                    data:
+                      - id: 019d99c6-88f0-7253-b6fc-92ad510fe576
+                        url: https://boltrack.in/
+                        status_code: 200
+                        content_type: html
+                        is_internal: true
+                        depth: 0
+                        title: Suspended Platform Rental Ahmedabad - Boltrack Engineers
+                        h1_count: 1
+                    next_cursor: null
 
   /v1/crawls/{crawl_id}/urls/{url_id}:
     parameters:
@@ -256,12 +379,49 @@ paths:
     get:
       tags: [urls]
       summary: URL detail (summary + every finding on this URL)
+      description: |
+        Returns every captured field for a single URL — title length,
+        meta description, H1/H2, canonical, robots meta, plus the full
+        list of filter keys that fired during evaluation (`findings`).
+        Feeds SF's "URL Details" right-pane tab.
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema: { $ref: "#/components/schemas/UrlDetail" }
+              examples:
+                boltrack_home:
+                  summary: boltrack.in home page
+                  value:
+                    id: 019d99c6-88f0-7253-b6fc-92ad510fe576
+                    url: https://boltrack.in/
+                    status_code: 200
+                    content_type: html
+                    is_internal: true
+                    depth: 0
+                    title: Suspended Platform Rental Ahmedabad - Boltrack Engineers
+                    title_length: 56
+                    meta_description: Boltrack Engineers designs, manufactures, and rents precision-engineered suspended platforms and construction equipment.
+                    meta_description_length: 167
+                    h1_first: WORK AT ANYHEIGHT WITHCONFIDENCE
+                    h1_count: 1
+                    h2_first: "PRODUCT\t\t\t         RANGE"
+                    h2_count: 8
+                    canonical_url: https://boltrack.in/
+                    meta_robots: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+                    word_count: 1681
+                    response_time_ms: 707
+                    crawled_at: 2026-04-17T04:50:18.480459Z
+                    findings:
+                      - response_code_success
+                      - title_all
+                      - meta_descripton_over_x_characters
+                      - h1_all
+                      - images_background_images
+                      - meta_descripton_multiple
+                      - h2_multiple
+                      - links_all
         "404": { $ref: "#/components/responses/NotFound" }
 
   /v1/crawls/{crawl_id}/urls/{url_id}/inlinks:
@@ -302,7 +462,11 @@ paths:
     get:
       tags: [overview]
       summary: Count-by-filter rollup across the whole crawl
-      description: "Returns an object `{filter_key: count}` — feeds the overview tree pane."
+      description: |
+        Returns `{filter_key: count}` — how many URLs in this crawl
+        matched each filter. Feeds the SF-style left-rail overview tree.
+        Only filter keys that fired at least once appear in the map, so
+        absent keys are implicitly zero.
       responses:
         "200":
           description: OK
@@ -312,12 +476,47 @@ paths:
                 type: object
                 additionalProperties: { type: integer }
               examples:
-                sample:
+                boltrack:
+                  summary: boltrack.in (210 URLs, implemented filters only)
                   value:
-                    internal_all: 105
+                    internal_all: 201
+                    internal_html: 106
+                    internal_images: 82
+                    internal_css: 6
+                    internal_javascript: 7
+                    external_all: 9
+                    external_html: 5
+                    external_images: 3
+                    external_javascript: 1
+                    response_code_all: 210
+                    response_code_success: 159
+                    response_code_internal_success: 151
+                    response_code_internal_client_error: 50
+                    title_all: 111
+                    title_below_x_characters: 55
+                    title_over_x_characters: 10
+                    meta_descripton_missing: 51
+                    meta_descripton_below_x_characters: 2
+                    meta_descripton_over_x_characters: 13
+                    meta_descripton_multiple: 22
+                    meta_keywords_all: 111
+                    meta_keywords_missing: 111
+                    h1_all: 111
                     h1_missing: 2
-                    meta_descripton_multiple: 1
-                    title_over_x_characters: 12
+                    h1_non_sequential: 47
+                    h2_all: 111
+                    h2_missing: 2
+                    h2_multiple: 56
+                    h2_non_sequential: 47
+                    links_all: 111
+                    links_no_internal_outlinks: 51
+                    links_no_anchor_text_outlinks: 4
+                    links_high_internal_outlinks: 3
+                    links_high_external_outlinks: 4
+                    images_all: 85
+                    images_missing_alt_text: 5
+                    images_missing_size_attributes: 52
+                    images_background_images: 58
 
 components:
   securitySchemes:

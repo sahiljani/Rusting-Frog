@@ -23,6 +23,7 @@ pub struct ExtractedLink {
     pub link_type: LinkType,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum LinkType {
     Anchor,
     Image,
@@ -134,6 +135,33 @@ fn extract_links(doc: &Html, base_url: &Url) -> Vec<ExtractedLink> {
                 anchor_text,
                 is_nofollow,
                 link_type: LinkType::Anchor,
+            });
+        }
+    }
+
+    for (selector, attr, kind) in [
+        ("img[src]", "src", LinkType::Image),
+        ("script[src]", "src", LinkType::Script),
+        ("link[rel=\"stylesheet\"][href]", "href", LinkType::Stylesheet),
+    ] {
+        let sel = match Selector::parse(selector) {
+            Ok(s) => s,
+            Err(_) => continue,
+        };
+        for el in doc.select(&sel) {
+            let raw = match el.value().attr(attr) {
+                Some(v) => v,
+                None => continue,
+            };
+            let resolved = match base_url.join(raw) {
+                Ok(u) => u.to_string(),
+                Err(_) => continue,
+            };
+            links.push(ExtractedLink {
+                href: resolved,
+                anchor_text: String::new(),
+                is_nofollow: false,
+                link_type: kind,
             });
         }
     }

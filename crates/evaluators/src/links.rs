@@ -101,15 +101,20 @@ impl Evaluator for LinksEvaluator {
             }
 
             let host = abs.host_str().map(|h| h.to_ascii_lowercase());
-            if matches!(host.as_deref(), Some("localhost") | Some("127.0.0.1")) {
-                saw_localhost = true;
-            }
-
             let is_internal_link = host.is_some() && host == base_host;
             if is_internal_link {
                 internal += 1;
             } else if host.is_some() {
                 external += 1;
+            }
+
+            // SF semantics: localhost/127.0.0.1 outlinks are only interesting
+            // when they're foreign to the page's own host (i.e. a stray dev
+            // URL left in production). Skip if the page itself is on localhost.
+            if !is_internal_link
+                && matches!(host.as_deref(), Some("localhost") | Some("127.0.0.1"))
+            {
+                saw_localhost = true;
             }
 
             let rel = a.value().attr("rel").unwrap_or("").to_ascii_lowercase();
