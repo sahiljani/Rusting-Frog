@@ -185,9 +185,7 @@ impl Evaluator for AmpEvaluator {
         // Inline <script> without any AMP attribute is disallowed
         // (except for JSON-LD). Spot-check by finding non-async scripts
         // with no custom-element attribute and no type="application/ld+json".
-        if !has_disallowed
-            && let Ok(sel) = Selector::parse("script")
-        {
+        if !has_disallowed && let Ok(sel) = Selector::parse("script") {
             for el in parsed.select(&sel) {
                 let v = el.value();
                 let is_amp_runtime = v

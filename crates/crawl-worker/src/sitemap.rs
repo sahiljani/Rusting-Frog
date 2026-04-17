@@ -133,16 +133,12 @@ fn parse(body: &str) -> ParseResult {
                 }
             }
             Ok(Event::Text(e)) => {
-                if in_loc
-                    && let Ok(s) = e.unescape()
-                {
+                if in_loc && let Ok(s) = e.unescape() {
                     current.push_str(&s);
                 }
             }
             Ok(Event::CData(e)) => {
-                if in_loc
-                    && let Ok(s) = std::str::from_utf8(e.as_ref())
-                {
+                if in_loc && let Ok(s) = std::str::from_utf8(e.as_ref()) {
                     current.push_str(s);
                 }
             }

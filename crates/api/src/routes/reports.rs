@@ -330,21 +330,39 @@ async fn build_report(
         "canonical_chains" => report_canonical_chains(state, crawl_id, limit).await,
 
         "pagination_non_200" => report_pagination_non_200(state, crawl_id, limit).await,
-        "pagination_unlinked" => report_finding(state, crawl_id, "pagination_unlinked_pages", limit).await,
+        "pagination_unlinked" => {
+            report_finding(state, crawl_id, "pagination_unlinked_pages", limit).await
+        }
 
         "hreflang_missing" => report_finding(state, crawl_id, "hreflang_missing", limit).await,
-        "hreflang_inconsistent" => report_finding(state, crawl_id, "hreflang_inconsistent_language_links", limit).await,
-        "hreflang_non_canonical" => report_finding(state, crawl_id, "hreflang_non_canonical", limit).await,
+        "hreflang_inconsistent" => {
+            report_finding(
+                state,
+                crawl_id,
+                "hreflang_inconsistent_language_links",
+                limit,
+            )
+            .await
+        }
+        "hreflang_non_canonical" => {
+            report_finding(state, crawl_id, "hreflang_non_canonical", limit).await
+        }
 
         "insecure_content" => report_insecure_content(state, crawl_id, limit).await,
         "serp_summary" => report_serp_summary(state, crawl_id, limit).await,
         "orphan_pages" => report_orphan_pages(state, crawl_id, limit).await,
 
-        "structured_data_all" => report_finding(state, crawl_id, "structured_data_all", limit).await,
-        "structured_data_errors" => report_finding(state, crawl_id, "structured_data_parse_errors", limit).await,
+        "structured_data_all" => {
+            report_finding(state, crawl_id, "structured_data_all", limit).await
+        }
+        "structured_data_errors" => {
+            report_finding(state, crawl_id, "structured_data_parse_errors", limit).await
+        }
 
         "javascript_all" => report_finding(state, crawl_id, "javascript_all", limit).await,
-        "javascript_containing_js_content" => report_finding(state, crawl_id, "javascript_contains_js_content", limit).await,
+        "javascript_containing_js_content" => {
+            report_finding(state, crawl_id, "javascript_contains_js_content", limit).await
+        }
 
         "pagespeed_all" => report_finding(state, crawl_id, "pagespeed_all", limit).await,
 
@@ -1328,8 +1346,7 @@ async fn report_http_headers_summary(
         let Some(arr) = r.response_headers.as_array() else {
             continue;
         };
-        let mut seen_on_url: std::collections::BTreeSet<String> =
-            std::collections::BTreeSet::new();
+        let mut seen_on_url: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
         for pair in arr {
             let Some(p) = pair.as_array() else { continue };
             let name = p
