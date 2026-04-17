@@ -121,8 +121,36 @@ impl CrawlPipeline {
         );
 
         let evaluators = sf_evaluators::phase1_evaluators();
+        let mut status_check_countdown = 0_u32;
 
         while let Some(entry) = self.frontier.next() {
+            // External stop signal: the /v1/crawls/:id/stop endpoint
+            // flips crawls.status to 'completed' but has no IPC channel
+            // to us. Poll the DB once every 5 fetches — cheap, and means
+            // stop takes effect within ~5s at default rate limits. Break
+            // out so the post-loop analysis + set_status still runs.
+            if status_check_countdown == 0 {
+                if let Ok(row) = sqlx::query!(
+                    "SELECT status FROM crawls WHERE id = $1",
+                    self.crawl_id.as_uuid(),
+                )
+                .fetch_one(&self.db)
+                .await
+                {
+                    if matches!(row.status.as_str(), "completed" | "failed" | "cancelled") {
+                        tracing::info!(
+                            crawl_id = %self.crawl_id,
+                            status = %row.status,
+                            "external stop signal received — ending fetch loop",
+                        );
+                        break;
+                    }
+                }
+                status_check_countdown = 5;
+            } else {
+                status_check_countdown -= 1;
+            }
+
             // Robots gate: if Disallow matches, we still record the URL so
             // the "Blocked by Robots.txt" filter has a row to surface, but we
             // don't fetch it. This mirrors Screaming Frog's "discover but
@@ -317,11 +345,73 @@ impl CrawlPipeline {
             .await;
         }
 
+        self.run_duplicate_analysis().await?;
+
         self.set_status("completed").await?;
         tracing::info!(
             crawl_id = %self.crawl_id,
             urls_crawled = self.urls_crawled,
             "crawl completed"
+        );
+
+        Ok(())
+    }
+
+    // Post-crawl pass: SF groups URLs that share a normalised title,
+    // meta description, H1 or raw-HTML content hash and tags every
+    // member of a group with a Duplicate finding. We run this once at
+    // finalize because the signal is cross-URL — a row doesn't know
+    // it's a duplicate until the whole corpus is in.
+    async fn run_duplicate_analysis(&self) -> Result<()> {
+        let groups: &[(&str, &str)] = &[
+            ("LOWER(TRIM(title))", "title_duplicate"),
+            ("LOWER(TRIM(meta_description))", "meta_descripton_duplicate"),
+            ("LOWER(TRIM(h1_first))", "h1_duplicate"),
+            ("LOWER(TRIM(h2_first))", "h2_duplicate"),
+            ("encode(content_hash, 'hex')", "content_duplicates"),
+        ];
+
+        let mut total = 0_i64;
+        for (expr, filter_key) in groups {
+            let q = format!(
+                r#"
+                INSERT INTO crawl_url_findings (crawl_id, crawl_url_id, filter_key)
+                SELECT crawl_id, id, $2
+                FROM crawl_urls u
+                WHERE u.crawl_id = $1
+                  AND u.is_internal = TRUE
+                  AND ({expr}) IS NOT NULL
+                  AND ({expr}) <> ''
+                  AND ({expr}) IN (
+                      SELECT {expr}
+                      FROM crawl_urls
+                      WHERE crawl_id = $1
+                        AND is_internal = TRUE
+                        AND ({expr}) IS NOT NULL
+                        AND ({expr}) <> ''
+                      GROUP BY {expr}
+                      HAVING COUNT(*) >= 2
+                  )
+                "#,
+                expr = expr
+            );
+            let n = sqlx::query(&q)
+                .bind(self.crawl_id.as_uuid())
+                .bind(*filter_key)
+                .execute(&self.db)
+                .await
+                .with_context(|| format!("duplicate analysis for {filter_key}"))?
+                .rows_affected() as i64;
+            total += n;
+            if n > 0 {
+                tracing::info!(filter_key, rows = n, "duplicate findings emitted");
+            }
+        }
+
+        tracing::info!(
+            crawl_id = %self.crawl_id,
+            total_duplicate_findings = total,
+            "duplicate analysis pass complete"
         );
 
         Ok(())
