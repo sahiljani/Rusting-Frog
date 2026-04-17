@@ -1,0 +1,167 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT id, url, status_code, content_type,\n               is_internal, depth, title, title_length, title_pixel_width,\n               meta_description, meta_description_length,\n               meta_description_pixel_width,\n               h1_first, h1_count, h2_first, h2_count,\n               word_count, response_time_ms, content_length,\n               redirect_url, canonical_url, meta_robots, crawled_at,\n               indexability, indexability_status\n        FROM crawl_urls\n        WHERE id = $1 AND crawl_id = $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "status_code",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 3,
+        "name": "content_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "is_internal",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 5,
+        "name": "depth",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "title_length",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 8,
+        "name": "title_pixel_width",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 9,
+        "name": "meta_description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "meta_description_length",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 11,
+        "name": "meta_description_pixel_width",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 12,
+        "name": "h1_first",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 13,
+        "name": "h1_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 14,
+        "name": "h2_first",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 15,
+        "name": "h2_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 16,
+        "name": "word_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 17,
+        "name": "response_time_ms",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 18,
+        "name": "content_length",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 19,
+        "name": "redirect_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 20,
+        "name": "canonical_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 21,
+        "name": "meta_robots",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 22,
+        "name": "crawled_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 23,
+        "name": "indexability",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 24,
+        "name": "indexability_status",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "a95f87d01ea4eefc8aa04f36dc1809740a3adbdb3555247366541395b8818728"
+}

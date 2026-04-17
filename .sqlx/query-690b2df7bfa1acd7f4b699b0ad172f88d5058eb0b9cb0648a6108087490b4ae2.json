@@ -1,0 +1,59 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT u.id, u.url, u.status_code, u.content_type,\n               u.content_length, u.response_time_ms, l.anchor_text\n        FROM crawl_links l\n        JOIN crawl_urls u ON u.id = l.target_url_id\n        WHERE l.source_url_id = $1\n          AND l.crawl_id = $2\n          AND u.content_type = 'image'\n        ORDER BY u.url\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "status_code",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 3,
+        "name": "content_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "content_length",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "response_time_ms",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 6,
+        "name": "anchor_text",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "690b2df7bfa1acd7f4b699b0ad172f88d5058eb0b9cb0648a6108087490b4ae2"
+}

@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO projects (id, tenant_id, name, seed_url, created_at, updated_at)\n        VALUES ($1, $2, $3, $4, $5, $5)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0cc67ed1412da4414105ba0a138bec76d6be4694cef0a517ed37a47685816b64"
+}

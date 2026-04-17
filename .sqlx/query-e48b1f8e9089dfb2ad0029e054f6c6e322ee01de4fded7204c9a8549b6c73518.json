@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT url FROM crawl_sitemap_urls WHERE crawl_id = $1 ORDER BY url LIMIT $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "url",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "e48b1f8e9089dfb2ad0029e054f6c6e322ee01de4fded7204c9a8549b6c73518"
+}

@@ -1,0 +1,42 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT u.url, u.status_code, u.title, u.title_length\n        FROM crawl_urls u\n        JOIN crawl_url_findings f ON f.crawl_url_id = u.id\n        WHERE u.crawl_id = $1 AND f.filter_key = $2\n        ORDER BY u.url\n        LIMIT $3\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "status_code",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 2,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "title_length",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "7f9dc6884b784cf45f6d18376862ef9a2bbc745e6d646f013e59b5bb47889caa"
+}

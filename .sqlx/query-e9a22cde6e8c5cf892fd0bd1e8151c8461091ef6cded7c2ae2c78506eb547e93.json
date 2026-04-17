@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE crawls SET robots_txt_raw = $1, robots_txt_status = $2 WHERE id = $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int2",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e9a22cde6e8c5cf892fd0bd1e8151c8461091ef6cded7c2ae2c78506eb547e93"
+}

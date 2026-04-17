@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT l.source_url_id, u.url as source_url, l.anchor_text, l.link_type\n        FROM crawl_links l\n        JOIN crawl_urls u ON u.id = l.source_url_id\n        WHERE l.target_url_id = $1 AND l.crawl_id = $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "source_url_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "source_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "anchor_text",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "link_type",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "a94350f71be56708090f80003bb38efe3217e4d18e3b08439106e3f53450fd0a"
+}

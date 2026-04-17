@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT robots_txt_raw, robots_txt_status, seed_urls\n        FROM crawls\n        WHERE id = $1 AND tenant_id = $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "robots_txt_raw",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "robots_txt_status",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 2,
+        "name": "seed_urls",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": [
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "29b7d60eed70bfee4bd33a9c1647c3b180507bfe65c9da58cedba3a55b0858e2"
+}

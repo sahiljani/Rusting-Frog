@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT depth, COUNT(*) as \"count!\"\n        FROM crawl_urls\n        WHERE crawl_id = $1 AND is_internal = true\n        GROUP BY depth\n        ORDER BY depth\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "depth",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "625be74567b016468a7e3eb7123346b1aba33564b8bf1160f8a1cde8c4981d3d"
+}

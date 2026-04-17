@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT url, status_code, redirect_url\n        FROM crawl_urls\n        WHERE crawl_id = $1 AND status_code BETWEEN 300 AND 399\n        ORDER BY url\n        LIMIT $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "status_code",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 2,
+        "name": "redirect_url",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "311e8cfa80ea68a1528fd5fa7273e693902ab1ac5f96106e2c1bc1e170aee6cd"
+}

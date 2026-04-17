@@ -1,0 +1,47 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT url, content_type, content_length, raw_html, content_hash\n        FROM crawl_urls\n        WHERE id = $1 AND crawl_id = $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "content_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "content_length",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "raw_html",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "content_hash",
+        "type_info": "Bytea"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "5b429537a139ed8ea097e0db1737b90038f12551c6bf7ebe3714f42632cdbd71"
+}

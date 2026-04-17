@@ -1,0 +1,59 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT url, title, title_length, title_pixel_width,\n               meta_description, meta_description_length,\n               meta_description_pixel_width\n        FROM crawl_urls\n        WHERE id = $1 AND crawl_id = $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "title_length",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "title_pixel_width",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "meta_description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "meta_description_length",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "meta_description_pixel_width",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "df2a2e7349fc26a319151d5cb8edd72b7ceec929a39243457f0ba2a2d8f4576e"
+}

@@ -1,0 +1,92 @@
+# Full-stack compose for running sf-clone on a single EC2 host.
+#
+# Services:
+#   postgres    persistent DB (named volume)
+#   redis       pub/sub + future job queue
+#   migrations  one-shot: runs sf-migrations, exits 0
+#   api         sf-api on :3000
+#   worker      sf-crawl-worker (scale with `--scale worker=N`)
+#
+# Bring up:   docker compose up -d --build
+# Tail logs:  docker compose logs -f api worker
+# Tear down:  docker compose down          (keeps DB volume)
+#             docker compose down -v       (wipes DB volume)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sf}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-sf_clone}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sf} -d ${POSTGRES_DB:-sf_clone}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  migrations:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sf-clone:latest
+    command: ["sf-migrations"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-sf}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-sf_clone}
+      RUST_LOG: ${RUST_LOG:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    image: sf-clone:latest
+    command: ["sf-api"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-sf}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-sf_clone}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      LISTEN_ADDR: 0.0.0.0:3000
+      RUST_LOG: ${RUST_LOG:-info}
+      SF_DEV_MODE: ${SF_DEV_MODE:-}
+    ports:
+      - "${API_PORT:-3000}:3000"
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    image: sf-clone:latest
+    command: ["sf-crawl-worker"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-sf}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-sf_clone}
+      REDIS_URL: redis://redis:6379
+      RUST_LOG: ${RUST_LOG:-info}
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:

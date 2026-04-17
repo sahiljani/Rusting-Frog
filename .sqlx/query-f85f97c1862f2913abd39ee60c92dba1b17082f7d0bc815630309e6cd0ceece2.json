@@ -1,0 +1,114 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT u.id, u.url, u.status_code, u.content_type,\n                   u.is_internal, u.depth, u.title, u.title_length,\n                   u.h1_first, u.h1_count, u.word_count,\n                   u.response_time_ms, u.content_length, u.crawled_at,\n                   u.indexability, u.indexability_status\n            FROM crawl_urls u\n            JOIN crawl_url_findings f ON f.crawl_url_id = u.id\n            WHERE u.crawl_id = $1 AND f.filter_key = $2\n            ORDER BY u.url\n            LIMIT $3\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "status_code",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 3,
+        "name": "content_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "is_internal",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 5,
+        "name": "depth",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "title_length",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 8,
+        "name": "h1_first",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "h1_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 10,
+        "name": "word_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 11,
+        "name": "response_time_ms",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 12,
+        "name": "content_length",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 13,
+        "name": "crawled_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 14,
+        "name": "indexability",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 15,
+        "name": "indexability_status",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "f85f97c1862f2913abd39ee60c92dba1b17082f7d0bc815630309e6cd0ceece2"
+}

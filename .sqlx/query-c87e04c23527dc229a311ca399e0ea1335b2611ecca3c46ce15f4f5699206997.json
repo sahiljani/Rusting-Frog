@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO crawl_sitemap_urls (crawl_id, url)\n                VALUES ($1, $2)\n                ON CONFLICT (crawl_id, url) DO NOTHING\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c87e04c23527dc229a311ca399e0ea1335b2611ecca3c46ce15f4f5699206997"
+}

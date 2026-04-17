@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT filter_key, COUNT(*) as \"count!\"\n        FROM crawl_url_findings\n        WHERE crawl_id = $1\n        GROUP BY filter_key\n        ORDER BY filter_key\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "filter_key",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "992959b8cf7dd9bacf67a61591ced994def402572fc0616fc0c8955dfa5f1e10"
+}

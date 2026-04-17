@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT sitemap_xml_raw, sitemap_xml_status, seed_urls\n        FROM crawls\n        WHERE id = $1 AND tenant_id = $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "sitemap_xml_raw",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "sitemap_xml_status",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 2,
+        "name": "seed_urls",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": [
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "66eccda6eee2d38f37e8907533cb02afd4f0eebbd5a41bda4d2148bd36b30758"
+}

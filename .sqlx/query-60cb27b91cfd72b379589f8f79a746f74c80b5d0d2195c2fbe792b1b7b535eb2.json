@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE crawls SET urls_crawled = $1, urls_discovered = $2 WHERE id = $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "60cb27b91cfd72b379589f8f79a746f74c80b5d0d2195c2fbe792b1b7b535eb2"
+}

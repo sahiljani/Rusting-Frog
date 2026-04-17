@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT COUNT(*)\n        FROM crawl_sitemap_urls s\n        WHERE s.crawl_id = $1\n          AND EXISTS (SELECT 1 FROM crawl_urls u WHERE u.crawl_id = $1 AND u.url = s.url)\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "bb58eae556dc0b30dc4efe7b2fc3f1bf92f872218429743c96579fb23e2f9cc7"
+}

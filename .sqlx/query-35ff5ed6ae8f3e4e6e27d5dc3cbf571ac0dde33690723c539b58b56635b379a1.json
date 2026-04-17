@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO crawls (id, project_id, tenant_id, status, seed_urls, urls_discovered, urls_crawled, created_at)\n        VALUES ($1, $2, $3, 'queued', $4, 0, 0, $5)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Jsonb",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "35ff5ed6ae8f3e4e6e27d5dc3cbf571ac0dde33690723c539b58b56635b379a1"
+}
