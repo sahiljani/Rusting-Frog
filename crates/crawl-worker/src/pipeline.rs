@@ -14,6 +14,7 @@ use crate::fetcher::{FetchResult, Fetcher};
 use crate::frontier::Frontier;
 use crate::parser;
 use crate::robots::RobotsGate;
+use crate::sitemap::SitemapCapture;
 
 pub struct CrawlPipeline {
     db: PgPool,
@@ -85,6 +86,39 @@ impl CrawlPipeline {
         )
         .execute(&self.db)
         .await?;
+
+        // Fetch sitemap.xml (or sitemap index) and persist both the raw body
+        // + every <loc> URL into crawl_sitemap_urls. SF's "URLs in Sitemap"
+        // and "Orphan URLs" filters read from this set — we don't gate the
+        // crawl on it (unlike robots), just record coverage.
+        let sitemap = SitemapCapture::fetch(self.fetcher.client(), &self.seed_url).await;
+        sqlx::query!(
+            "UPDATE crawls SET sitemap_xml_raw = $1, sitemap_xml_status = $2 WHERE id = $3",
+            sitemap.raw.as_deref(),
+            sitemap.status,
+            self.crawl_id.as_uuid(),
+        )
+        .execute(&self.db)
+        .await?;
+        for sm_url in &sitemap.urls {
+            sqlx::query!(
+                r#"
+                INSERT INTO crawl_sitemap_urls (crawl_id, url)
+                VALUES ($1, $2)
+                ON CONFLICT (crawl_id, url) DO NOTHING
+                "#,
+                self.crawl_id.as_uuid(),
+                sm_url,
+            )
+            .execute(&self.db)
+            .await
+            .ok();
+        }
+        tracing::info!(
+            sitemap_status = ?sitemap.status,
+            sitemap_url_count = sitemap.urls.len(),
+            "sitemap captured"
+        );
 
         let evaluators = sf_evaluators::phase1_evaluators();
 

@@ -1,4 +1,4 @@
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
@@ -18,6 +18,7 @@ pub fn routes() -> Router<AppState> {
         .route("/crawls/{id}/resume", post(resume_crawl))
         .route("/crawls/{id}/stop", post(stop_crawl))
         .route("/crawls/{id}/robots", get(get_robots))
+        .route("/crawls/{id}/sitemap", get(get_sitemap))
 }
 
 #[derive(Debug, Serialize)]
@@ -213,6 +214,92 @@ async fn get_robots(
         "groups": groups,
         "blocked_url_count": blocked_count,
     })))
+}
+
+// The sitemap.xml detail endpoint. Returns the literal XML body plus a
+// summary of the URL set: total URLs in the sitemap, how many of those we
+// actually crawled, and how many sitemap URLs are orphans (present in the
+// sitemap but never discovered by the crawler). Drives the SF "Sitemaps"
+// tab and its "URLs in Sitemap" / "Orphan URLs" filters.
+async fn get_sitemap(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Query(query): Query<SitemapQuery>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let row = sqlx::query!(
+        r#"
+        SELECT sitemap_xml_raw, sitemap_xml_status, seed_urls
+        FROM crawls
+        WHERE id = $1 AND tenant_id = $2
+        "#,
+        &id,
+        auth.tenant_id.as_str()
+    )
+    .fetch_optional(&state.db)
+    .await?
+    .ok_or_else(|| ApiError::not_found("crawl not found"))?;
+
+    let seed_urls: Vec<String> = serde_json::from_value(row.seed_urls).unwrap_or_default();
+    let sitemap_url = seed_urls
+        .first()
+        .and_then(|s| url::Url::parse(s).ok())
+        .and_then(|u| {
+            let host = u.host_str()?;
+            Some(format!("{}://{}/sitemap.xml", u.scheme(), host))
+        });
+
+    // Total URLs in sitemap + crawled subset, computed server-side so the UI
+    // just renders the numbers. `crawled_intersect` is URLs present in BOTH
+    // the sitemap and the crawl; `orphan_count` is sitemap-only.
+    let total_count: i64 = sqlx::query_scalar!(
+        "SELECT COUNT(*) FROM crawl_sitemap_urls WHERE crawl_id = $1",
+        &id,
+    )
+    .fetch_one(&state.db)
+    .await?
+    .unwrap_or(0);
+
+    let crawled_intersect: i64 = sqlx::query_scalar!(
+        r#"
+        SELECT COUNT(*)
+        FROM crawl_sitemap_urls s
+        WHERE s.crawl_id = $1
+          AND EXISTS (SELECT 1 FROM crawl_urls u WHERE u.crawl_id = $1 AND u.url = s.url)
+        "#,
+        &id,
+    )
+    .fetch_one(&state.db)
+    .await?
+    .unwrap_or(0);
+
+    let orphan_count = total_count - crawled_intersect;
+
+    let limit = query.limit.unwrap_or(100).clamp(1, 1000);
+    let urls: Vec<String> = sqlx::query_scalar!(
+        "SELECT url FROM crawl_sitemap_urls WHERE crawl_id = $1 ORDER BY url LIMIT $2",
+        &id,
+        limit,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    let urls_returned = urls.len();
+    Ok(Json(serde_json::json!({
+        "url": sitemap_url,
+        "status": row.sitemap_xml_status,
+        "raw": row.sitemap_xml_raw,
+        "url_count": total_count,
+        "crawled_count": crawled_intersect,
+        "orphan_count": orphan_count,
+        "urls_returned": urls_returned,
+        "urls": urls,
+    })))
+}
+
+#[derive(Debug, Deserialize)]
+struct SitemapQuery {
+    limit: Option<i64>,
 }
 
 // Lightweight robots.txt group extractor — just enough for the UI to show

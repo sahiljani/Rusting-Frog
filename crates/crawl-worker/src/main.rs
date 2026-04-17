@@ -9,6 +9,7 @@ mod frontier;
 mod parser;
 mod pipeline;
 mod robots;
+mod sitemap;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

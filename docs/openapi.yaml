@@ -133,7 +133,7 @@ info:
 
     **This spec is hand-written** — a Swagger UI app in `../swagger-ui/` loads it
     and issues requests against the Rust server at `http://localhost:3000`.
-  version: "0.13.0"
+  version: "0.14.0"
   contact:
     name: sf-clone-rust
     url: https://github.com/sahiljani/Rusting-Frog
@@ -469,6 +469,80 @@ paths:
                     allow: []
                     sitemap: ["https://github.com/sitemap.xml"]
                 blocked_url_count: 2
+
+  /v1/crawls/{id}/sitemap:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlId" }
+    get:
+      tags: [crawls]
+      summary: Get the sitemap.xml body + URL set used for this crawl
+      description: |
+        Returns the sitemap.xml body fetched at crawl start (or each of the
+        child sitemap bodies if the root was a `<sitemapindex>`), the HTTP
+        status of that fetch, and the parsed URL set with coverage stats.
+
+        Coverage semantics:
+          - `url_count` — total unique `<loc>` URLs extracted.
+          - `crawled_count` — how many of those were actually visited by
+            the crawler.
+          - `orphan_count` = `url_count − crawled_count`; drives the SF
+            "Orphan URLs" filter (URLs in sitemap but never discovered).
+
+        The `urls` array is paginated via `?limit=N` (default 100, max
+        1000); the totals always reflect the full set.
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 1000, default: 100 }
+          description: Max URLs to return in the `urls` array.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, status, raw, url_count, crawled_count, orphan_count, urls, urls_returned]
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                    nullable: true
+                    description: The URL the sitemap.xml was fetched from.
+                  status:
+                    type: integer
+                    nullable: true
+                    description: HTTP status of the sitemap fetch. `null` means the fetch errored.
+                  raw:
+                    type: string
+                    nullable: true
+                    description: Literal sitemap body (the root document only; child sitemap bodies are not stored).
+                  url_count:
+                    type: integer
+                    description: Total unique URLs extracted from the sitemap(s).
+                  crawled_count:
+                    type: integer
+                    description: Count of sitemap URLs also present in the crawl.
+                  orphan_count:
+                    type: integer
+                    description: Count of sitemap URLs NOT visited by the crawler.
+                  urls_returned:
+                    type: integer
+                    description: Size of the `urls` array in this response (honours `?limit=`).
+                  urls:
+                    type: array
+                    items: { type: string, format: uri }
+              example:
+                url: "https://www.cloudflare.com/sitemap.xml"
+                status: 200
+                raw: "<?xml version=\"1.0\" encoding=\"UTF-8\"?><urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">…</urlset>"
+                url_count: 1820
+                crawled_count: 1
+                orphan_count: 1819
+                urls_returned: 100
+                urls:
+                  - "https://www.cloudflare.com/"
+                  - "https://www.cloudflare.com/about-overview/"
 
   /v1/crawls/{crawl_id}/urls:
     parameters:
