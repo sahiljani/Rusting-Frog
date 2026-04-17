@@ -1,0 +1,514 @@
+openapi: 3.0.3
+info:
+  title: Rusting Frog API
+  description: |
+    Screaming-Frog-compatible SEO crawler backend, in Rust.
+
+    **Auth.** Every endpoint requires a Laravel-issued JWT in `Authorization: Bearer <jwt>`.
+    Dev: mint one with `node scripts/mint_jwt.js`.
+
+    **Tenancy.** `tenant_id` is taken from the JWT `tenant_id` claim; callers never
+    pass it. All reads and writes are scoped to the caller's tenant.
+
+    **This spec is hand-written** — a Swagger UI app in `../swagger-ui/` loads it
+    and issues requests against the Rust server at `http://localhost:3000`.
+  version: "0.1.0"
+  contact:
+    name: sf-clone-rust
+    url: https://github.com/sahiljani/Rusting-Frog
+
+servers:
+  - url: http://localhost:3000
+    description: Local dev server
+
+tags:
+  - name: catalog
+    description: Static tab/filter registry. Cacheable.
+  - name: projects
+    description: A "crawl site" — name + seed URL + persisted config.
+  - name: crawls
+    description: Crawl lifecycle (start, pause, resume, stop, status).
+  - name: urls
+    description: Per-URL results grid and detail tabs.
+  - name: overview
+    description: Aggregate findings across a whole crawl.
+
+security:
+  - bearerAuth: []
+
+paths:
+  /v1/catalog/tabs:
+    get:
+      tags: [catalog]
+      summary: List every tab and its filters
+      description: |
+        Returns all 33 SF tabs, each with its filter keys, display names,
+        severities, and filter types. Used by the frontend to render tabs
+        and filter dropdowns. Safe to cache for an hour.
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TabCatalog" }
+              examples:
+                sample:
+                  value:
+                    - key: page_titles
+                      display_name: Page Titles
+                      i18n_key: page_titles
+                      has_dynamic_filters: false
+                      filters:
+                        - key: title_missing
+                          display_name: Missing
+                          severity: Issue
+                          filter_type: Issue
+                          has_watermark: false
+
+  /v1/projects:
+    get:
+      tags: [projects]
+      summary: List projects for the caller's tenant
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Project" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    post:
+      tags: [projects]
+      summary: Create a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateProjectRequest" }
+            examples:
+              example:
+                value:
+                  name: My Site
+                  seed_url: https://example.com/
+      responses:
+        "200":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /v1/projects/{id}:
+    parameters:
+      - { $ref: "#/components/parameters/ProjectId" }
+    get:
+      tags: [projects]
+      summary: Get a project by id
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [projects]
+      summary: Delete a project and cascade its crawls
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted: { type: boolean }
+                required: [deleted]
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/projects/{project_id}/crawls:
+    parameters:
+      - in: path
+        name: project_id
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [crawls]
+      summary: List crawls for a project
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CrawlSummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    post:
+      tags: [crawls]
+      summary: Start a crawl (async — returns immediately with status=queued)
+      responses:
+        "200":
+          description: Crawl queued
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CrawlStartResponse" }
+        "404":
+          description: Project not found
+          $ref: "#/components/responses/NotFound"
+
+  /v1/crawls/{id}:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlId" }
+    get:
+      tags: [crawls]
+      summary: Get crawl status + counters
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CrawlDetail" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/crawls/{id}/pause:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlId" }
+    post:
+      tags: [crawls]
+      summary: Pause a running crawl (idempotent)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CrawlStartResponse" }
+
+  /v1/crawls/{id}/resume:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlId" }
+    post:
+      tags: [crawls]
+      summary: Resume a paused crawl
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CrawlStartResponse" }
+
+  /v1/crawls/{id}/stop:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlId" }
+    post:
+      tags: [crawls]
+      summary: Stop a crawl and finalize
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CrawlStartResponse" }
+
+  /v1/crawls/{crawl_id}/urls:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlIdAsCrawl" }
+      - in: query
+        name: tab
+        schema: { type: string }
+        description: Tab key (unused when `filter` is provided — filter is authoritative)
+      - in: query
+        name: filter
+        schema: { type: string }
+        description: |
+          Filter key to grid by, e.g. `meta_descripton_missing`, `h1_multiple`,
+          `title_over_x_characters`. Returns only URLs whose findings include this key.
+      - in: query
+        name: q
+        schema: { type: string }
+        description: Free-text substring search across URL (not yet implemented)
+      - in: query
+        name: cursor
+        schema: { type: string }
+        description: Opaque pagination cursor (not yet implemented)
+      - in: query
+        name: limit
+        schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+    get:
+      tags: [urls]
+      summary: The main results grid — list URLs, optionally filtered by finding
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UrlGridResponse" }
+
+  /v1/crawls/{crawl_id}/urls/{url_id}:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlIdAsCrawl" }
+      - { $ref: "#/components/parameters/UrlId" }
+    get:
+      tags: [urls]
+      summary: URL detail (summary + every finding on this URL)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UrlDetail" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/crawls/{crawl_id}/urls/{url_id}/inlinks:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlIdAsCrawl" }
+      - { $ref: "#/components/parameters/UrlId" }
+    get:
+      tags: [urls]
+      summary: Inlinks — every URL that links to this one
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Inlink" }
+
+  /v1/crawls/{crawl_id}/urls/{url_id}/outlinks:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlIdAsCrawl" }
+      - { $ref: "#/components/parameters/UrlId" }
+    get:
+      tags: [urls]
+      summary: Outlinks — every URL this one links to
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Outlink" }
+
+  /v1/crawls/{crawl_id}/overview:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlIdAsCrawl" }
+    get:
+      tags: [overview]
+      summary: Count-by-filter rollup across the whole crawl
+      description: "Returns an object `{filter_key: count}` — feeds the overview tree pane."
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: { type: integer }
+              examples:
+                sample:
+                  value:
+                    internal_all: 105
+                    h1_missing: 2
+                    meta_descripton_multiple: 1
+                    title_over_x_characters: 12
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Short-lived JWT issued by Laravel; `tenant_id`, `user_id`, `scopes` claims required.
+
+  parameters:
+    ProjectId:
+      in: path
+      name: id
+      required: true
+      schema: { type: string, format: uuid }
+    CrawlId:
+      in: path
+      name: id
+      required: true
+      schema: { type: string, format: uuid }
+    CrawlIdAsCrawl:
+      in: path
+      name: crawl_id
+      required: true
+      schema: { type: string, format: uuid }
+    UrlId:
+      in: path
+      name: url_id
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid JWT
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    NotFound:
+      description: Resource not found in this tenant
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    ValidationError:
+      description: Request body failed validation
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+
+  schemas:
+    Problem:
+      type: object
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+      required: [title, status]
+
+    Project:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        seed_url: { type: string, format: uri }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+      required: [id, name, seed_url, created_at, updated_at]
+
+    CreateProjectRequest:
+      type: object
+      properties:
+        name: { type: string, example: "My Site" }
+        seed_url: { type: string, format: uri, example: "https://example.com/" }
+      required: [name, seed_url]
+
+    CrawlSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, enum: [queued, running, paused, completed, failed] }
+        urls_discovered: { type: integer }
+        urls_crawled: { type: integer }
+        started_at: { type: string, format: date-time, nullable: true }
+        completed_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+      required: [id, status, urls_discovered, urls_crawled, created_at]
+
+    CrawlDetail:
+      allOf:
+        - $ref: "#/components/schemas/CrawlSummary"
+        - type: object
+          properties:
+            project_id: { type: string, format: uuid }
+            seed_urls:
+              type: array
+              items: { type: string, format: uri }
+
+    CrawlStartResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string }
+        message: { type: string }
+      required: [id, status, message]
+
+    TabCatalog:
+      type: object
+      properties:
+        key: { type: string }
+        display_name: { type: string }
+        i18n_key: { type: string }
+        has_dynamic_filters: { type: boolean }
+        filters:
+          type: array
+          items: { $ref: "#/components/schemas/FilterCatalog" }
+      required: [key, display_name, filters]
+
+    FilterCatalog:
+      type: object
+      properties:
+        key: { type: string, example: h1_missing }
+        display_name: { type: string, example: Missing }
+        severity:
+          type: string
+          enum: [Issue, PotentialIssue, Opportunity, Normal]
+        filter_type:
+          type: string
+          enum: [Normal, Issue, PotentialIssue, Opportunity, Highlight, NotSet, PostCrawlAnalysis]
+        has_watermark: { type: boolean }
+      required: [key, display_name]
+
+    UrlGridResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/UrlRow" }
+        next_cursor:
+          type: string
+          nullable: true
+      required: [data]
+
+    UrlRow:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        url: { type: string, format: uri }
+        status_code: { type: integer, nullable: true }
+        content_type: { type: string }
+        is_internal: { type: boolean }
+        depth: { type: integer }
+        title: { type: string, nullable: true }
+        title_length: { type: integer, nullable: true }
+        h1_first: { type: string, nullable: true }
+        h1_count: { type: integer }
+        word_count: { type: integer, nullable: true }
+        response_time_ms: { type: integer, nullable: true }
+        content_length: { type: integer, nullable: true }
+        crawled_at: { type: string, format: date-time, nullable: true }
+      required: [id, url]
+
+    UrlDetail:
+      allOf:
+        - $ref: "#/components/schemas/UrlRow"
+        - type: object
+          properties:
+            title_pixel_width: { type: integer, nullable: true }
+            meta_description: { type: string, nullable: true }
+            meta_description_length: { type: integer, nullable: true }
+            h2_first: { type: string, nullable: true }
+            h2_count: { type: integer }
+            redirect_url: { type: string, nullable: true }
+            canonical_url: { type: string, nullable: true }
+            meta_robots: { type: string, nullable: true }
+            findings:
+              type: array
+              items: { type: string }
+              description: Filter keys that fired on this URL.
+
+    Inlink:
+      type: object
+      properties:
+        source_url_id: { type: string, format: uuid }
+        source_url: { type: string, format: uri }
+        anchor_text: { type: string, nullable: true }
+        link_type: { type: string }
+
+    Outlink:
+      type: object
+      properties:
+        target_url_id: { type: string, format: uuid }
+        target_url: { type: string, format: uri }
+        anchor_text: { type: string, nullable: true }
+        link_type: { type: string }

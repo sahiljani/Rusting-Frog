@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Rusting Frog — API Explorer</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui.css">
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; }
+    .sf-topbar {
+      padding: 10px 16px;
+      background: #1b1f23;
+      color: #fff;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      border-bottom: 2px solid #f0663f;
+    }
+    .sf-topbar h1 { font-size: 16px; margin: 0; font-weight: 600; }
+    .sf-topbar .sf-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #888; display: inline-block; margin-right: 6px;
+    }
+    .sf-topbar .sf-dot.on { background: #3fb950; }
+    .sf-topbar .sf-dot.off { background: #f85149; }
+    .sf-topbar label { font-size: 13px; color: #c9d1d9; }
+    .sf-topbar input[type="text"] {
+      background: #0d1117; color: #fff;
+      border: 1px solid #30363d; border-radius: 6px;
+      padding: 6px 10px; font-family: ui-monospace, monospace; font-size: 12px;
+      min-width: 360px;
+    }
+    .sf-topbar button {
+      background: #f0663f; color: #fff;
+      border: 0; border-radius: 6px; padding: 6px 12px;
+      cursor: pointer; font-size: 13px;
+    }
+    .sf-topbar button:hover { background: #d85425; }
+    .sf-spacer { flex: 1; }
+    .sf-hint { font-size: 12px; color: #8b949e; }
+    #swagger-ui { padding-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="sf-topbar">
+    <h1>Rusting Frog API</h1>
+    <span class="sf-hint"><span id="sf-health-dot" class="sf-dot"></span><span id="sf-health-label">probing</span></span>
+    <span class="sf-spacer"></span>
+    <label>Server: <input id="sf-server" type="text" value="http://localhost:3000"></label>
+    <label>JWT: <input id="sf-jwt" type="text" placeholder="paste token (or /set-jwt)" style="min-width:240px"></label>
+    <button id="sf-apply">Apply</button>
+  </div>
+  <div id="swagger-ui"></div>
+
+  <script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-standalone-preset.js"></script>
+  <script src="https://unpkg.com/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+  <script>
+    const SPEC_URL = "../docs/openapi.yaml";
+    const STORE_KEY = "rf.api.settings";
+
+    function load() {
+      try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); } catch { return {}; }
+    }
+    function save(v) { localStorage.setItem(STORE_KEY, JSON.stringify(v)); }
+
+    const saved = load();
+    if (saved.server) document.getElementById("sf-server").value = saved.server;
+    if (saved.jwt) document.getElementById("sf-jwt").value = saved.jwt;
+
+    async function fetchSpec(server) {
+      const resp = await fetch(SPEC_URL);
+      const text = await resp.text();
+      const obj = jsyaml.load(text);
+      obj.servers = [{ url: server, description: "Configured server" }];
+      return obj;
+    }
+
+    async function probe(server) {
+      const dot = document.getElementById("sf-health-dot");
+      const lbl = document.getElementById("sf-health-label");
+      try {
+        const r = await fetch(server + "/v1/catalog/tabs", { method: "GET" });
+        if (r.ok) { dot.className = "sf-dot on"; lbl.textContent = "API up"; }
+        else { dot.className = "sf-dot off"; lbl.textContent = "API " + r.status; }
+      } catch (e) {
+        dot.className = "sf-dot off"; lbl.textContent = "API unreachable";
+      }
+    }
+
+    async function boot() {
+      const server = document.getElementById("sf-server").value.trim();
+      const jwt = document.getElementById("sf-jwt").value.trim();
+      save({ server, jwt });
+      probe(server);
+
+      const spec = await fetchSpec(server);
+
+      window.ui = SwaggerUIBundle({
+        spec,
+        dom_id: "#swagger-ui",
+        deepLinking: true,
+        presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+        layout: "StandaloneLayout",
+        persistAuthorization: true,
+        requestInterceptor: (req) => {
+          if (jwt && !req.headers.Authorization) {
+            req.headers.Authorization = "Bearer " + jwt;
+          }
+          return req;
+        },
+        onComplete: () => {
+          if (jwt) {
+            try { window.ui.preauthorizeApiKey("bearerAuth", jwt); } catch {}
+          }
+        },
+      });
+    }
+
+    document.getElementById("sf-apply").addEventListener("click", boot);
+    boot();
+  </script>
+</body>
+</html>

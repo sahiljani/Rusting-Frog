@@ -36,7 +36,7 @@ impl Fetcher {
     }
 
     pub async fn fetch(&self, url: &Url) -> Result<FetchResult> {
-        if is_private_ip(url) {
+        if is_private_ip(url) && !allow_private_ips() {
             anyhow::bail!("SSRF blocked: private/reserved IP");
         }
 
@@ -79,6 +79,13 @@ impl Fetcher {
             final_url,
         })
     }
+}
+
+fn allow_private_ips() -> bool {
+    matches!(
+        std::env::var("SF_ALLOW_PRIVATE_IPS").ok().as_deref(),
+        Some("1") | Some("true")
+    )
 }
 
 fn is_private_ip(url: &Url) -> bool {
