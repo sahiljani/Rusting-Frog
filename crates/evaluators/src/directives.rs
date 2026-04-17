@@ -166,11 +166,7 @@ fn robots_meta_outside_head(doc: &scraper::Html) -> bool {
         Err(_) => return false,
     };
     for el in doc.select(&sel) {
-        let name_lc = el
-            .value()
-            .attr("name")
-            .unwrap_or("")
-            .to_ascii_lowercase();
+        let name_lc = el.value().attr("name").unwrap_or("").to_ascii_lowercase();
         if name_lc != "robots" {
             continue;
         }
@@ -295,8 +291,7 @@ mod tests {
 
     #[test]
     fn meta_refresh_flagged() {
-        let html =
-            r#"<html><head><meta http-equiv="refresh" content="5;url=/x"></head></html>"#;
+        let html = r#"<html><head><meta http-equiv="refresh" content="5;url=/x"></head></html>"#;
         let keys = eval(None, html);
         assert!(keys.contains(&FilterKey::DirectivesRefresh));
     }
@@ -311,8 +306,7 @@ mod tests {
 
     #[test]
     fn robots_inside_head_not_flagged_outside() {
-        let html =
-            r#"<html><head><meta name="robots" content="noindex"></head></html>"#;
+        let html = r#"<html><head><meta name="robots" content="noindex"></head></html>"#;
         let keys = eval(Some("noindex"), html);
         assert!(!keys.contains(&FilterKey::DirectivesOutsideHead));
     }

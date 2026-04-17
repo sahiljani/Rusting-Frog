@@ -17,12 +17,12 @@
 //! missing capture so the UI can degrade gracefully.
 
 use axum::extract::{Path, Query, State};
-use axum::http::{header, StatusCode};
+use axum::http::{StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use uuid::Uuid;
 
 use crate::app_state::AppState;
@@ -50,57 +50,162 @@ struct ReportDef {
 
 const REPORTS: &[ReportDef] = &[
     // Top-level overviews
-    ReportDef { key: "crawl_overview",              title: "Crawl Overview",                group: "Overview" },
-    ReportDef { key: "issues_overview",             title: "Issues Overview",               group: "Overview" },
-    ReportDef { key: "segments_overview",           title: "Segments Overview",             group: "Overview" },
-    ReportDef { key: "site_structure",              title: "Site Structure",                group: "Overview" },
-
+    ReportDef {
+        key: "crawl_overview",
+        title: "Crawl Overview",
+        group: "Overview",
+    },
+    ReportDef {
+        key: "issues_overview",
+        title: "Issues Overview",
+        group: "Overview",
+    },
+    ReportDef {
+        key: "segments_overview",
+        title: "Segments Overview",
+        group: "Overview",
+    },
+    ReportDef {
+        key: "site_structure",
+        title: "Site Structure",
+        group: "Overview",
+    },
     // Redirects
-    ReportDef { key: "redirects_all",               title: "All Redirects",                 group: "Redirects" },
-    ReportDef { key: "redirect_chains",             title: "Redirect Chains",               group: "Redirects" },
-    ReportDef { key: "redirect_and_canonical_chains", title: "Redirect & Canonical Chains", group: "Redirects" },
-    ReportDef { key: "redirects_to_error",          title: "Redirects to Error",            group: "Redirects" },
-
+    ReportDef {
+        key: "redirects_all",
+        title: "All Redirects",
+        group: "Redirects",
+    },
+    ReportDef {
+        key: "redirect_chains",
+        title: "Redirect Chains",
+        group: "Redirects",
+    },
+    ReportDef {
+        key: "redirect_and_canonical_chains",
+        title: "Redirect & Canonical Chains",
+        group: "Redirects",
+    },
+    ReportDef {
+        key: "redirects_to_error",
+        title: "Redirects to Error",
+        group: "Redirects",
+    },
     // Canonicals
-    ReportDef { key: "canonicals_missing",          title: "Canonicals: Missing",           group: "Canonicals" },
-    ReportDef { key: "canonicals_all",              title: "Canonicals: All",               group: "Canonicals" },
-    ReportDef { key: "canonicals_self_referencing", title: "Canonicals: Self Referencing",  group: "Canonicals" },
-    ReportDef { key: "canonicals_non_indexable",    title: "Canonicals: Non-Indexable",     group: "Canonicals" },
-
+    ReportDef {
+        key: "canonicals_missing",
+        title: "Canonicals: Missing",
+        group: "Canonicals",
+    },
+    ReportDef {
+        key: "canonicals_all",
+        title: "Canonicals: All",
+        group: "Canonicals",
+    },
+    ReportDef {
+        key: "canonicals_self_referencing",
+        title: "Canonicals: Self Referencing",
+        group: "Canonicals",
+    },
+    ReportDef {
+        key: "canonicals_non_indexable",
+        title: "Canonicals: Non-Indexable",
+        group: "Canonicals",
+    },
     // Pagination
-    ReportDef { key: "pagination_non_200",          title: "Pagination: Non-200",           group: "Pagination" },
-    ReportDef { key: "pagination_unlinked",         title: "Pagination: Unlinked",          group: "Pagination" },
-
+    ReportDef {
+        key: "pagination_non_200",
+        title: "Pagination: Non-200",
+        group: "Pagination",
+    },
+    ReportDef {
+        key: "pagination_unlinked",
+        title: "Pagination: Unlinked",
+        group: "Pagination",
+    },
     // Hreflang
-    ReportDef { key: "hreflang_missing",            title: "Hreflang: Missing",             group: "Hreflang" },
-    ReportDef { key: "hreflang_inconsistent",       title: "Hreflang: Inconsistent",        group: "Hreflang" },
-    ReportDef { key: "hreflang_non_canonical",      title: "Hreflang: Non-Canonical",       group: "Hreflang" },
-
+    ReportDef {
+        key: "hreflang_missing",
+        title: "Hreflang: Missing",
+        group: "Hreflang",
+    },
+    ReportDef {
+        key: "hreflang_inconsistent",
+        title: "Hreflang: Inconsistent",
+        group: "Hreflang",
+    },
+    ReportDef {
+        key: "hreflang_non_canonical",
+        title: "Hreflang: Non-Canonical",
+        group: "Hreflang",
+    },
     // Misc
-    ReportDef { key: "insecure_content",            title: "Insecure Content",              group: "Security" },
-    ReportDef { key: "serp_summary",                title: "SERP Summary",                  group: "SERP" },
-    ReportDef { key: "orphan_pages",                title: "Orphan Pages",                  group: "Links" },
-
+    ReportDef {
+        key: "insecure_content",
+        title: "Insecure Content",
+        group: "Security",
+    },
+    ReportDef {
+        key: "serp_summary",
+        title: "SERP Summary",
+        group: "SERP",
+    },
+    ReportDef {
+        key: "orphan_pages",
+        title: "Orphan Pages",
+        group: "Links",
+    },
     // Structured data
-    ReportDef { key: "structured_data_all",         title: "Structured Data: All",          group: "Structured Data" },
-    ReportDef { key: "structured_data_errors",      title: "Structured Data: Errors",       group: "Structured Data" },
-
+    ReportDef {
+        key: "structured_data_all",
+        title: "Structured Data: All",
+        group: "Structured Data",
+    },
+    ReportDef {
+        key: "structured_data_errors",
+        title: "Structured Data: Errors",
+        group: "Structured Data",
+    },
     // JavaScript
-    ReportDef { key: "javascript_all",              title: "JavaScript: All",               group: "JavaScript" },
-    ReportDef { key: "javascript_containing_js_content", title: "JavaScript: JS Content",   group: "JavaScript" },
-
+    ReportDef {
+        key: "javascript_all",
+        title: "JavaScript: All",
+        group: "JavaScript",
+    },
+    ReportDef {
+        key: "javascript_containing_js_content",
+        title: "JavaScript: JS Content",
+        group: "JavaScript",
+    },
     // PageSpeed
-    ReportDef { key: "pagespeed_all",               title: "PageSpeed: All",                group: "PageSpeed" },
-
+    ReportDef {
+        key: "pagespeed_all",
+        title: "PageSpeed: All",
+        group: "PageSpeed",
+    },
     // Mobile
-    ReportDef { key: "mobile_all",                  title: "Mobile: All",                   group: "Mobile" },
-
+    ReportDef {
+        key: "mobile_all",
+        title: "Mobile: All",
+        group: "Mobile",
+    },
     // Accessibility
-    ReportDef { key: "accessibility_all",           title: "Accessibility: All",            group: "Accessibility" },
-
+    ReportDef {
+        key: "accessibility_all",
+        title: "Accessibility: All",
+        group: "Accessibility",
+    },
     // Deferred — crawler must capture headers/cookies first
-    ReportDef { key: "http_headers_all",            title: "HTTP Headers: All",             group: "HTTP Headers" },
-    ReportDef { key: "cookies_all",                 title: "Cookies: All",                  group: "Cookies" },
+    ReportDef {
+        key: "http_headers_all",
+        title: "HTTP Headers: All",
+        group: "HTTP Headers",
+    },
+    ReportDef {
+        key: "cookies_all",
+        title: "Cookies: All",
+        group: "Cookies",
+    },
 ];
 
 async fn list_reports(
@@ -441,13 +546,11 @@ async fn report_redirects_to_error(
             })
         })
         .collect();
-    Ok(
-        (
-            vec!["source", "source_status", "redirect_url", "final_status"],
-            data,
-            None,
-        ),
-    )
+    Ok((
+        vec!["source", "source_status", "redirect_url", "final_status"],
+        data,
+        None,
+    ))
 }
 
 async fn report_canonicals_all(
@@ -544,7 +647,16 @@ async fn report_canonicals_non_indexable(
             })
         })
         .collect();
-    Ok((vec!["url", "canonical_url", "canonical_status", "canonical_robots"], data, None))
+    Ok((
+        vec![
+            "url",
+            "canonical_url",
+            "canonical_status",
+            "canonical_robots",
+        ],
+        data,
+        None,
+    ))
 }
 
 async fn report_pagination_non_200(
@@ -642,20 +754,18 @@ async fn report_serp_summary(
             })
         })
         .collect();
-    Ok(
-        (
-            vec![
-                "url",
-                "title",
-                "title_length",
-                "title_pixel_width",
-                "meta_description",
-                "meta_description_length",
-            ],
-            data,
-            None,
-        ),
-    )
+    Ok((
+        vec![
+            "url",
+            "title",
+            "title_length",
+            "title_pixel_width",
+            "meta_description",
+            "meta_description_length",
+        ],
+        data,
+        None,
+    ))
 }
 
 async fn report_orphan_pages(
@@ -722,13 +832,11 @@ async fn report_finding(
             })
         })
         .collect();
-    Ok(
-        (
-            vec!["url", "status_code", "title", "title_length"],
-            data,
-            None,
-        ),
-    )
+    Ok((
+        vec!["url", "status_code", "title", "title_length"],
+        data,
+        None,
+    ))
 }
 
 /// All HTTP response headers across the crawl, flattened to one row per
@@ -790,11 +898,15 @@ async fn report_cookies(
 
     let mut data: Vec<Value> = Vec::new();
     for r in rows {
-        let Some(arr) = r.response_headers.as_array() else { continue };
+        let Some(arr) = r.response_headers.as_array() else {
+            continue;
+        };
         for pair in arr {
             let Some(p) = pair.as_array() else { continue };
             let name = p.first().and_then(|v| v.as_str()).unwrap_or("");
-            if !name.eq_ignore_ascii_case("set-cookie") { continue; }
+            if !name.eq_ignore_ascii_case("set-cookie") {
+                continue;
+            }
             let raw = p.get(1).and_then(|v| v.as_str()).unwrap_or("");
             let parsed = parse_set_cookie_report(raw);
             data.push(json!({
@@ -812,7 +924,17 @@ async fn report_cookies(
     }
 
     Ok((
-        vec!["url", "name", "value", "domain", "path", "expires", "secure", "http_only", "same_site"],
+        vec![
+            "url",
+            "name",
+            "value",
+            "domain",
+            "path",
+            "expires",
+            "secure",
+            "http_only",
+            "same_site",
+        ],
         data,
         None,
     ))
@@ -820,7 +942,16 @@ async fn report_cookies(
 
 /// Cheap Set-Cookie parser — duplicated here to keep `reports` standalone.
 /// Returns (name, value, domain, path, expires, secure, http_only, same_site).
-type ParsedCookie = (String, String, Option<String>, Option<String>, Option<String>, bool, bool, Option<String>);
+type ParsedCookie = (
+    String,
+    String,
+    Option<String>,
+    Option<String>,
+    Option<String>,
+    bool,
+    bool,
+    Option<String>,
+);
 fn parse_set_cookie_report(raw: &str) -> ParsedCookie {
     let mut parts = raw.split(';').map(str::trim);
     let first = parts.next().unwrap_or("");
@@ -828,17 +959,31 @@ fn parse_set_cookie_report(raw: &str) -> ParsedCookie {
     let (mut domain, mut path, mut expires, mut same_site) = (None, None, None, None);
     let (mut secure, mut http_only) = (false, false);
     for attr in parts {
-        if attr.is_empty() { continue; }
-        let (k, v) = attr.split_once('=').map(|(k, v)| (k.trim(), v.trim())).unwrap_or((attr, ""));
+        if attr.is_empty() {
+            continue;
+        }
+        let (k, v) = attr
+            .split_once('=')
+            .map(|(k, v)| (k.trim(), v.trim()))
+            .unwrap_or((attr, ""));
         match k.to_ascii_lowercase().as_str() {
-            "domain"   => domain = Some(v.to_string()),
-            "path"     => path = Some(v.to_string()),
-            "expires"  => expires = Some(v.to_string()),
-            "secure"   => secure = true,
+            "domain" => domain = Some(v.to_string()),
+            "path" => path = Some(v.to_string()),
+            "expires" => expires = Some(v.to_string()),
+            "secure" => secure = true,
             "httponly" => http_only = true,
             "samesite" => same_site = Some(v.to_string()),
             _ => {}
         }
     }
-    (name.to_string(), value.to_string(), domain, path, expires, secure, http_only, same_site)
+    (
+        name.to_string(),
+        value.to_string(),
+        domain,
+        path,
+        expires,
+        secure,
+        http_only,
+        same_site,
+    )
 }

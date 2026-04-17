@@ -48,34 +48,74 @@ impl FilterKey {
             Self::ResponseCodeSuccess => Cow::Borrowed("response_code_success"),
             Self::ResponseCodeRedirection => Cow::Borrowed("response_code_redirection"),
             Self::ResponseCodeRedirectionJs => Cow::Borrowed("response_code_redirection_js"),
-            Self::ResponseCodeRedirectionMetaRefresh => Cow::Borrowed("response_code_redirection_meta_refresh"),
-            Self::ResponseCodeRedirectionHttpRefresh => Cow::Borrowed("response_code_redirection_http_refresh"),
+            Self::ResponseCodeRedirectionMetaRefresh => {
+                Cow::Borrowed("response_code_redirection_meta_refresh")
+            }
+            Self::ResponseCodeRedirectionHttpRefresh => {
+                Cow::Borrowed("response_code_redirection_http_refresh")
+            }
             Self::ResponseCodeClientError => Cow::Borrowed("response_code_client_error"),
             Self::ResponseCodeServerError => Cow::Borrowed("response_code_server_error"),
             Self::ResponseCodeInternalAll => Cow::Borrowed("response_code_internal_all"),
             Self::ResponseCodeInternalBlocked => Cow::Borrowed("response_code_internal_blocked"),
-            Self::ResponseCodeInternalBlockedResource => Cow::Borrowed("response_code_internal_blocked_resource"),
-            Self::ResponseCodeInternalNoResponse => Cow::Borrowed("response_code_internal_no_response"),
+            Self::ResponseCodeInternalBlockedResource => {
+                Cow::Borrowed("response_code_internal_blocked_resource")
+            }
+            Self::ResponseCodeInternalNoResponse => {
+                Cow::Borrowed("response_code_internal_no_response")
+            }
             Self::ResponseCodeInternalSuccess => Cow::Borrowed("response_code_internal_success"),
-            Self::ResponseCodeInternalRedirection => Cow::Borrowed("response_code_internal_redirection"),
-            Self::ResponseCodeInternalRedirectionJs => Cow::Borrowed("response_code_internal_redirection_js"),
-            Self::ResponseCodeInternalRedirectionMetaRefresh => Cow::Borrowed("response_code_internal_redirection_meta_refresh"),
-            Self::ResponseCodeInternalRedirectionHttpRefresh => Cow::Borrowed("response_code_internal_redirection_http_refresh"),
-            Self::ResponseCodeInternalRedirectChain => Cow::Borrowed("response_code_internal_redirect_chain"),
-            Self::ResponseCodeInternalRedirectLoop => Cow::Borrowed("response_code_internal_redirect_loop"),
-            Self::ResponseCodeInternalClientError => Cow::Borrowed("response_code_internal_client_error"),
-            Self::ResponseCodeInternalServerError => Cow::Borrowed("response_code_internal_server_error"),
+            Self::ResponseCodeInternalRedirection => {
+                Cow::Borrowed("response_code_internal_redirection")
+            }
+            Self::ResponseCodeInternalRedirectionJs => {
+                Cow::Borrowed("response_code_internal_redirection_js")
+            }
+            Self::ResponseCodeInternalRedirectionMetaRefresh => {
+                Cow::Borrowed("response_code_internal_redirection_meta_refresh")
+            }
+            Self::ResponseCodeInternalRedirectionHttpRefresh => {
+                Cow::Borrowed("response_code_internal_redirection_http_refresh")
+            }
+            Self::ResponseCodeInternalRedirectChain => {
+                Cow::Borrowed("response_code_internal_redirect_chain")
+            }
+            Self::ResponseCodeInternalRedirectLoop => {
+                Cow::Borrowed("response_code_internal_redirect_loop")
+            }
+            Self::ResponseCodeInternalClientError => {
+                Cow::Borrowed("response_code_internal_client_error")
+            }
+            Self::ResponseCodeInternalServerError => {
+                Cow::Borrowed("response_code_internal_server_error")
+            }
             Self::ResponseCodeExternalAll => Cow::Borrowed("response_code_external_all"),
             Self::ResponseCodeExternalBlocked => Cow::Borrowed("response_code_external_blocked"),
-            Self::ResponseCodeExternalBlockedResource => Cow::Borrowed("response_code_external_blocked_resource"),
-            Self::ResponseCodeExternalNoResponse => Cow::Borrowed("response_code_external_no_response"),
+            Self::ResponseCodeExternalBlockedResource => {
+                Cow::Borrowed("response_code_external_blocked_resource")
+            }
+            Self::ResponseCodeExternalNoResponse => {
+                Cow::Borrowed("response_code_external_no_response")
+            }
             Self::ResponseCodeExternalSuccess => Cow::Borrowed("response_code_external_success"),
-            Self::ResponseCodeExternalRedirection => Cow::Borrowed("response_code_external_redirection"),
-            Self::ResponseCodeExternalRedirectionJs => Cow::Borrowed("response_code_external_redirection_js"),
-            Self::ResponseCodeExternalRedirectionMetaRefresh => Cow::Borrowed("response_code_external_redirection_meta_refresh"),
-            Self::ResponseCodeExternalRedirectionHttpRefresh => Cow::Borrowed("response_code_external_redirection_http_refresh"),
-            Self::ResponseCodeExternalClientError => Cow::Borrowed("response_code_external_client_error"),
-            Self::ResponseCodeExternalServerError => Cow::Borrowed("response_code_external_server_error"),
+            Self::ResponseCodeExternalRedirection => {
+                Cow::Borrowed("response_code_external_redirection")
+            }
+            Self::ResponseCodeExternalRedirectionJs => {
+                Cow::Borrowed("response_code_external_redirection_js")
+            }
+            Self::ResponseCodeExternalRedirectionMetaRefresh => {
+                Cow::Borrowed("response_code_external_redirection_meta_refresh")
+            }
+            Self::ResponseCodeExternalRedirectionHttpRefresh => {
+                Cow::Borrowed("response_code_external_redirection_http_refresh")
+            }
+            Self::ResponseCodeExternalClientError => {
+                Cow::Borrowed("response_code_external_client_error")
+            }
+            Self::ResponseCodeExternalServerError => {
+                Cow::Borrowed("response_code_external_server_error")
+            }
             Self::UrlAll => Cow::Borrowed("url_all"),
             Self::UrlNonAsciiCharacters => Cow::Borrowed("url_non_ascii_characters"),
             Self::UrlUnderscores => Cow::Borrowed("url_underscores"),
@@ -101,8 +141,12 @@ impl FilterKey {
             Self::MetaDescriptonAll => Cow::Borrowed("meta_descripton_all"),
             Self::MetaDescriptonMissing => Cow::Borrowed("meta_descripton_missing"),
             Self::MetaDescriptonDuplicate => Cow::Borrowed("meta_descripton_duplicate"),
-            Self::MetaDescriptonOverXCharacters => Cow::Borrowed("meta_descripton_over_x_characters"),
-            Self::MetaDescriptonBelowXCharacters => Cow::Borrowed("meta_descripton_below_x_characters"),
+            Self::MetaDescriptonOverXCharacters => {
+                Cow::Borrowed("meta_descripton_over_x_characters")
+            }
+            Self::MetaDescriptonBelowXCharacters => {
+                Cow::Borrowed("meta_descripton_below_x_characters")
+            }
             Self::MetaDescriptonOverXPixels => Cow::Borrowed("meta_descripton_over_x_pixels"),
             Self::MetaDescriptonBelowXPixels => Cow::Borrowed("meta_descripton_below_x_pixels"),
             Self::MetaDescriptonMultiple => Cow::Borrowed("meta_descripton_multiple"),
@@ -128,7 +172,9 @@ impl FilterKey {
             Self::ImagesOverXKb => Cow::Borrowed("images_over_x_kb"),
             Self::ImagesMissingAltText => Cow::Borrowed("images_missing_alt_text"),
             Self::ImagesMissingAltAttribute => Cow::Borrowed("images_missing_alt_attribute"),
-            Self::ImagesAltTextOverXCharacters => Cow::Borrowed("images_alt_text_over_x_characters"),
+            Self::ImagesAltTextOverXCharacters => {
+                Cow::Borrowed("images_alt_text_over_x_characters")
+            }
             Self::ImagesBackgroundImages => Cow::Borrowed("images_background_images"),
             Self::ImagesIncorrectlySizedImages => Cow::Borrowed("images_incorrectly_sized_images"),
             Self::ImagesMissingSizeAttributes => Cow::Borrowed("images_missing_size_attributes"),
@@ -138,22 +184,36 @@ impl FilterKey {
             Self::CanonicalsCanonicalised => Cow::Borrowed("canonicals_canonicalised"),
             Self::CanonicalsMissing => Cow::Borrowed("canonicals_missing"),
             Self::CanonicalsMultiple => Cow::Borrowed("canonicals_multiple"),
-            Self::CanonicalsNonIndexableCanonical => Cow::Borrowed("canonicals_non_indexable_canonical"),
+            Self::CanonicalsNonIndexableCanonical => {
+                Cow::Borrowed("canonicals_non_indexable_canonical")
+            }
             Self::CanonicalsMultipleConflicting => Cow::Borrowed("canonicals_multiple_conflicting"),
-            Self::CanonicalsCanonicalIsRelative => Cow::Borrowed("canonicals_canonical_is_relative"),
+            Self::CanonicalsCanonicalIsRelative => {
+                Cow::Borrowed("canonicals_canonical_is_relative")
+            }
             Self::CanonicalsUnlinked => Cow::Borrowed("canonicals_unlinked"),
             Self::CanonicalsInvalidAttributes => Cow::Borrowed("canonicals_invalid_attributes"),
-            Self::CanonicalsContainsFragmentUrl => Cow::Borrowed("canonicals_contains_fragment_url"),
+            Self::CanonicalsContainsFragmentUrl => {
+                Cow::Borrowed("canonicals_contains_fragment_url")
+            }
             Self::CanonicalsOutsideHead => Cow::Borrowed("canonicals_outside_head"),
             Self::PaginationAll => Cow::Borrowed("pagination_all"),
             Self::PaginationContainsPagination => Cow::Borrowed("pagination_contains_pagination"),
             Self::PaginationFirstPage => Cow::Borrowed("pagination_first_page"),
             Self::PaginationPaginated2Plus => Cow::Borrowed("pagination_paginated_2_plus"),
-            Self::PaginationPaginationNotInAnchor => Cow::Borrowed("pagination_pagination_not_in_anchor"),
-            Self::PaginationNon200PaginationUrls => Cow::Borrowed("pagination_non_200_pagination_urls"),
-            Self::PaginationUnlinkedPaginationUrls => Cow::Borrowed("pagination_unlinked_pagination_urls"),
+            Self::PaginationPaginationNotInAnchor => {
+                Cow::Borrowed("pagination_pagination_not_in_anchor")
+            }
+            Self::PaginationNon200PaginationUrls => {
+                Cow::Borrowed("pagination_non_200_pagination_urls")
+            }
+            Self::PaginationUnlinkedPaginationUrls => {
+                Cow::Borrowed("pagination_unlinked_pagination_urls")
+            }
             Self::PaginationNonIndexable => Cow::Borrowed("pagination_non_indexable"),
-            Self::PaginationMultiplePaginationUrls => Cow::Borrowed("pagination_multiple_pagination_urls"),
+            Self::PaginationMultiplePaginationUrls => {
+                Cow::Borrowed("pagination_multiple_pagination_urls")
+            }
             Self::PaginationPaginationLoop => Cow::Borrowed("pagination_pagination_loop"),
             Self::PaginationSequenceError => Cow::Borrowed("pagination_sequence_error"),
             Self::DirectivesAll => Cow::Borrowed("directives_all"),
@@ -179,10 +239,16 @@ impl FilterKey {
             Self::HreflangNon200HreflangUrls => Cow::Borrowed("hreflang_non_200_hreflang_urls"),
             Self::HreflangUnlinkedHreflangUrls => Cow::Borrowed("hreflang_unlinked_hreflang_urls"),
             Self::HreflangMissingReturnLinks => Cow::Borrowed("hreflang_missing_return_links"),
-            Self::HreflangInconsistentLanguageReturnLinks => Cow::Borrowed("hreflang_inconsistent_language_return_links"),
-            Self::HreflangNonCanonicalReturnLinks => Cow::Borrowed("hreflang_non_canonical_return_links"),
+            Self::HreflangInconsistentLanguageReturnLinks => {
+                Cow::Borrowed("hreflang_inconsistent_language_return_links")
+            }
+            Self::HreflangNonCanonicalReturnLinks => {
+                Cow::Borrowed("hreflang_non_canonical_return_links")
+            }
             Self::HreflangNoIndexReturnLinks => Cow::Borrowed("hreflang_no_index_return_links"),
-            Self::HreflangIncorrectLanguageCodes => Cow::Borrowed("hreflang_incorrect_language_codes"),
+            Self::HreflangIncorrectLanguageCodes => {
+                Cow::Borrowed("hreflang_incorrect_language_codes")
+            }
             Self::HreflangMultipleEntries => Cow::Borrowed("hreflang_multiple_entries"),
             Self::HreflangMissingSelfReference => Cow::Borrowed("hreflang_missing_self_reference"),
             Self::HreflangNotUsingCanonical => Cow::Borrowed("hreflang_not_using_canonical"),
@@ -190,24 +256,40 @@ impl FilterKey {
             Self::HreflangMissing => Cow::Borrowed("hreflang_missing"),
             Self::HreflangOutsideHead => Cow::Borrowed("hreflang_outside_head"),
             Self::JavaScriptAll => Cow::Borrowed("javascript_all"),
-            Self::JavaScriptOldAjaxCrawlingScheme => Cow::Borrowed("javascript_old_ajax_crawling_scheme"),
-            Self::JavaScriptOldAjaxCrawlingMetaFragmentTag => Cow::Borrowed("javascript_old_ajax_crawling_meta_fragment_tag"),
+            Self::JavaScriptOldAjaxCrawlingScheme => {
+                Cow::Borrowed("javascript_old_ajax_crawling_scheme")
+            }
+            Self::JavaScriptOldAjaxCrawlingMetaFragmentTag => {
+                Cow::Borrowed("javascript_old_ajax_crawling_meta_fragment_tag")
+            }
             Self::JavaScriptTitleJsOnly => Cow::Borrowed("javascript_title_js_only"),
             Self::JavaScriptTitleJsUpdated => Cow::Borrowed("javascript_title_js_updated"),
             Self::JavaScriptH1JsOnly => Cow::Borrowed("javascript_h1_js_only"),
             Self::JavaScriptH1JsUpdated => Cow::Borrowed("javascript_h1_js_updated"),
-            Self::JavaScriptMetadescriptionJsOnly => Cow::Borrowed("javascript_metadescription_js_only"),
-            Self::JavaScriptMetadescriptionJsUpdated => Cow::Borrowed("javascript_metadescription_js_updated"),
+            Self::JavaScriptMetadescriptionJsOnly => {
+                Cow::Borrowed("javascript_metadescription_js_only")
+            }
+            Self::JavaScriptMetadescriptionJsUpdated => {
+                Cow::Borrowed("javascript_metadescription_js_updated")
+            }
             Self::JavaScriptCanonicalJsOnly => Cow::Borrowed("javascript_canonical_js_only"),
             Self::JavaScriptCanonicalMismatch => Cow::Borrowed("javascript_canonical_mismatch"),
             Self::JavaScriptNoIndexOnlyInHtml => Cow::Borrowed("javascript_no_index_only_in_html"),
-            Self::JavaScriptNoFollowOnlyInHtml => Cow::Borrowed("javascript_no_follow_only_in_html"),
+            Self::JavaScriptNoFollowOnlyInHtml => {
+                Cow::Borrowed("javascript_no_follow_only_in_html")
+            }
             Self::JavaScriptContainsJsLinks => Cow::Borrowed("javascript_contains_js_links"),
             Self::JavaScriptContainsJsContent => Cow::Borrowed("javascript_contains_js_content"),
-            Self::JavaScriptPagesWithBlockedResources => Cow::Borrowed("javascript_pages_with_blocked_resources"),
+            Self::JavaScriptPagesWithBlockedResources => {
+                Cow::Borrowed("javascript_pages_with_blocked_resources")
+            }
             Self::JavaScriptPagesWithJsErrors => Cow::Borrowed("javascript_pages_with_js_errors"),
-            Self::JavaScriptPagesWithJsWarnings => Cow::Borrowed("javascript_pages_with_js_warnings"),
-            Self::JavaScriptPagesWithChromeIssues => Cow::Borrowed("javascript_pages_with_chrome_issues"),
+            Self::JavaScriptPagesWithJsWarnings => {
+                Cow::Borrowed("javascript_pages_with_js_warnings")
+            }
+            Self::JavaScriptPagesWithChromeIssues => {
+                Cow::Borrowed("javascript_pages_with_chrome_issues")
+            }
             Self::AmpAll => Cow::Borrowed("amp_all"),
             Self::AmpNon200 => Cow::Borrowed("amp_non_200"),
             Self::MissingNonAmpReturnLink => Cow::Borrowed("missing_non_amp_return_link"),
@@ -227,22 +309,38 @@ impl FilterKey {
             Self::AmpContainsDisallowedHtml => Cow::Borrowed("amp_contains_disallowed_html"),
             Self::AmpOtherValidationErrors => Cow::Borrowed("amp_other_validation_errors"),
             Self::StructuredDataAll => Cow::Borrowed("structured_data_all"),
-            Self::StructuredDataContainsStructuredData => Cow::Borrowed("structured_data_contains_structured_data"),
-            Self::StructuredDataMissingStructuredData => Cow::Borrowed("structured_data_missing_structured_data"),
-            Self::StructuredDataValidationErrors => Cow::Borrowed("structured_data_validation_errors"),
-            Self::StructuredDataValidationWarnings => Cow::Borrowed("structured_data_validation_warnings"),
-            Self::StructuredDataGoogleValidationErrors => Cow::Borrowed("structured_data_google_validation_errors"),
-            Self::StructuredDataGoogleValidationWarnings => Cow::Borrowed("structured_data_google_validation_warnings"),
+            Self::StructuredDataContainsStructuredData => {
+                Cow::Borrowed("structured_data_contains_structured_data")
+            }
+            Self::StructuredDataMissingStructuredData => {
+                Cow::Borrowed("structured_data_missing_structured_data")
+            }
+            Self::StructuredDataValidationErrors => {
+                Cow::Borrowed("structured_data_validation_errors")
+            }
+            Self::StructuredDataValidationWarnings => {
+                Cow::Borrowed("structured_data_validation_warnings")
+            }
+            Self::StructuredDataGoogleValidationErrors => {
+                Cow::Borrowed("structured_data_google_validation_errors")
+            }
+            Self::StructuredDataGoogleValidationWarnings => {
+                Cow::Borrowed("structured_data_google_validation_warnings")
+            }
             Self::StructuredDataParseErrors => Cow::Borrowed("structured_data_parse_errors"),
             Self::StructuredDataMicrodataUrls => Cow::Borrowed("structured_data_microdata_urls"),
             Self::StructuredDataJsonldUrls => Cow::Borrowed("structured_data_jsonld_urls"),
             Self::StructuredDataRdfaUrls => Cow::Borrowed("structured_data_rdfa_urls"),
-            Self::StructuredDataGoogleFeatureDetected => Cow::Borrowed("structured_data_google_feature_detected"),
+            Self::StructuredDataGoogleFeatureDetected => {
+                Cow::Borrowed("structured_data_google_feature_detected")
+            }
             Self::SitemapsAll => Cow::Borrowed("sitemaps_all"),
             Self::SitemapsUrlsInSitemap => Cow::Borrowed("sitemaps_urls_in_sitemap"),
             Self::SitemapsNotInSitemap => Cow::Borrowed("sitemaps_not_in_sitemap"),
             Self::SitemapsOrphanUrl => Cow::Borrowed("sitemaps_orphan_url"),
-            Self::SitemapsNonIndexableUrlInSitemap => Cow::Borrowed("sitemaps_non_indexable_url_in_sitemap"),
+            Self::SitemapsNonIndexableUrlInSitemap => {
+                Cow::Borrowed("sitemaps_non_indexable_url_in_sitemap")
+            }
             Self::SitemapsInMultipleSitemaps => Cow::Borrowed("sitemaps_in_multiple_sitemaps"),
             Self::SitemapsOver50KUrls => Cow::Borrowed("sitemaps_over_50k_urls"),
             Self::SitemapsOver50Mb => Cow::Borrowed("sitemaps_over_50_mb"),
@@ -274,20 +372,34 @@ impl FilterKey {
             Self::PagespeedUnusedCssRules => Cow::Borrowed("pagespeed_unused_css_rules"),
             Self::PagespeedUnusedJavaScript => Cow::Borrowed("pagespeed_unused_javascript"),
             Self::PagespeedBootupTime => Cow::Borrowed("pagespeed_bootup_time"),
-            Self::PagespeedMainThreadWorkBreakdown => Cow::Borrowed("pagespeed_main_thread_work_breakdown"),
+            Self::PagespeedMainThreadWorkBreakdown => {
+                Cow::Borrowed("pagespeed_main_thread_work_breakdown")
+            }
             Self::PagespeedRequestError => Cow::Borrowed("pagespeed_request_error"),
             Self::PagespeedLayoutShiftCulprits => Cow::Borrowed("pagespeed_layout_shift_culprits"),
-            Self::PagespeedDocumentLatencyInsight => Cow::Borrowed("pagespeed_document_latency_insight"),
+            Self::PagespeedDocumentLatencyInsight => {
+                Cow::Borrowed("pagespeed_document_latency_insight")
+            }
             Self::PagespeedOptimizeDomSize => Cow::Borrowed("pagespeed_optimize_dom_size"),
             Self::PagespeedFontDisplay => Cow::Borrowed("pagespeed_font_display"),
-            Self::PagespeedImproveImageDelivery => Cow::Borrowed("pagespeed_improve_image_delivery"),
+            Self::PagespeedImproveImageDelivery => {
+                Cow::Borrowed("pagespeed_improve_image_delivery")
+            }
             Self::PagespeedLegacyJavaScript => Cow::Borrowed("pagespeed_legacy_javascript"),
-            Self::PagespeedRenderBlockingRequests => Cow::Borrowed("pagespeed_render_blocking_requests"),
-            Self::PagespeedUseEfficientCacheLifetimes => Cow::Borrowed("pagespeed_use_efficient_cache_lifetimes"),
+            Self::PagespeedRenderBlockingRequests => {
+                Cow::Borrowed("pagespeed_render_blocking_requests")
+            }
+            Self::PagespeedUseEfficientCacheLifetimes => {
+                Cow::Borrowed("pagespeed_use_efficient_cache_lifetimes")
+            }
             Self::PagespeedLcpRequestDiscovery => Cow::Borrowed("pagespeed_lcp_request_discovery"),
             Self::PagespeedForcedReflow => Cow::Borrowed("pagespeed_forced_reflow"),
-            Self::PagespeedAvoidEnormousNetworkPayloads => Cow::Borrowed("pagespeed_avoid_enormous_network_payloads"),
-            Self::PagespeedNetworkDependencyTree => Cow::Borrowed("pagespeed_network_dependency_tree"),
+            Self::PagespeedAvoidEnormousNetworkPayloads => {
+                Cow::Borrowed("pagespeed_avoid_enormous_network_payloads")
+            }
+            Self::PagespeedNetworkDependencyTree => {
+                Cow::Borrowed("pagespeed_network_dependency_tree")
+            }
             Self::PagespeedDuplicatedJavaScript => Cow::Borrowed("pagespeed_duplicated_javascript"),
             Self::Unknown => Cow::Borrowed("unknown"),
             Self::SecurityAll => Cow::Borrowed("security_all"),
@@ -299,13 +411,19 @@ impl FilterKey {
             Self::SecurityUnsafeCrossOrigin => Cow::Borrowed("security_unsafe_cross_origin"),
             Self::SecurityMissingHstsHeader => Cow::Borrowed("security_missing_hsts_header"),
             Self::SecurityBadMimeType => Cow::Borrowed("security_bad_mime_type"),
-            Self::SecurityMissingContentTypeHeader => Cow::Borrowed("security_missing_content_type_header"),
+            Self::SecurityMissingContentTypeHeader => {
+                Cow::Borrowed("security_missing_content_type_header")
+            }
             Self::SecurityMissingFrameHeader => Cow::Borrowed("security_missing_frame_header"),
             Self::SecurityProtocolRelativeUrls => Cow::Borrowed("security_protocol_relative_urls"),
             Self::SecurityMissingCspHeader => Cow::Borrowed("security_missing_csp_header"),
-            Self::SecurityMissingSecureReferrerPolicy => Cow::Borrowed("security_missing_secure_referrer_policy"),
+            Self::SecurityMissingSecureReferrerPolicy => {
+                Cow::Borrowed("security_missing_secure_referrer_policy")
+            }
             Self::ContentAll => Cow::Borrowed("content_all"),
-            Self::ContentLanguageErrorsMisspelt => Cow::Borrowed("content_language_errors_misspelt"),
+            Self::ContentLanguageErrorsMisspelt => {
+                Cow::Borrowed("content_language_errors_misspelt")
+            }
             Self::ContentLanguageErrorsGrammar => Cow::Borrowed("content_language_errors_grammar"),
             Self::ContentNearDuplicates => Cow::Borrowed("content_near_duplicates"),
             Self::ContentCosineSimilarity => Cow::Borrowed("content_cosine_similarity"),
@@ -313,7 +431,9 @@ impl FilterKey {
             Self::ContentDuplicates => Cow::Borrowed("content_duplicates"),
             Self::ContentLowContentPages => Cow::Borrowed("content_low_content_pages"),
             Self::ContentReadabilityDifficult => Cow::Borrowed("content_readability_difficult"),
-            Self::ContentReadabilityVeryDifficult => Cow::Borrowed("content_readability_very_difficult"),
+            Self::ContentReadabilityVeryDifficult => {
+                Cow::Borrowed("content_readability_very_difficult")
+            }
             Self::ContentLoremIpsumPlaceholder => Cow::Borrowed("content_lorem_ipsum_placeholder"),
             Self::ContentSoft404Pages => Cow::Borrowed("content_soft_404_pages"),
             Self::ParityAll => Cow::Borrowed("parity_all"),
@@ -329,164 +449,362 @@ impl FilterKey {
             Self::ParityUniqueInternalOutlinks => Cow::Borrowed("parity_unique_internal_outlinks"),
             Self::ParityExternalOutlinks => Cow::Borrowed("parity_external_outlinks"),
             Self::ParityUniqueExternalOutlinks => Cow::Borrowed("parity_unique_external_outlinks"),
-            Self::ParityStructuredDataUniqueTypes => Cow::Borrowed("parity_structured_data_unique_types"),
+            Self::ParityStructuredDataUniqueTypes => {
+                Cow::Borrowed("parity_structured_data_unique_types")
+            }
             Self::ParityContentChange => Cow::Borrowed("parity_content_change"),
             Self::LinksAll => Cow::Borrowed("links_all"),
             Self::LinksNoInternalOutlinks => Cow::Borrowed("links_no_internal_outlinks"),
-            Self::LinksNofollowInternalOutlinks => Cow::Borrowed("links_nofollow_internal_outlinks"),
+            Self::LinksNofollowInternalOutlinks => {
+                Cow::Borrowed("links_nofollow_internal_outlinks")
+            }
             Self::LinksNoAnchorTextOutlinks => Cow::Borrowed("links_no_anchor_text_outlinks"),
-            Self::LinksNonDescriptiveAnchorTextOutlinks => Cow::Borrowed("links_non_descriptive_anchor_text_outlinks"),
+            Self::LinksNonDescriptiveAnchorTextOutlinks => {
+                Cow::Borrowed("links_non_descriptive_anchor_text_outlinks")
+            }
             Self::LinksHighExternalOutlinks => Cow::Borrowed("links_high_external_outlinks"),
             Self::LinksHighInternalOutlinks => Cow::Borrowed("links_high_internal_outlinks"),
             Self::LinksFollowNofollowInlinks => Cow::Borrowed("links_follow_nofollow_inlinks"),
-            Self::LinksInternalNofollowInlinksOnly => Cow::Borrowed("links_internal_nofollow_inlinks_only"),
+            Self::LinksInternalNofollowInlinksOnly => {
+                Cow::Borrowed("links_internal_nofollow_inlinks_only")
+            }
             Self::LinksHighCrawlDepth => Cow::Borrowed("links_high_crawl_depth"),
             Self::LinksLocalHostOutlinks => Cow::Borrowed("links_local_host_outlinks"),
-            Self::LinksNonIndexablePageInlinksOnly => Cow::Borrowed("links_non_indexable_page_inlinks_only"),
+            Self::LinksNonIndexablePageInlinksOnly => {
+                Cow::Borrowed("links_non_indexable_page_inlinks_only")
+            }
             Self::ValidationAll => Cow::Borrowed("validation_all"),
-            Self::ValidationInvalidElementsInHead => Cow::Borrowed("validation_invalid_elements_in_head"),
-            Self::ValidationHeadNotFirstElement => Cow::Borrowed("validation_head_not_first_element"),
+            Self::ValidationInvalidElementsInHead => {
+                Cow::Borrowed("validation_invalid_elements_in_head")
+            }
+            Self::ValidationHeadNotFirstElement => {
+                Cow::Borrowed("validation_head_not_first_element")
+            }
             Self::ValidationMissingHead => Cow::Borrowed("validation_missing_head"),
             Self::ValidationMultipleHeads => Cow::Borrowed("validation_multiple_heads"),
             Self::ValidationMissingBody => Cow::Borrowed("validation_missing_body"),
             Self::ValidationMultipleBodies => Cow::Borrowed("validation_multiple_bodies"),
             Self::ValidationDocumentOver15Mb => Cow::Borrowed("validation_document_over_15_mb"),
             Self::ValidationResourceOver15Mb => Cow::Borrowed("validation_resource_over_15_mb"),
-            Self::ValidationBodyElementPrecedingHtml => Cow::Borrowed("validation_body_element_preceding_html"),
+            Self::ValidationBodyElementPrecedingHtml => {
+                Cow::Borrowed("validation_body_element_preceding_html")
+            }
             Self::ValidationHighCarbonRating => Cow::Borrowed("validation_high_carbon_rating"),
             Self::MobileAll => Cow::Borrowed("mobile_all"),
             Self::MobileViewportNotSet => Cow::Borrowed("mobile_viewport_not_set"),
             Self::MobileTargetSize => Cow::Borrowed("mobile_target_size"),
-            Self::MobileContentNotSizedCorrectly => Cow::Borrowed("mobile_content_not_sized_correctly"),
+            Self::MobileContentNotSizedCorrectly => {
+                Cow::Borrowed("mobile_content_not_sized_correctly")
+            }
             Self::MobileIllegibleFontSize => Cow::Borrowed("mobile_illegible_font_size"),
             Self::MobileUnsupportedPlugins => Cow::Borrowed("mobile_unsupported_plugins"),
             Self::MobileMobileAlternateLink => Cow::Borrowed("mobile_mobile_alternate_link"),
             Self::AiAll => Cow::Borrowed("ai_all"),
             Self::AccessibilityAll => Cow::Borrowed("accessibility_all"),
             Self::AccessibilityScorePoor => Cow::Borrowed("accessibility_score_poor"),
-            Self::AccessibilityScoreNeedsImprovement => Cow::Borrowed("accessibility_score_needs_improvement"),
+            Self::AccessibilityScoreNeedsImprovement => {
+                Cow::Borrowed("accessibility_score_needs_improvement")
+            }
             Self::AccessibilityScoreGood => Cow::Borrowed("accessibility_score_good"),
-            Self::AccessibilityBestPracticeViolation => Cow::Borrowed("accessibility_best_practice_violation"),
+            Self::AccessibilityBestPracticeViolation => {
+                Cow::Borrowed("accessibility_best_practice_violation")
+            }
             Self::AccessibilityWcag2aViolation => Cow::Borrowed("accessibility_wcag2a_violation"),
             Self::AccessibilityWcag2aaViolation => Cow::Borrowed("accessibility_wcag2aa_violation"),
-            Self::AccessibilityWcag2aaaViolation => Cow::Borrowed("accessibility_wcag2aaa_violation"),
-            Self::AccessibilityWcag21aaViolation => Cow::Borrowed("accessibility_wcag21aa_violation"),
-            Self::AccessibilityWcag22aaViolation => Cow::Borrowed("accessibility_wcag22aa_violation"),
+            Self::AccessibilityWcag2aaaViolation => {
+                Cow::Borrowed("accessibility_wcag2aaa_violation")
+            }
+            Self::AccessibilityWcag21aaViolation => {
+                Cow::Borrowed("accessibility_wcag21aa_violation")
+            }
+            Self::AccessibilityWcag22aaViolation => {
+                Cow::Borrowed("accessibility_wcag22aa_violation")
+            }
             Self::AccessibilityRuleAccesskeys => Cow::Borrowed("accessibility_rule_accesskeys"),
-            Self::AccessibilityRulePresentationRoleConflict => Cow::Borrowed("accessibility_rule_presentation_role_conflict"),
+            Self::AccessibilityRulePresentationRoleConflict => {
+                Cow::Borrowed("accessibility_rule_presentation_role_conflict")
+            }
             Self::AccessibilityRuleTabindex => Cow::Borrowed("accessibility_rule_tabindex"),
-            Self::AccessibilityRuleScrollableRegionFocusable => Cow::Borrowed("accessibility_rule_scrollable_region_focusable"),
+            Self::AccessibilityRuleScrollableRegionFocusable => {
+                Cow::Borrowed("accessibility_rule_scrollable_region_focusable")
+            }
             Self::AccessibilityRuleSkipLink => Cow::Borrowed("accessibility_rule_skip_link"),
-            Self::AccessibilityRuleAriaRequiredAttr => Cow::Borrowed("accessibility_rule_aria_required_attr"),
+            Self::AccessibilityRuleAriaRequiredAttr => {
+                Cow::Borrowed("accessibility_rule_aria_required_attr")
+            }
             Self::AccessibilityRuleAriaText => Cow::Borrowed("accessibility_rule_aria_text"),
-            Self::AccessibilityRuleAriaConditionalAttr => Cow::Borrowed("accessibility_rule_aria_conditional_attr"),
-            Self::AccessibilityRuleAriaValidAttrValue => Cow::Borrowed("accessibility_rule_aria_valid_attr_value"),
-            Self::AccessibilityRuleAriaValidAttr => Cow::Borrowed("accessibility_rule_aria_valid_attr"),
-            Self::AccessibilityRuleAriaCommandName => Cow::Borrowed("accessibility_rule_aria_command_name"),
-            Self::AccessibilityRuleAriaDialogName => Cow::Borrowed("accessibility_rule_aria_dialog_name"),
-            Self::AccessibilityRuleAriaInputFieldName => Cow::Borrowed("accessibility_rule_aria_input_field_name"),
-            Self::AccessibilityRuleAriaMeterName => Cow::Borrowed("accessibility_rule_aria_meter_name"),
-            Self::AccessibilityRuleAriaProgressbarName => Cow::Borrowed("accessibility_rule_aria_progressbar_name"),
-            Self::AccessibilityRuleAriaAllowedRole => Cow::Borrowed("accessibility_rule_aria_allowed_role"),
-            Self::AccessibilityRuleAriaRequiredParent => Cow::Borrowed("accessibility_rule_aria_required_parent"),
+            Self::AccessibilityRuleAriaConditionalAttr => {
+                Cow::Borrowed("accessibility_rule_aria_conditional_attr")
+            }
+            Self::AccessibilityRuleAriaValidAttrValue => {
+                Cow::Borrowed("accessibility_rule_aria_valid_attr_value")
+            }
+            Self::AccessibilityRuleAriaValidAttr => {
+                Cow::Borrowed("accessibility_rule_aria_valid_attr")
+            }
+            Self::AccessibilityRuleAriaCommandName => {
+                Cow::Borrowed("accessibility_rule_aria_command_name")
+            }
+            Self::AccessibilityRuleAriaDialogName => {
+                Cow::Borrowed("accessibility_rule_aria_dialog_name")
+            }
+            Self::AccessibilityRuleAriaInputFieldName => {
+                Cow::Borrowed("accessibility_rule_aria_input_field_name")
+            }
+            Self::AccessibilityRuleAriaMeterName => {
+                Cow::Borrowed("accessibility_rule_aria_meter_name")
+            }
+            Self::AccessibilityRuleAriaProgressbarName => {
+                Cow::Borrowed("accessibility_rule_aria_progressbar_name")
+            }
+            Self::AccessibilityRuleAriaAllowedRole => {
+                Cow::Borrowed("accessibility_rule_aria_allowed_role")
+            }
+            Self::AccessibilityRuleAriaRequiredParent => {
+                Cow::Borrowed("accessibility_rule_aria_required_parent")
+            }
             Self::AccessibilityRuleAriaRoles => Cow::Borrowed("accessibility_rule_aria_roles"),
-            Self::AccessibilityRuleAriaToggleFieldName => Cow::Borrowed("accessibility_rule_aria_toggle_field_name"),
-            Self::AccessibilityRuleAriaTooltipName => Cow::Borrowed("accessibility_rule_aria_tooltip_name"),
-            Self::AccessibilityRuleAriaTreeitemName => Cow::Borrowed("accessibility_rule_aria_treeitem_name"),
-            Self::AccessibilityRuleAriaRequiredChildren => Cow::Borrowed("accessibility_rule_aria_required_children"),
-            Self::AccessibilityRuleAriaDeprecatedRole => Cow::Borrowed("accessibility_rule_aria_deprecated_role"),
-            Self::AccessibilityRuleAriaBrailleEquivalent => Cow::Borrowed("accessibility_rule_aria_braille_equivalent"),
-            Self::AccessibilityRuleAriaHiddenFocus => Cow::Borrowed("accessibility_rule_aria_hidden_focus"),
-            Self::AccessibilityRuleAriaHiddenBody => Cow::Borrowed("accessibility_rule_aria_hidden_body"),
-            Self::AccessibilityRuleAriaProhibitedAttr => Cow::Borrowed("accessibility_rule_aria_prohibited_attr"),
-            Self::AccessibilityRuleAriaAllowedAttr => Cow::Borrowed("accessibility_rule_aria_allowed_attr"),
-            Self::AccessibilityRuleDuplicateIdAria => Cow::Borrowed("accessibility_rule_duplicate_id_aria"),
+            Self::AccessibilityRuleAriaToggleFieldName => {
+                Cow::Borrowed("accessibility_rule_aria_toggle_field_name")
+            }
+            Self::AccessibilityRuleAriaTooltipName => {
+                Cow::Borrowed("accessibility_rule_aria_tooltip_name")
+            }
+            Self::AccessibilityRuleAriaTreeitemName => {
+                Cow::Borrowed("accessibility_rule_aria_treeitem_name")
+            }
+            Self::AccessibilityRuleAriaRequiredChildren => {
+                Cow::Borrowed("accessibility_rule_aria_required_children")
+            }
+            Self::AccessibilityRuleAriaDeprecatedRole => {
+                Cow::Borrowed("accessibility_rule_aria_deprecated_role")
+            }
+            Self::AccessibilityRuleAriaBrailleEquivalent => {
+                Cow::Borrowed("accessibility_rule_aria_braille_equivalent")
+            }
+            Self::AccessibilityRuleAriaHiddenFocus => {
+                Cow::Borrowed("accessibility_rule_aria_hidden_focus")
+            }
+            Self::AccessibilityRuleAriaHiddenBody => {
+                Cow::Borrowed("accessibility_rule_aria_hidden_body")
+            }
+            Self::AccessibilityRuleAriaProhibitedAttr => {
+                Cow::Borrowed("accessibility_rule_aria_prohibited_attr")
+            }
+            Self::AccessibilityRuleAriaAllowedAttr => {
+                Cow::Borrowed("accessibility_rule_aria_allowed_attr")
+            }
+            Self::AccessibilityRuleDuplicateIdAria => {
+                Cow::Borrowed("accessibility_rule_duplicate_id_aria")
+            }
             Self::AccessibilityRuleBypass => Cow::Borrowed("accessibility_rule_bypass"),
             Self::AccessibilityRuleRegion => Cow::Borrowed("accessibility_rule_region"),
-            Self::AccessibilityRuleLandmarkOneMain => Cow::Borrowed("accessibility_rule_landmark_one_main"),
-            Self::AccessibilityRuleLandmarkNoDuplicateBanner => Cow::Borrowed("accessibility_rule_landmark_no_duplicate_banner"),
-            Self::AccessibilityRuleLandmarkBannerIsTopLevel => Cow::Borrowed("accessibility_rule_landmark_banner_is_top_level"),
-            Self::AccessibilityRuleLandmarkNoDuplicateContentinfo => Cow::Borrowed("accessibility_rule_landmark_no_duplicate_contentinfo"),
-            Self::AccessibilityRuleLandmarkNoDuplicateMain => Cow::Borrowed("accessibility_rule_landmark_no_duplicate_main"),
-            Self::AccessibilityRuleLandmarkComplementaryIsTopLevel => Cow::Borrowed("accessibility_rule_landmark_complementary_is_top_level"),
-            Self::AccessibilityRuleLandmarkContentinfoIsTopLevel => Cow::Borrowed("accessibility_rule_landmark_contentinfo_is_top_level"),
-            Self::AccessibilityRuleLandmarkMainIsTopLevel => Cow::Borrowed("accessibility_rule_landmark_main_is_top_level"),
-            Self::AccessibilityRuleLandmarkUnique => Cow::Borrowed("accessibility_rule_landmark_unique"),
+            Self::AccessibilityRuleLandmarkOneMain => {
+                Cow::Borrowed("accessibility_rule_landmark_one_main")
+            }
+            Self::AccessibilityRuleLandmarkNoDuplicateBanner => {
+                Cow::Borrowed("accessibility_rule_landmark_no_duplicate_banner")
+            }
+            Self::AccessibilityRuleLandmarkBannerIsTopLevel => {
+                Cow::Borrowed("accessibility_rule_landmark_banner_is_top_level")
+            }
+            Self::AccessibilityRuleLandmarkNoDuplicateContentinfo => {
+                Cow::Borrowed("accessibility_rule_landmark_no_duplicate_contentinfo")
+            }
+            Self::AccessibilityRuleLandmarkNoDuplicateMain => {
+                Cow::Borrowed("accessibility_rule_landmark_no_duplicate_main")
+            }
+            Self::AccessibilityRuleLandmarkComplementaryIsTopLevel => {
+                Cow::Borrowed("accessibility_rule_landmark_complementary_is_top_level")
+            }
+            Self::AccessibilityRuleLandmarkContentinfoIsTopLevel => {
+                Cow::Borrowed("accessibility_rule_landmark_contentinfo_is_top_level")
+            }
+            Self::AccessibilityRuleLandmarkMainIsTopLevel => {
+                Cow::Borrowed("accessibility_rule_landmark_main_is_top_level")
+            }
+            Self::AccessibilityRuleLandmarkUnique => {
+                Cow::Borrowed("accessibility_rule_landmark_unique")
+            }
             Self::AccessibilityRuleLabel => Cow::Borrowed("accessibility_rule_label"),
-            Self::AccessibilityRuleLabelTitleOnly => Cow::Borrowed("accessibility_rule_label_title_only"),
-            Self::AccessibilityRuleFormFieldMultipleLabels => Cow::Borrowed("accessibility_rule_form_field_multiple_labels"),
-            Self::AccessibilityRuleAutocompleteValid => Cow::Borrowed("accessibility_rule_autocomplete_valid"),
+            Self::AccessibilityRuleLabelTitleOnly => {
+                Cow::Borrowed("accessibility_rule_label_title_only")
+            }
+            Self::AccessibilityRuleFormFieldMultipleLabels => {
+                Cow::Borrowed("accessibility_rule_form_field_multiple_labels")
+            }
+            Self::AccessibilityRuleAutocompleteValid => {
+                Cow::Borrowed("accessibility_rule_autocomplete_valid")
+            }
             Self::AccessibilityRuleFrameTitle => Cow::Borrowed("accessibility_rule_frame_title"),
-            Self::AccessibilityRuleFrameTitleUnique => Cow::Borrowed("accessibility_rule_frame_title_unique"),
+            Self::AccessibilityRuleFrameTitleUnique => {
+                Cow::Borrowed("accessibility_rule_frame_title_unique")
+            }
             Self::AccessibilityRuleFrameTested => Cow::Borrowed("accessibility_rule_frame_tested"),
-            Self::AccessibilityRuleFrameFocusableContent => Cow::Borrowed("accessibility_rule_frame_focusable_content"),
-            Self::AccessibilityRuleDocumentTitle => Cow::Borrowed("accessibility_rule_document_title"),
-            Self::AccessibilityRulePageHasHeadingOne => Cow::Borrowed("accessibility_rule_page_has_heading_one"),
-            Self::AccessibilityRuleHeadingOrder => Cow::Borrowed("accessibility_rule_heading_order"),
-            Self::AccessibilityRuleEmptyHeading => Cow::Borrowed("accessibility_rule_empty_heading"),
-            Self::AccessibilityRuleMetaViewportLarge => Cow::Borrowed("accessibility_rule_meta_viewport_large"),
-            Self::AccessibilityRuleMetaViewport => Cow::Borrowed("accessibility_rule_meta_viewport"),
-            Self::AccessibilityRuleHtmlLangValid => Cow::Borrowed("accessibility_rule_html_lang_valid"),
+            Self::AccessibilityRuleFrameFocusableContent => {
+                Cow::Borrowed("accessibility_rule_frame_focusable_content")
+            }
+            Self::AccessibilityRuleDocumentTitle => {
+                Cow::Borrowed("accessibility_rule_document_title")
+            }
+            Self::AccessibilityRulePageHasHeadingOne => {
+                Cow::Borrowed("accessibility_rule_page_has_heading_one")
+            }
+            Self::AccessibilityRuleHeadingOrder => {
+                Cow::Borrowed("accessibility_rule_heading_order")
+            }
+            Self::AccessibilityRuleEmptyHeading => {
+                Cow::Borrowed("accessibility_rule_empty_heading")
+            }
+            Self::AccessibilityRuleMetaViewportLarge => {
+                Cow::Borrowed("accessibility_rule_meta_viewport_large")
+            }
+            Self::AccessibilityRuleMetaViewport => {
+                Cow::Borrowed("accessibility_rule_meta_viewport")
+            }
+            Self::AccessibilityRuleHtmlLangValid => {
+                Cow::Borrowed("accessibility_rule_html_lang_valid")
+            }
             Self::AccessibilityRuleHtmlHasLang => Cow::Borrowed("accessibility_rule_html_has_lang"),
-            Self::AccessibilityRuleHtmlXmlLangMismatch => Cow::Borrowed("accessibility_rule_html_xml_lang_mismatch"),
+            Self::AccessibilityRuleHtmlXmlLangMismatch => {
+                Cow::Borrowed("accessibility_rule_html_xml_lang_mismatch")
+            }
             Self::AccessibilityRuleValidLang => Cow::Borrowed("accessibility_rule_valid_lang"),
-            Self::AccessibilityRuleMetaRefreshNoExceptions => Cow::Borrowed("accessibility_rule_meta_refresh_no_exceptions"),
+            Self::AccessibilityRuleMetaRefreshNoExceptions => {
+                Cow::Borrowed("accessibility_rule_meta_refresh_no_exceptions")
+            }
             Self::AccessibilityRuleMetaRefresh => Cow::Borrowed("accessibility_rule_meta_refresh"),
-            Self::AccessibilityRuleInputImageAlt => Cow::Borrowed("accessibility_rule_input_image_alt"),
+            Self::AccessibilityRuleInputImageAlt => {
+                Cow::Borrowed("accessibility_rule_input_image_alt")
+            }
             Self::AccessibilityRuleImageAlt => Cow::Borrowed("accessibility_rule_image_alt"),
             Self::AccessibilityRuleObjectAlt => Cow::Borrowed("accessibility_rule_object_alt"),
             Self::AccessibilityRuleAreaAlt => Cow::Borrowed("accessibility_rule_area_alt"),
-            Self::AccessibilityRuleImageRedundantAlt => Cow::Borrowed("accessibility_rule_image_redundant_alt"),
+            Self::AccessibilityRuleImageRedundantAlt => {
+                Cow::Borrowed("accessibility_rule_image_redundant_alt")
+            }
             Self::AccessibilityRuleRoleImgAlt => Cow::Borrowed("accessibility_rule_role_img_alt"),
             Self::AccessibilityRuleSvgImgAlt => Cow::Borrowed("accessibility_rule_svg_img_alt"),
-            Self::AccessibilityRuleServerSideImageMap => Cow::Borrowed("accessibility_rule_server_side_image_map"),
-            Self::AccessibilityRuleVideoCaption => Cow::Borrowed("accessibility_rule_video_caption"),
-            Self::AccessibilityRuleNoAutoplayAudio => Cow::Borrowed("accessibility_rule_no_autoplay_audio"),
+            Self::AccessibilityRuleServerSideImageMap => {
+                Cow::Borrowed("accessibility_rule_server_side_image_map")
+            }
+            Self::AccessibilityRuleVideoCaption => {
+                Cow::Borrowed("accessibility_rule_video_caption")
+            }
+            Self::AccessibilityRuleNoAutoplayAudio => {
+                Cow::Borrowed("accessibility_rule_no_autoplay_audio")
+            }
             Self::AccessibilityRuleButtonName => Cow::Borrowed("accessibility_rule_button_name"),
-            Self::AccessibilityRuleAvoidInlineSpacing => Cow::Borrowed("accessibility_rule_avoid_inline_spacing"),
-            Self::AccessibilityRuleInputButtonName => Cow::Borrowed("accessibility_rule_input_button_name"),
-            Self::AccessibilityRuleLinkInTextBlock => Cow::Borrowed("accessibility_rule_link_in_text_block"),
+            Self::AccessibilityRuleAvoidInlineSpacing => {
+                Cow::Borrowed("accessibility_rule_avoid_inline_spacing")
+            }
+            Self::AccessibilityRuleInputButtonName => {
+                Cow::Borrowed("accessibility_rule_input_button_name")
+            }
+            Self::AccessibilityRuleLinkInTextBlock => {
+                Cow::Borrowed("accessibility_rule_link_in_text_block")
+            }
             Self::AccessibilityRuleLinkName => Cow::Borrowed("accessibility_rule_link_name"),
-            Self::AccessibilityRuleIdenticalLinksSamePurpose => Cow::Borrowed("accessibility_rule_identical_links_same_purpose"),
+            Self::AccessibilityRuleIdenticalLinksSamePurpose => {
+                Cow::Borrowed("accessibility_rule_identical_links_same_purpose")
+            }
             Self::AccessibilityRuleSelectName => Cow::Borrowed("accessibility_rule_select_name"),
             Self::AccessibilityRuleSummaryName => Cow::Borrowed("accessibility_rule_summary_name"),
             Self::AccessibilityRuleMarquee => Cow::Borrowed("accessibility_rule_marquee"),
             Self::AccessibilityRuleBlink => Cow::Borrowed("accessibility_rule_blink"),
-            Self::AccessibilityRuleColorContrastEnhanced => Cow::Borrowed("accessibility_rule_color_contrast_enhanced"),
-            Self::AccessibilityRuleColorContrast => Cow::Borrowed("accessibility_rule_color_contrast"),
+            Self::AccessibilityRuleColorContrastEnhanced => {
+                Cow::Borrowed("accessibility_rule_color_contrast_enhanced")
+            }
+            Self::AccessibilityRuleColorContrast => {
+                Cow::Borrowed("accessibility_rule_color_contrast")
+            }
             Self::AccessibilityRuleTargetSize => Cow::Borrowed("accessibility_rule_target_size"),
-            Self::AccessibilityRuleNestedInteractive => Cow::Borrowed("accessibility_rule_nested_interactive"),
+            Self::AccessibilityRuleNestedInteractive => {
+                Cow::Borrowed("accessibility_rule_nested_interactive")
+            }
             Self::AccessibilityRuleListitem => Cow::Borrowed("accessibility_rule_listitem"),
             Self::AccessibilityRuleList => Cow::Borrowed("accessibility_rule_list"),
-            Self::AccessibilityRuleDefinitionList => Cow::Borrowed("accessibility_rule_definition_list"),
+            Self::AccessibilityRuleDefinitionList => {
+                Cow::Borrowed("accessibility_rule_definition_list")
+            }
             Self::AccessibilityRuleDlitem => Cow::Borrowed("accessibility_rule_dlitem"),
-            Self::AccessibilityRuleThHasDataCells => Cow::Borrowed("accessibility_rule_th_has_data_cells"),
-            Self::AccessibilityRuleTdHeadersAttr => Cow::Borrowed("accessibility_rule_td_headers_attr"),
-            Self::AccessibilityRuleEmptyTableHeader => Cow::Borrowed("accessibility_rule_empty_table_header"),
-            Self::AccessibilityRuleTableDuplicateName => Cow::Borrowed("accessibility_rule_table_duplicate_name"),
-            Self::AccessibilityRuleScopeAttrValid => Cow::Borrowed("accessibility_rule_scope_attr_valid"),
-            Self::ValidationHighCarbonRatingDeprecated1 => Cow::Borrowed("validation_high_carbon_rating_deprecated_1"),
-            Self::ValidationHighCarbonRatingDeprecated2 => Cow::Borrowed("validation_high_carbon_rating_deprecated_2"),
-            Self::UrlGaTrackingParametersDeprecated1 => Cow::Borrowed("url_ga_tracking_parameters_deprecated_1"),
-            Self::UrlGaTrackingParametersDeprecated2 => Cow::Borrowed("url_ga_tracking_parameters_deprecated_2"),
-            Self::PagespeedLayoutShiftDeprecated => Cow::Borrowed("pagespeed_layout_shift_deprecated"),
-            Self::PagespeedUnsizedImagesDeprecated => Cow::Borrowed("pagespeed_unsized_images_deprecated"),
-            Self::PagespeedUsesWebpImagesDeprecated => Cow::Borrowed("pagespeed_uses_webp_images_deprecated"),
-            Self::PagespeedUsesTextCompressionDeprecated => Cow::Borrowed("pagespeed_uses_text_compression_deprecated"),
-            Self::PagespeedTimeToFirstByteDeprecated => Cow::Borrowed("pagespeed_time_to_first_byte_deprecated"),
+            Self::AccessibilityRuleThHasDataCells => {
+                Cow::Borrowed("accessibility_rule_th_has_data_cells")
+            }
+            Self::AccessibilityRuleTdHeadersAttr => {
+                Cow::Borrowed("accessibility_rule_td_headers_attr")
+            }
+            Self::AccessibilityRuleEmptyTableHeader => {
+                Cow::Borrowed("accessibility_rule_empty_table_header")
+            }
+            Self::AccessibilityRuleTableDuplicateName => {
+                Cow::Borrowed("accessibility_rule_table_duplicate_name")
+            }
+            Self::AccessibilityRuleScopeAttrValid => {
+                Cow::Borrowed("accessibility_rule_scope_attr_valid")
+            }
+            Self::ValidationHighCarbonRatingDeprecated1 => {
+                Cow::Borrowed("validation_high_carbon_rating_deprecated_1")
+            }
+            Self::ValidationHighCarbonRatingDeprecated2 => {
+                Cow::Borrowed("validation_high_carbon_rating_deprecated_2")
+            }
+            Self::UrlGaTrackingParametersDeprecated1 => {
+                Cow::Borrowed("url_ga_tracking_parameters_deprecated_1")
+            }
+            Self::UrlGaTrackingParametersDeprecated2 => {
+                Cow::Borrowed("url_ga_tracking_parameters_deprecated_2")
+            }
+            Self::PagespeedLayoutShiftDeprecated => {
+                Cow::Borrowed("pagespeed_layout_shift_deprecated")
+            }
+            Self::PagespeedUnsizedImagesDeprecated => {
+                Cow::Borrowed("pagespeed_unsized_images_deprecated")
+            }
+            Self::PagespeedUsesWebpImagesDeprecated => {
+                Cow::Borrowed("pagespeed_uses_webp_images_deprecated")
+            }
+            Self::PagespeedUsesTextCompressionDeprecated => {
+                Cow::Borrowed("pagespeed_uses_text_compression_deprecated")
+            }
+            Self::PagespeedTimeToFirstByteDeprecated => {
+                Cow::Borrowed("pagespeed_time_to_first_byte_deprecated")
+            }
             Self::PagespeedRedirectsDeprecated => Cow::Borrowed("pagespeed_redirects_deprecated"),
             Self::PagespeedDomSizeDeprecated => Cow::Borrowed("pagespeed_dom_size_deprecated"),
-            Self::PagespeedFontDisplayDeprecated => Cow::Borrowed("pagespeed_font_display_deprecated"),
-            Self::PagespeedUsesOptimizedImagesDeprecated => Cow::Borrowed("pagespeed_uses_optimized_images_deprecated"),
-            Self::PagespeedEfficientAnimatedContentDeprecated => Cow::Borrowed("pagespeed_efficient_animated_content_deprecated"),
-            Self::PagespeedUsesResponsiveImagesDeprecated => Cow::Borrowed("pagespeed_uses_responsive_images_deprecated"),
-            Self::PagespeedLegacyJavaScriptDeprecated => Cow::Borrowed("pagespeed_legacy_javascript_deprecated"),
-            Self::PagespeedUsesRelPreconnectDeprecated => Cow::Borrowed("pagespeed_uses_rel_preconnect_deprecated"),
-            Self::PagespeedRenderBlockingResourcesDeprecated => Cow::Borrowed("pagespeed_render_blocking_resources_deprecated"),
-            Self::PagespeedUsesLongCacheTtlDeprecated => Cow::Borrowed("pagespeed_uses_long_cache_ttl_deprecated"),
-            Self::PagespeedOffscreenImagesDeprecated => Cow::Borrowed("pagespeed_offscreen_images_deprecated"),
-            Self::PagespeedUsesRelPreloadDeprecated => Cow::Borrowed("pagespeed_uses_rel_preload_deprecated"),
-            Self::MobileViewportNotSetDeprecated => Cow::Borrowed("mobile_viewport_not_set_deprecated"),
+            Self::PagespeedFontDisplayDeprecated => {
+                Cow::Borrowed("pagespeed_font_display_deprecated")
+            }
+            Self::PagespeedUsesOptimizedImagesDeprecated => {
+                Cow::Borrowed("pagespeed_uses_optimized_images_deprecated")
+            }
+            Self::PagespeedEfficientAnimatedContentDeprecated => {
+                Cow::Borrowed("pagespeed_efficient_animated_content_deprecated")
+            }
+            Self::PagespeedUsesResponsiveImagesDeprecated => {
+                Cow::Borrowed("pagespeed_uses_responsive_images_deprecated")
+            }
+            Self::PagespeedLegacyJavaScriptDeprecated => {
+                Cow::Borrowed("pagespeed_legacy_javascript_deprecated")
+            }
+            Self::PagespeedUsesRelPreconnectDeprecated => {
+                Cow::Borrowed("pagespeed_uses_rel_preconnect_deprecated")
+            }
+            Self::PagespeedRenderBlockingResourcesDeprecated => {
+                Cow::Borrowed("pagespeed_render_blocking_resources_deprecated")
+            }
+            Self::PagespeedUsesLongCacheTtlDeprecated => {
+                Cow::Borrowed("pagespeed_uses_long_cache_ttl_deprecated")
+            }
+            Self::PagespeedOffscreenImagesDeprecated => {
+                Cow::Borrowed("pagespeed_offscreen_images_deprecated")
+            }
+            Self::PagespeedUsesRelPreloadDeprecated => {
+                Cow::Borrowed("pagespeed_uses_rel_preload_deprecated")
+            }
+            Self::MobileViewportNotSetDeprecated => {
+                Cow::Borrowed("mobile_viewport_not_set_deprecated")
+            }
         }
     }
 
@@ -494,17 +812,23 @@ impl FilterKey {
     pub fn from_serde_key(s: &str) -> Option<Self> {
         if let Some(rest) = s.strip_prefix("custom_search_slot_") {
             if let Ok(n) = rest.parse::<u8>() {
-                if (1..=100).contains(&n) { return Some(Self::CustomSearchSlot(n)); }
+                if (1..=100).contains(&n) {
+                    return Some(Self::CustomSearchSlot(n));
+                }
             }
         }
         if let Some(rest) = s.strip_prefix("custom_extractor_slot_") {
             if let Ok(n) = rest.parse::<u8>() {
-                if (1..=100).contains(&n) { return Some(Self::CustomExtractorSlot(n)); }
+                if (1..=100).contains(&n) {
+                    return Some(Self::CustomExtractorSlot(n));
+                }
             }
         }
         if let Some(rest) = s.strip_prefix("custom_javascript_slot_") {
             if let Ok(n) = rest.parse::<u8>() {
-                if (1..=100).contains(&n) { return Some(Self::CustomJavaScriptSlot(n)); }
+                if (1..=100).contains(&n) {
+                    return Some(Self::CustomJavaScriptSlot(n));
+                }
             }
         }
         if let Some(rest) = s.strip_prefix("ai_") {
@@ -512,7 +836,9 @@ impl FilterKey {
                 let provider = &rest[..idx];
                 let n_str = &rest[idx + "_slot_".len()..];
                 if let (Some(p), Ok(n)) = (AiProvider::parse(provider), n_str.parse::<u8>()) {
-                    if (1..=100).contains(&n) { return Some(Self::AiSlot(p, n)); }
+                    if (1..=100).contains(&n) {
+                        return Some(Self::AiSlot(p, n));
+                    }
                 }
             }
         }
@@ -548,32 +874,54 @@ impl FilterKey {
             "response_code_success" => Some(Self::ResponseCodeSuccess),
             "response_code_redirection" => Some(Self::ResponseCodeRedirection),
             "response_code_redirection_js" => Some(Self::ResponseCodeRedirectionJs),
-            "response_code_redirection_meta_refresh" => Some(Self::ResponseCodeRedirectionMetaRefresh),
-            "response_code_redirection_http_refresh" => Some(Self::ResponseCodeRedirectionHttpRefresh),
+            "response_code_redirection_meta_refresh" => {
+                Some(Self::ResponseCodeRedirectionMetaRefresh)
+            }
+            "response_code_redirection_http_refresh" => {
+                Some(Self::ResponseCodeRedirectionHttpRefresh)
+            }
             "response_code_client_error" => Some(Self::ResponseCodeClientError),
             "response_code_server_error" => Some(Self::ResponseCodeServerError),
             "response_code_internal_all" => Some(Self::ResponseCodeInternalAll),
             "response_code_internal_blocked" => Some(Self::ResponseCodeInternalBlocked),
-            "response_code_internal_blocked_resource" => Some(Self::ResponseCodeInternalBlockedResource),
+            "response_code_internal_blocked_resource" => {
+                Some(Self::ResponseCodeInternalBlockedResource)
+            }
             "response_code_internal_no_response" => Some(Self::ResponseCodeInternalNoResponse),
             "response_code_internal_success" => Some(Self::ResponseCodeInternalSuccess),
             "response_code_internal_redirection" => Some(Self::ResponseCodeInternalRedirection),
-            "response_code_internal_redirection_js" => Some(Self::ResponseCodeInternalRedirectionJs),
-            "response_code_internal_redirection_meta_refresh" => Some(Self::ResponseCodeInternalRedirectionMetaRefresh),
-            "response_code_internal_redirection_http_refresh" => Some(Self::ResponseCodeInternalRedirectionHttpRefresh),
-            "response_code_internal_redirect_chain" => Some(Self::ResponseCodeInternalRedirectChain),
+            "response_code_internal_redirection_js" => {
+                Some(Self::ResponseCodeInternalRedirectionJs)
+            }
+            "response_code_internal_redirection_meta_refresh" => {
+                Some(Self::ResponseCodeInternalRedirectionMetaRefresh)
+            }
+            "response_code_internal_redirection_http_refresh" => {
+                Some(Self::ResponseCodeInternalRedirectionHttpRefresh)
+            }
+            "response_code_internal_redirect_chain" => {
+                Some(Self::ResponseCodeInternalRedirectChain)
+            }
             "response_code_internal_redirect_loop" => Some(Self::ResponseCodeInternalRedirectLoop),
             "response_code_internal_client_error" => Some(Self::ResponseCodeInternalClientError),
             "response_code_internal_server_error" => Some(Self::ResponseCodeInternalServerError),
             "response_code_external_all" => Some(Self::ResponseCodeExternalAll),
             "response_code_external_blocked" => Some(Self::ResponseCodeExternalBlocked),
-            "response_code_external_blocked_resource" => Some(Self::ResponseCodeExternalBlockedResource),
+            "response_code_external_blocked_resource" => {
+                Some(Self::ResponseCodeExternalBlockedResource)
+            }
             "response_code_external_no_response" => Some(Self::ResponseCodeExternalNoResponse),
             "response_code_external_success" => Some(Self::ResponseCodeExternalSuccess),
             "response_code_external_redirection" => Some(Self::ResponseCodeExternalRedirection),
-            "response_code_external_redirection_js" => Some(Self::ResponseCodeExternalRedirectionJs),
-            "response_code_external_redirection_meta_refresh" => Some(Self::ResponseCodeExternalRedirectionMetaRefresh),
-            "response_code_external_redirection_http_refresh" => Some(Self::ResponseCodeExternalRedirectionHttpRefresh),
+            "response_code_external_redirection_js" => {
+                Some(Self::ResponseCodeExternalRedirectionJs)
+            }
+            "response_code_external_redirection_meta_refresh" => {
+                Some(Self::ResponseCodeExternalRedirectionMetaRefresh)
+            }
+            "response_code_external_redirection_http_refresh" => {
+                Some(Self::ResponseCodeExternalRedirectionHttpRefresh)
+            }
             "response_code_external_client_error" => Some(Self::ResponseCodeExternalClientError),
             "response_code_external_server_error" => Some(Self::ResponseCodeExternalServerError),
             "url_all" => Some(Self::UrlAll),
@@ -679,7 +1027,9 @@ impl FilterKey {
             "hreflang_non_200_hreflang_urls" => Some(Self::HreflangNon200HreflangUrls),
             "hreflang_unlinked_hreflang_urls" => Some(Self::HreflangUnlinkedHreflangUrls),
             "hreflang_missing_return_links" => Some(Self::HreflangMissingReturnLinks),
-            "hreflang_inconsistent_language_return_links" => Some(Self::HreflangInconsistentLanguageReturnLinks),
+            "hreflang_inconsistent_language_return_links" => {
+                Some(Self::HreflangInconsistentLanguageReturnLinks)
+            }
             "hreflang_non_canonical_return_links" => Some(Self::HreflangNonCanonicalReturnLinks),
             "hreflang_no_index_return_links" => Some(Self::HreflangNoIndexReturnLinks),
             "hreflang_incorrect_language_codes" => Some(Self::HreflangIncorrectLanguageCodes),
@@ -691,20 +1041,26 @@ impl FilterKey {
             "hreflang_outside_head" => Some(Self::HreflangOutsideHead),
             "javascript_all" => Some(Self::JavaScriptAll),
             "javascript_old_ajax_crawling_scheme" => Some(Self::JavaScriptOldAjaxCrawlingScheme),
-            "javascript_old_ajax_crawling_meta_fragment_tag" => Some(Self::JavaScriptOldAjaxCrawlingMetaFragmentTag),
+            "javascript_old_ajax_crawling_meta_fragment_tag" => {
+                Some(Self::JavaScriptOldAjaxCrawlingMetaFragmentTag)
+            }
             "javascript_title_js_only" => Some(Self::JavaScriptTitleJsOnly),
             "javascript_title_js_updated" => Some(Self::JavaScriptTitleJsUpdated),
             "javascript_h1_js_only" => Some(Self::JavaScriptH1JsOnly),
             "javascript_h1_js_updated" => Some(Self::JavaScriptH1JsUpdated),
             "javascript_metadescription_js_only" => Some(Self::JavaScriptMetadescriptionJsOnly),
-            "javascript_metadescription_js_updated" => Some(Self::JavaScriptMetadescriptionJsUpdated),
+            "javascript_metadescription_js_updated" => {
+                Some(Self::JavaScriptMetadescriptionJsUpdated)
+            }
             "javascript_canonical_js_only" => Some(Self::JavaScriptCanonicalJsOnly),
             "javascript_canonical_mismatch" => Some(Self::JavaScriptCanonicalMismatch),
             "javascript_no_index_only_in_html" => Some(Self::JavaScriptNoIndexOnlyInHtml),
             "javascript_no_follow_only_in_html" => Some(Self::JavaScriptNoFollowOnlyInHtml),
             "javascript_contains_js_links" => Some(Self::JavaScriptContainsJsLinks),
             "javascript_contains_js_content" => Some(Self::JavaScriptContainsJsContent),
-            "javascript_pages_with_blocked_resources" => Some(Self::JavaScriptPagesWithBlockedResources),
+            "javascript_pages_with_blocked_resources" => {
+                Some(Self::JavaScriptPagesWithBlockedResources)
+            }
             "javascript_pages_with_js_errors" => Some(Self::JavaScriptPagesWithJsErrors),
             "javascript_pages_with_js_warnings" => Some(Self::JavaScriptPagesWithJsWarnings),
             "javascript_pages_with_chrome_issues" => Some(Self::JavaScriptPagesWithChromeIssues),
@@ -727,17 +1083,27 @@ impl FilterKey {
             "amp_contains_disallowed_html" => Some(Self::AmpContainsDisallowedHtml),
             "amp_other_validation_errors" => Some(Self::AmpOtherValidationErrors),
             "structured_data_all" => Some(Self::StructuredDataAll),
-            "structured_data_contains_structured_data" => Some(Self::StructuredDataContainsStructuredData),
-            "structured_data_missing_structured_data" => Some(Self::StructuredDataMissingStructuredData),
+            "structured_data_contains_structured_data" => {
+                Some(Self::StructuredDataContainsStructuredData)
+            }
+            "structured_data_missing_structured_data" => {
+                Some(Self::StructuredDataMissingStructuredData)
+            }
             "structured_data_validation_errors" => Some(Self::StructuredDataValidationErrors),
             "structured_data_validation_warnings" => Some(Self::StructuredDataValidationWarnings),
-            "structured_data_google_validation_errors" => Some(Self::StructuredDataGoogleValidationErrors),
-            "structured_data_google_validation_warnings" => Some(Self::StructuredDataGoogleValidationWarnings),
+            "structured_data_google_validation_errors" => {
+                Some(Self::StructuredDataGoogleValidationErrors)
+            }
+            "structured_data_google_validation_warnings" => {
+                Some(Self::StructuredDataGoogleValidationWarnings)
+            }
             "structured_data_parse_errors" => Some(Self::StructuredDataParseErrors),
             "structured_data_microdata_urls" => Some(Self::StructuredDataMicrodataUrls),
             "structured_data_jsonld_urls" => Some(Self::StructuredDataJsonldUrls),
             "structured_data_rdfa_urls" => Some(Self::StructuredDataRdfaUrls),
-            "structured_data_google_feature_detected" => Some(Self::StructuredDataGoogleFeatureDetected),
+            "structured_data_google_feature_detected" => {
+                Some(Self::StructuredDataGoogleFeatureDetected)
+            }
             "sitemaps_all" => Some(Self::SitemapsAll),
             "sitemaps_urls_in_sitemap" => Some(Self::SitemapsUrlsInSitemap),
             "sitemaps_not_in_sitemap" => Some(Self::SitemapsNotInSitemap),
@@ -783,10 +1149,14 @@ impl FilterKey {
             "pagespeed_improve_image_delivery" => Some(Self::PagespeedImproveImageDelivery),
             "pagespeed_legacy_javascript" => Some(Self::PagespeedLegacyJavaScript),
             "pagespeed_render_blocking_requests" => Some(Self::PagespeedRenderBlockingRequests),
-            "pagespeed_use_efficient_cache_lifetimes" => Some(Self::PagespeedUseEfficientCacheLifetimes),
+            "pagespeed_use_efficient_cache_lifetimes" => {
+                Some(Self::PagespeedUseEfficientCacheLifetimes)
+            }
             "pagespeed_lcp_request_discovery" => Some(Self::PagespeedLcpRequestDiscovery),
             "pagespeed_forced_reflow" => Some(Self::PagespeedForcedReflow),
-            "pagespeed_avoid_enormous_network_payloads" => Some(Self::PagespeedAvoidEnormousNetworkPayloads),
+            "pagespeed_avoid_enormous_network_payloads" => {
+                Some(Self::PagespeedAvoidEnormousNetworkPayloads)
+            }
             "pagespeed_network_dependency_tree" => Some(Self::PagespeedNetworkDependencyTree),
             "pagespeed_duplicated_javascript" => Some(Self::PagespeedDuplicatedJavaScript),
             "unknown" => Some(Self::Unknown),
@@ -803,7 +1173,9 @@ impl FilterKey {
             "security_missing_frame_header" => Some(Self::SecurityMissingFrameHeader),
             "security_protocol_relative_urls" => Some(Self::SecurityProtocolRelativeUrls),
             "security_missing_csp_header" => Some(Self::SecurityMissingCspHeader),
-            "security_missing_secure_referrer_policy" => Some(Self::SecurityMissingSecureReferrerPolicy),
+            "security_missing_secure_referrer_policy" => {
+                Some(Self::SecurityMissingSecureReferrerPolicy)
+            }
             "content_all" => Some(Self::ContentAll),
             "content_language_errors_misspelt" => Some(Self::ContentLanguageErrorsMisspelt),
             "content_language_errors_grammar" => Some(Self::ContentLanguageErrorsGrammar),
@@ -835,7 +1207,9 @@ impl FilterKey {
             "links_no_internal_outlinks" => Some(Self::LinksNoInternalOutlinks),
             "links_nofollow_internal_outlinks" => Some(Self::LinksNofollowInternalOutlinks),
             "links_no_anchor_text_outlinks" => Some(Self::LinksNoAnchorTextOutlinks),
-            "links_non_descriptive_anchor_text_outlinks" => Some(Self::LinksNonDescriptiveAnchorTextOutlinks),
+            "links_non_descriptive_anchor_text_outlinks" => {
+                Some(Self::LinksNonDescriptiveAnchorTextOutlinks)
+            }
             "links_high_external_outlinks" => Some(Self::LinksHighExternalOutlinks),
             "links_high_internal_outlinks" => Some(Self::LinksHighInternalOutlinks),
             "links_follow_nofollow_inlinks" => Some(Self::LinksFollowNofollowInlinks),
@@ -852,7 +1226,9 @@ impl FilterKey {
             "validation_multiple_bodies" => Some(Self::ValidationMultipleBodies),
             "validation_document_over_15_mb" => Some(Self::ValidationDocumentOver15Mb),
             "validation_resource_over_15_mb" => Some(Self::ValidationResourceOver15Mb),
-            "validation_body_element_preceding_html" => Some(Self::ValidationBodyElementPrecedingHtml),
+            "validation_body_element_preceding_html" => {
+                Some(Self::ValidationBodyElementPrecedingHtml)
+            }
             "validation_high_carbon_rating" => Some(Self::ValidationHighCarbonRating),
             "mobile_all" => Some(Self::MobileAll),
             "mobile_viewport_not_set" => Some(Self::MobileViewportNotSet),
@@ -864,128 +1240,238 @@ impl FilterKey {
             "ai_all" => Some(Self::AiAll),
             "accessibility_all" => Some(Self::AccessibilityAll),
             "accessibility_score_poor" => Some(Self::AccessibilityScorePoor),
-            "accessibility_score_needs_improvement" => Some(Self::AccessibilityScoreNeedsImprovement),
+            "accessibility_score_needs_improvement" => {
+                Some(Self::AccessibilityScoreNeedsImprovement)
+            }
             "accessibility_score_good" => Some(Self::AccessibilityScoreGood),
-            "accessibility_best_practice_violation" => Some(Self::AccessibilityBestPracticeViolation),
+            "accessibility_best_practice_violation" => {
+                Some(Self::AccessibilityBestPracticeViolation)
+            }
             "accessibility_wcag2a_violation" => Some(Self::AccessibilityWcag2aViolation),
             "accessibility_wcag2aa_violation" => Some(Self::AccessibilityWcag2aaViolation),
             "accessibility_wcag2aaa_violation" => Some(Self::AccessibilityWcag2aaaViolation),
             "accessibility_wcag21aa_violation" => Some(Self::AccessibilityWcag21aaViolation),
             "accessibility_wcag22aa_violation" => Some(Self::AccessibilityWcag22aaViolation),
             "accessibility_rule_accesskeys" => Some(Self::AccessibilityRuleAccesskeys),
-            "accessibility_rule_presentation_role_conflict" => Some(Self::AccessibilityRulePresentationRoleConflict),
+            "accessibility_rule_presentation_role_conflict" => {
+                Some(Self::AccessibilityRulePresentationRoleConflict)
+            }
             "accessibility_rule_tabindex" => Some(Self::AccessibilityRuleTabindex),
-            "accessibility_rule_scrollable_region_focusable" => Some(Self::AccessibilityRuleScrollableRegionFocusable),
+            "accessibility_rule_scrollable_region_focusable" => {
+                Some(Self::AccessibilityRuleScrollableRegionFocusable)
+            }
             "accessibility_rule_skip_link" => Some(Self::AccessibilityRuleSkipLink),
-            "accessibility_rule_aria_required_attr" => Some(Self::AccessibilityRuleAriaRequiredAttr),
+            "accessibility_rule_aria_required_attr" => {
+                Some(Self::AccessibilityRuleAriaRequiredAttr)
+            }
             "accessibility_rule_aria_text" => Some(Self::AccessibilityRuleAriaText),
-            "accessibility_rule_aria_conditional_attr" => Some(Self::AccessibilityRuleAriaConditionalAttr),
-            "accessibility_rule_aria_valid_attr_value" => Some(Self::AccessibilityRuleAriaValidAttrValue),
+            "accessibility_rule_aria_conditional_attr" => {
+                Some(Self::AccessibilityRuleAriaConditionalAttr)
+            }
+            "accessibility_rule_aria_valid_attr_value" => {
+                Some(Self::AccessibilityRuleAriaValidAttrValue)
+            }
             "accessibility_rule_aria_valid_attr" => Some(Self::AccessibilityRuleAriaValidAttr),
             "accessibility_rule_aria_command_name" => Some(Self::AccessibilityRuleAriaCommandName),
             "accessibility_rule_aria_dialog_name" => Some(Self::AccessibilityRuleAriaDialogName),
-            "accessibility_rule_aria_input_field_name" => Some(Self::AccessibilityRuleAriaInputFieldName),
+            "accessibility_rule_aria_input_field_name" => {
+                Some(Self::AccessibilityRuleAriaInputFieldName)
+            }
             "accessibility_rule_aria_meter_name" => Some(Self::AccessibilityRuleAriaMeterName),
-            "accessibility_rule_aria_progressbar_name" => Some(Self::AccessibilityRuleAriaProgressbarName),
+            "accessibility_rule_aria_progressbar_name" => {
+                Some(Self::AccessibilityRuleAriaProgressbarName)
+            }
             "accessibility_rule_aria_allowed_role" => Some(Self::AccessibilityRuleAriaAllowedRole),
-            "accessibility_rule_aria_required_parent" => Some(Self::AccessibilityRuleAriaRequiredParent),
+            "accessibility_rule_aria_required_parent" => {
+                Some(Self::AccessibilityRuleAriaRequiredParent)
+            }
             "accessibility_rule_aria_roles" => Some(Self::AccessibilityRuleAriaRoles),
-            "accessibility_rule_aria_toggle_field_name" => Some(Self::AccessibilityRuleAriaToggleFieldName),
+            "accessibility_rule_aria_toggle_field_name" => {
+                Some(Self::AccessibilityRuleAriaToggleFieldName)
+            }
             "accessibility_rule_aria_tooltip_name" => Some(Self::AccessibilityRuleAriaTooltipName),
-            "accessibility_rule_aria_treeitem_name" => Some(Self::AccessibilityRuleAriaTreeitemName),
-            "accessibility_rule_aria_required_children" => Some(Self::AccessibilityRuleAriaRequiredChildren),
-            "accessibility_rule_aria_deprecated_role" => Some(Self::AccessibilityRuleAriaDeprecatedRole),
-            "accessibility_rule_aria_braille_equivalent" => Some(Self::AccessibilityRuleAriaBrailleEquivalent),
+            "accessibility_rule_aria_treeitem_name" => {
+                Some(Self::AccessibilityRuleAriaTreeitemName)
+            }
+            "accessibility_rule_aria_required_children" => {
+                Some(Self::AccessibilityRuleAriaRequiredChildren)
+            }
+            "accessibility_rule_aria_deprecated_role" => {
+                Some(Self::AccessibilityRuleAriaDeprecatedRole)
+            }
+            "accessibility_rule_aria_braille_equivalent" => {
+                Some(Self::AccessibilityRuleAriaBrailleEquivalent)
+            }
             "accessibility_rule_aria_hidden_focus" => Some(Self::AccessibilityRuleAriaHiddenFocus),
             "accessibility_rule_aria_hidden_body" => Some(Self::AccessibilityRuleAriaHiddenBody),
-            "accessibility_rule_aria_prohibited_attr" => Some(Self::AccessibilityRuleAriaProhibitedAttr),
+            "accessibility_rule_aria_prohibited_attr" => {
+                Some(Self::AccessibilityRuleAriaProhibitedAttr)
+            }
             "accessibility_rule_aria_allowed_attr" => Some(Self::AccessibilityRuleAriaAllowedAttr),
             "accessibility_rule_duplicate_id_aria" => Some(Self::AccessibilityRuleDuplicateIdAria),
             "accessibility_rule_bypass" => Some(Self::AccessibilityRuleBypass),
             "accessibility_rule_region" => Some(Self::AccessibilityRuleRegion),
             "accessibility_rule_landmark_one_main" => Some(Self::AccessibilityRuleLandmarkOneMain),
-            "accessibility_rule_landmark_no_duplicate_banner" => Some(Self::AccessibilityRuleLandmarkNoDuplicateBanner),
-            "accessibility_rule_landmark_banner_is_top_level" => Some(Self::AccessibilityRuleLandmarkBannerIsTopLevel),
-            "accessibility_rule_landmark_no_duplicate_contentinfo" => Some(Self::AccessibilityRuleLandmarkNoDuplicateContentinfo),
-            "accessibility_rule_landmark_no_duplicate_main" => Some(Self::AccessibilityRuleLandmarkNoDuplicateMain),
-            "accessibility_rule_landmark_complementary_is_top_level" => Some(Self::AccessibilityRuleLandmarkComplementaryIsTopLevel),
-            "accessibility_rule_landmark_contentinfo_is_top_level" => Some(Self::AccessibilityRuleLandmarkContentinfoIsTopLevel),
-            "accessibility_rule_landmark_main_is_top_level" => Some(Self::AccessibilityRuleLandmarkMainIsTopLevel),
+            "accessibility_rule_landmark_no_duplicate_banner" => {
+                Some(Self::AccessibilityRuleLandmarkNoDuplicateBanner)
+            }
+            "accessibility_rule_landmark_banner_is_top_level" => {
+                Some(Self::AccessibilityRuleLandmarkBannerIsTopLevel)
+            }
+            "accessibility_rule_landmark_no_duplicate_contentinfo" => {
+                Some(Self::AccessibilityRuleLandmarkNoDuplicateContentinfo)
+            }
+            "accessibility_rule_landmark_no_duplicate_main" => {
+                Some(Self::AccessibilityRuleLandmarkNoDuplicateMain)
+            }
+            "accessibility_rule_landmark_complementary_is_top_level" => {
+                Some(Self::AccessibilityRuleLandmarkComplementaryIsTopLevel)
+            }
+            "accessibility_rule_landmark_contentinfo_is_top_level" => {
+                Some(Self::AccessibilityRuleLandmarkContentinfoIsTopLevel)
+            }
+            "accessibility_rule_landmark_main_is_top_level" => {
+                Some(Self::AccessibilityRuleLandmarkMainIsTopLevel)
+            }
             "accessibility_rule_landmark_unique" => Some(Self::AccessibilityRuleLandmarkUnique),
             "accessibility_rule_label" => Some(Self::AccessibilityRuleLabel),
             "accessibility_rule_label_title_only" => Some(Self::AccessibilityRuleLabelTitleOnly),
-            "accessibility_rule_form_field_multiple_labels" => Some(Self::AccessibilityRuleFormFieldMultipleLabels),
-            "accessibility_rule_autocomplete_valid" => Some(Self::AccessibilityRuleAutocompleteValid),
+            "accessibility_rule_form_field_multiple_labels" => {
+                Some(Self::AccessibilityRuleFormFieldMultipleLabels)
+            }
+            "accessibility_rule_autocomplete_valid" => {
+                Some(Self::AccessibilityRuleAutocompleteValid)
+            }
             "accessibility_rule_frame_title" => Some(Self::AccessibilityRuleFrameTitle),
-            "accessibility_rule_frame_title_unique" => Some(Self::AccessibilityRuleFrameTitleUnique),
+            "accessibility_rule_frame_title_unique" => {
+                Some(Self::AccessibilityRuleFrameTitleUnique)
+            }
             "accessibility_rule_frame_tested" => Some(Self::AccessibilityRuleFrameTested),
-            "accessibility_rule_frame_focusable_content" => Some(Self::AccessibilityRuleFrameFocusableContent),
+            "accessibility_rule_frame_focusable_content" => {
+                Some(Self::AccessibilityRuleFrameFocusableContent)
+            }
             "accessibility_rule_document_title" => Some(Self::AccessibilityRuleDocumentTitle),
-            "accessibility_rule_page_has_heading_one" => Some(Self::AccessibilityRulePageHasHeadingOne),
+            "accessibility_rule_page_has_heading_one" => {
+                Some(Self::AccessibilityRulePageHasHeadingOne)
+            }
             "accessibility_rule_heading_order" => Some(Self::AccessibilityRuleHeadingOrder),
             "accessibility_rule_empty_heading" => Some(Self::AccessibilityRuleEmptyHeading),
-            "accessibility_rule_meta_viewport_large" => Some(Self::AccessibilityRuleMetaViewportLarge),
+            "accessibility_rule_meta_viewport_large" => {
+                Some(Self::AccessibilityRuleMetaViewportLarge)
+            }
             "accessibility_rule_meta_viewport" => Some(Self::AccessibilityRuleMetaViewport),
             "accessibility_rule_html_lang_valid" => Some(Self::AccessibilityRuleHtmlLangValid),
             "accessibility_rule_html_has_lang" => Some(Self::AccessibilityRuleHtmlHasLang),
-            "accessibility_rule_html_xml_lang_mismatch" => Some(Self::AccessibilityRuleHtmlXmlLangMismatch),
+            "accessibility_rule_html_xml_lang_mismatch" => {
+                Some(Self::AccessibilityRuleHtmlXmlLangMismatch)
+            }
             "accessibility_rule_valid_lang" => Some(Self::AccessibilityRuleValidLang),
-            "accessibility_rule_meta_refresh_no_exceptions" => Some(Self::AccessibilityRuleMetaRefreshNoExceptions),
+            "accessibility_rule_meta_refresh_no_exceptions" => {
+                Some(Self::AccessibilityRuleMetaRefreshNoExceptions)
+            }
             "accessibility_rule_meta_refresh" => Some(Self::AccessibilityRuleMetaRefresh),
             "accessibility_rule_input_image_alt" => Some(Self::AccessibilityRuleInputImageAlt),
             "accessibility_rule_image_alt" => Some(Self::AccessibilityRuleImageAlt),
             "accessibility_rule_object_alt" => Some(Self::AccessibilityRuleObjectAlt),
             "accessibility_rule_area_alt" => Some(Self::AccessibilityRuleAreaAlt),
-            "accessibility_rule_image_redundant_alt" => Some(Self::AccessibilityRuleImageRedundantAlt),
+            "accessibility_rule_image_redundant_alt" => {
+                Some(Self::AccessibilityRuleImageRedundantAlt)
+            }
             "accessibility_rule_role_img_alt" => Some(Self::AccessibilityRuleRoleImgAlt),
             "accessibility_rule_svg_img_alt" => Some(Self::AccessibilityRuleSvgImgAlt),
-            "accessibility_rule_server_side_image_map" => Some(Self::AccessibilityRuleServerSideImageMap),
+            "accessibility_rule_server_side_image_map" => {
+                Some(Self::AccessibilityRuleServerSideImageMap)
+            }
             "accessibility_rule_video_caption" => Some(Self::AccessibilityRuleVideoCaption),
             "accessibility_rule_no_autoplay_audio" => Some(Self::AccessibilityRuleNoAutoplayAudio),
             "accessibility_rule_button_name" => Some(Self::AccessibilityRuleButtonName),
-            "accessibility_rule_avoid_inline_spacing" => Some(Self::AccessibilityRuleAvoidInlineSpacing),
+            "accessibility_rule_avoid_inline_spacing" => {
+                Some(Self::AccessibilityRuleAvoidInlineSpacing)
+            }
             "accessibility_rule_input_button_name" => Some(Self::AccessibilityRuleInputButtonName),
             "accessibility_rule_link_in_text_block" => Some(Self::AccessibilityRuleLinkInTextBlock),
             "accessibility_rule_link_name" => Some(Self::AccessibilityRuleLinkName),
-            "accessibility_rule_identical_links_same_purpose" => Some(Self::AccessibilityRuleIdenticalLinksSamePurpose),
+            "accessibility_rule_identical_links_same_purpose" => {
+                Some(Self::AccessibilityRuleIdenticalLinksSamePurpose)
+            }
             "accessibility_rule_select_name" => Some(Self::AccessibilityRuleSelectName),
             "accessibility_rule_summary_name" => Some(Self::AccessibilityRuleSummaryName),
             "accessibility_rule_marquee" => Some(Self::AccessibilityRuleMarquee),
             "accessibility_rule_blink" => Some(Self::AccessibilityRuleBlink),
-            "accessibility_rule_color_contrast_enhanced" => Some(Self::AccessibilityRuleColorContrastEnhanced),
+            "accessibility_rule_color_contrast_enhanced" => {
+                Some(Self::AccessibilityRuleColorContrastEnhanced)
+            }
             "accessibility_rule_color_contrast" => Some(Self::AccessibilityRuleColorContrast),
             "accessibility_rule_target_size" => Some(Self::AccessibilityRuleTargetSize),
-            "accessibility_rule_nested_interactive" => Some(Self::AccessibilityRuleNestedInteractive),
+            "accessibility_rule_nested_interactive" => {
+                Some(Self::AccessibilityRuleNestedInteractive)
+            }
             "accessibility_rule_listitem" => Some(Self::AccessibilityRuleListitem),
             "accessibility_rule_list" => Some(Self::AccessibilityRuleList),
             "accessibility_rule_definition_list" => Some(Self::AccessibilityRuleDefinitionList),
             "accessibility_rule_dlitem" => Some(Self::AccessibilityRuleDlitem),
             "accessibility_rule_th_has_data_cells" => Some(Self::AccessibilityRuleThHasDataCells),
             "accessibility_rule_td_headers_attr" => Some(Self::AccessibilityRuleTdHeadersAttr),
-            "accessibility_rule_empty_table_header" => Some(Self::AccessibilityRuleEmptyTableHeader),
-            "accessibility_rule_table_duplicate_name" => Some(Self::AccessibilityRuleTableDuplicateName),
+            "accessibility_rule_empty_table_header" => {
+                Some(Self::AccessibilityRuleEmptyTableHeader)
+            }
+            "accessibility_rule_table_duplicate_name" => {
+                Some(Self::AccessibilityRuleTableDuplicateName)
+            }
             "accessibility_rule_scope_attr_valid" => Some(Self::AccessibilityRuleScopeAttrValid),
-            "validation_high_carbon_rating_deprecated_1" => Some(Self::ValidationHighCarbonRatingDeprecated1),
-            "validation_high_carbon_rating_deprecated_2" => Some(Self::ValidationHighCarbonRatingDeprecated2),
-            "url_ga_tracking_parameters_deprecated_1" => Some(Self::UrlGaTrackingParametersDeprecated1),
-            "url_ga_tracking_parameters_deprecated_2" => Some(Self::UrlGaTrackingParametersDeprecated2),
+            "validation_high_carbon_rating_deprecated_1" => {
+                Some(Self::ValidationHighCarbonRatingDeprecated1)
+            }
+            "validation_high_carbon_rating_deprecated_2" => {
+                Some(Self::ValidationHighCarbonRatingDeprecated2)
+            }
+            "url_ga_tracking_parameters_deprecated_1" => {
+                Some(Self::UrlGaTrackingParametersDeprecated1)
+            }
+            "url_ga_tracking_parameters_deprecated_2" => {
+                Some(Self::UrlGaTrackingParametersDeprecated2)
+            }
             "pagespeed_layout_shift_deprecated" => Some(Self::PagespeedLayoutShiftDeprecated),
             "pagespeed_unsized_images_deprecated" => Some(Self::PagespeedUnsizedImagesDeprecated),
-            "pagespeed_uses_webp_images_deprecated" => Some(Self::PagespeedUsesWebpImagesDeprecated),
-            "pagespeed_uses_text_compression_deprecated" => Some(Self::PagespeedUsesTextCompressionDeprecated),
-            "pagespeed_time_to_first_byte_deprecated" => Some(Self::PagespeedTimeToFirstByteDeprecated),
+            "pagespeed_uses_webp_images_deprecated" => {
+                Some(Self::PagespeedUsesWebpImagesDeprecated)
+            }
+            "pagespeed_uses_text_compression_deprecated" => {
+                Some(Self::PagespeedUsesTextCompressionDeprecated)
+            }
+            "pagespeed_time_to_first_byte_deprecated" => {
+                Some(Self::PagespeedTimeToFirstByteDeprecated)
+            }
             "pagespeed_redirects_deprecated" => Some(Self::PagespeedRedirectsDeprecated),
             "pagespeed_dom_size_deprecated" => Some(Self::PagespeedDomSizeDeprecated),
             "pagespeed_font_display_deprecated" => Some(Self::PagespeedFontDisplayDeprecated),
-            "pagespeed_uses_optimized_images_deprecated" => Some(Self::PagespeedUsesOptimizedImagesDeprecated),
-            "pagespeed_efficient_animated_content_deprecated" => Some(Self::PagespeedEfficientAnimatedContentDeprecated),
-            "pagespeed_uses_responsive_images_deprecated" => Some(Self::PagespeedUsesResponsiveImagesDeprecated),
-            "pagespeed_legacy_javascript_deprecated" => Some(Self::PagespeedLegacyJavaScriptDeprecated),
-            "pagespeed_uses_rel_preconnect_deprecated" => Some(Self::PagespeedUsesRelPreconnectDeprecated),
-            "pagespeed_render_blocking_resources_deprecated" => Some(Self::PagespeedRenderBlockingResourcesDeprecated),
-            "pagespeed_uses_long_cache_ttl_deprecated" => Some(Self::PagespeedUsesLongCacheTtlDeprecated),
-            "pagespeed_offscreen_images_deprecated" => Some(Self::PagespeedOffscreenImagesDeprecated),
-            "pagespeed_uses_rel_preload_deprecated" => Some(Self::PagespeedUsesRelPreloadDeprecated),
+            "pagespeed_uses_optimized_images_deprecated" => {
+                Some(Self::PagespeedUsesOptimizedImagesDeprecated)
+            }
+            "pagespeed_efficient_animated_content_deprecated" => {
+                Some(Self::PagespeedEfficientAnimatedContentDeprecated)
+            }
+            "pagespeed_uses_responsive_images_deprecated" => {
+                Some(Self::PagespeedUsesResponsiveImagesDeprecated)
+            }
+            "pagespeed_legacy_javascript_deprecated" => {
+                Some(Self::PagespeedLegacyJavaScriptDeprecated)
+            }
+            "pagespeed_uses_rel_preconnect_deprecated" => {
+                Some(Self::PagespeedUsesRelPreconnectDeprecated)
+            }
+            "pagespeed_render_blocking_resources_deprecated" => {
+                Some(Self::PagespeedRenderBlockingResourcesDeprecated)
+            }
+            "pagespeed_uses_long_cache_ttl_deprecated" => {
+                Some(Self::PagespeedUsesLongCacheTtlDeprecated)
+            }
+            "pagespeed_offscreen_images_deprecated" => {
+                Some(Self::PagespeedOffscreenImagesDeprecated)
+            }
+            "pagespeed_uses_rel_preload_deprecated" => {
+                Some(Self::PagespeedUsesRelPreloadDeprecated)
+            }
             "mobile_viewport_not_set_deprecated" => Some(Self::MobileViewportNotSetDeprecated),
             _ => None,
         }

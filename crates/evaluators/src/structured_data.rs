@@ -198,9 +198,8 @@ mod tests {
 
     #[test]
     fn rdfa_fires_rdfa_flag() {
-        let keys = eval(
-            r#"<html><body><div typeof="Person" property="name">A</div></body></html>"#,
-        );
+        let keys =
+            eval(r#"<html><body><div typeof="Person" property="name">A</div></body></html>"#);
         assert!(keys.contains(&FilterKey::StructuredDataRdfaUrls));
         assert!(keys.contains(&FilterKey::StructuredDataContainsStructuredData));
     }

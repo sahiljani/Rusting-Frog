@@ -17,10 +17,8 @@ async fn main() -> anyhow::Result<()> {
         .json()
         .init();
 
-    let database_url =
-        std::env::var("DATABASE_URL").context("DATABASE_URL must be set")?;
-    let jwt_secret =
-        std::env::var("JWT_SECRET").context("JWT_SECRET must be set")?;
+    let database_url = std::env::var("DATABASE_URL").context("DATABASE_URL must be set")?;
+    let jwt_secret = std::env::var("JWT_SECRET").context("JWT_SECRET must be set")?;
     let redis_url =
         std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
 
@@ -35,8 +33,7 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("failed to run migrations")?;
 
-    let redis = redis::Client::open(redis_url.as_str())
-        .context("failed to parse Redis URL")?;
+    let redis = redis::Client::open(redis_url.as_str()).context("failed to parse Redis URL")?;
 
     let state = app_state::AppState {
         db,

@@ -12,7 +12,10 @@ use crate::extractors::auth::AuthUser;
 
 pub fn routes() -> Router<AppState> {
     Router::new()
-        .route("/projects/{project_id}/crawls", post(start_crawl).get(list_crawls))
+        .route(
+            "/projects/{project_id}/crawls",
+            post(start_crawl).get(list_crawls),
+        )
         .route("/crawls/{id}", get(get_crawl))
         .route("/crawls/{id}/pause", post(pause_crawl))
         .route("/crawls/{id}/resume", post(resume_crawl))
@@ -315,11 +318,7 @@ fn parse_robots_groups(body: &str) -> Vec<serde_json::Value> {
     let mut last_was_ua = false;
 
     for raw_line in body.lines() {
-        let line = raw_line
-            .split('#')
-            .next()
-            .unwrap_or("")
-            .trim();
+        let line = raw_line.split('#').next().unwrap_or("").trim();
         if line.is_empty() {
             continue;
         }
@@ -358,7 +357,12 @@ fn parse_robots_groups(body: &str) -> Vec<serde_json::Value> {
         }
     }
     if !current_uas.is_empty() {
-        groups.push((current_uas, current_disallow, current_allow, current_sitemap));
+        groups.push((
+            current_uas,
+            current_disallow,
+            current_allow,
+            current_sitemap,
+        ));
     }
 
     groups

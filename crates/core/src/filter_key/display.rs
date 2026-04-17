@@ -179,7 +179,9 @@ impl FilterKey {
             Self::HreflangNon200HreflangUrls => Cow::Borrowed("Non200urls"),
             Self::HreflangUnlinkedHreflangUrls => Cow::Borrowed("Unlinkedurls"),
             Self::HreflangMissingReturnLinks => Cow::Borrowed("Missingreturnlinks"),
-            Self::HreflangInconsistentLanguageReturnLinks => Cow::Borrowed("Inconsistentlanguagereturnlinks"),
+            Self::HreflangInconsistentLanguageReturnLinks => {
+                Cow::Borrowed("Inconsistentlanguagereturnlinks")
+            }
             Self::HreflangNonCanonicalReturnLinks => Cow::Borrowed("Noncanonicalreturnlinks"),
             Self::HreflangNoIndexReturnLinks => Cow::Borrowed("Noindexreturnlinks"),
             Self::HreflangIncorrectLanguageCodes => Cow::Borrowed("Incorrectlanguagecodes"),
@@ -191,7 +193,9 @@ impl FilterKey {
             Self::HreflangOutsideHead => Cow::Borrowed("Outside Head"),
             Self::JavaScriptAll => Cow::Borrowed("All"),
             Self::JavaScriptOldAjaxCrawlingScheme => Cow::Borrowed("Old Ajax Crawling Scheme Urls"),
-            Self::JavaScriptOldAjaxCrawlingMetaFragmentTag => Cow::Borrowed("Old Ajax Crawling Meta Fragment Tag"),
+            Self::JavaScriptOldAjaxCrawlingMetaFragmentTag => {
+                Cow::Borrowed("Old Ajax Crawling Meta Fragment Tag")
+            }
             Self::JavaScriptTitleJsOnly => Cow::Borrowed("Title Js Only"),
             Self::JavaScriptTitleJsUpdated => Cow::Borrowed("Title Js Updated"),
             Self::JavaScriptH1JsOnly => Cow::Borrowed("H1 Js Only"),
@@ -204,7 +208,9 @@ impl FilterKey {
             Self::JavaScriptNoFollowOnlyInHtml => Cow::Borrowed("No Follow Only Html"),
             Self::JavaScriptContainsJsLinks => Cow::Borrowed("Contains Js Links"),
             Self::JavaScriptContainsJsContent => Cow::Borrowed("Contains Js Content"),
-            Self::JavaScriptPagesWithBlockedResources => Cow::Borrowed("Pages With Blockedresources"),
+            Self::JavaScriptPagesWithBlockedResources => {
+                Cow::Borrowed("Pages With Blockedresources")
+            }
             Self::JavaScriptPagesWithJsErrors => Cow::Borrowed("Pages With Js Errors"),
             Self::JavaScriptPagesWithJsWarnings => Cow::Borrowed("Pages With Js Warnings"),
             Self::JavaScriptPagesWithChromeIssues => Cow::Borrowed("Pages With Chrome Issues"),
@@ -232,7 +238,9 @@ impl FilterKey {
             Self::StructuredDataValidationErrors => Cow::Borrowed("Validation Errors"),
             Self::StructuredDataValidationWarnings => Cow::Borrowed("Validation Warnings"),
             Self::StructuredDataGoogleValidationErrors => Cow::Borrowed("Google Validation Errors"),
-            Self::StructuredDataGoogleValidationWarnings => Cow::Borrowed("Google Validation Warnings"),
+            Self::StructuredDataGoogleValidationWarnings => {
+                Cow::Borrowed("Google Validation Warnings")
+            }
             Self::StructuredDataParseErrors => Cow::Borrowed("Parse Errors"),
             Self::StructuredDataMicrodataUrls => Cow::Borrowed("Microdata Urls"),
             Self::StructuredDataJsonldUrls => Cow::Borrowed("Jsonld Urls"),
@@ -283,10 +291,14 @@ impl FilterKey {
             Self::PagespeedImproveImageDelivery => Cow::Borrowed("Improve Image Delivery"),
             Self::PagespeedLegacyJavaScript => Cow::Borrowed("Legacy Javascript"),
             Self::PagespeedRenderBlockingRequests => Cow::Borrowed("Render Blocking Requests"),
-            Self::PagespeedUseEfficientCacheLifetimes => Cow::Borrowed("Use Efficient Cache Lifetimes"),
+            Self::PagespeedUseEfficientCacheLifetimes => {
+                Cow::Borrowed("Use Efficient Cache Lifetimes")
+            }
             Self::PagespeedLcpRequestDiscovery => Cow::Borrowed("Lcp Discovery"),
             Self::PagespeedForcedReflow => Cow::Borrowed("Forced Reflow"),
-            Self::PagespeedAvoidEnormousNetworkPayloads => Cow::Borrowed("Avoid Enormous Network Payloads"),
+            Self::PagespeedAvoidEnormousNetworkPayloads => {
+                Cow::Borrowed("Avoid Enormous Network Payloads")
+            }
             Self::PagespeedNetworkDependencyTree => Cow::Borrowed("Network Dependency Tree"),
             Self::PagespeedDuplicatedJavaScript => Cow::Borrowed("Duplicated Javascript"),
             Self::Unknown => Cow::Borrowed("Unknown"),
@@ -299,11 +311,15 @@ impl FilterKey {
             Self::SecurityUnsafeCrossOrigin => Cow::Borrowed("Unsafecrossorigin"),
             Self::SecurityMissingHstsHeader => Cow::Borrowed("Missinghstsheader"),
             Self::SecurityBadMimeType => Cow::Borrowed("Badmimetype"),
-            Self::SecurityMissingContentTypeHeader => Cow::Borrowed("Missingcontenttypeoptionsheader"),
+            Self::SecurityMissingContentTypeHeader => {
+                Cow::Borrowed("Missingcontenttypeoptionsheader")
+            }
             Self::SecurityMissingFrameHeader => Cow::Borrowed("Missingframeoptionsheader"),
             Self::SecurityProtocolRelativeUrls => Cow::Borrowed("Protocolrelativelinks"),
             Self::SecurityMissingCspHeader => Cow::Borrowed("Missingcspheader"),
-            Self::SecurityMissingSecureReferrerPolicy => Cow::Borrowed("Missingreferrerpolicyheader"),
+            Self::SecurityMissingSecureReferrerPolicy => {
+                Cow::Borrowed("Missingreferrerpolicyheader")
+            }
             Self::ContentAll => Cow::Borrowed("All"),
             Self::ContentLanguageErrorsMisspelt => Cow::Borrowed("Spelling Errors"),
             Self::ContentLanguageErrorsGrammar => Cow::Borrowed("Grammar Errors"),
@@ -335,7 +351,9 @@ impl FilterKey {
             Self::LinksNoInternalOutlinks => Cow::Borrowed("No Internal Outlinks"),
             Self::LinksNofollowInternalOutlinks => Cow::Borrowed("Internal Nofollow Outlinks"),
             Self::LinksNoAnchorTextOutlinks => Cow::Borrowed("No Anchor Text Outlinks"),
-            Self::LinksNonDescriptiveAnchorTextOutlinks => Cow::Borrowed("Non Descriptive Anchor Text Outlinks"),
+            Self::LinksNonDescriptiveAnchorTextOutlinks => {
+                Cow::Borrowed("Non Descriptive Anchor Text Outlinks")
+            }
             Self::LinksHighExternalOutlinks => Cow::Borrowed("Pages With High External Outlinks"),
             Self::LinksHighInternalOutlinks => Cow::Borrowed("Pages With High Internal Outlinks"),
             Self::LinksFollowNofollowInlinks => Cow::Borrowed("Inlinks"),
@@ -352,7 +370,9 @@ impl FilterKey {
             Self::ValidationMultipleBodies => Cow::Borrowed("Multiple Bodies"),
             Self::ValidationDocumentOver15Mb => Cow::Borrowed("Document Over 15 Mb"),
             Self::ValidationResourceOver15Mb => Cow::Borrowed("Resource Over 15 Mb"),
-            Self::ValidationBodyElementPrecedingHtml => Cow::Borrowed("Body Element Preceding Html"),
+            Self::ValidationBodyElementPrecedingHtml => {
+                Cow::Borrowed("Body Element Preceding Html")
+            }
             Self::ValidationHighCarbonRating => Cow::Borrowed("High Carbon Rating"),
             Self::MobileAll => Cow::Borrowed("All"),
             Self::MobileViewportNotSet => Cow::Borrowed("Viewport Not Set"),
@@ -373,9 +393,13 @@ impl FilterKey {
             Self::AccessibilityWcag21aaViolation => Cow::Borrowed("Violation"),
             Self::AccessibilityWcag22aaViolation => Cow::Borrowed("Violation"),
             Self::AccessibilityRuleAccesskeys => Cow::Borrowed("Accesskeys"),
-            Self::AccessibilityRulePresentationRoleConflict => Cow::Borrowed("Presentation Role Conflict"),
+            Self::AccessibilityRulePresentationRoleConflict => {
+                Cow::Borrowed("Presentation Role Conflict")
+            }
             Self::AccessibilityRuleTabindex => Cow::Borrowed("Tabindex"),
-            Self::AccessibilityRuleScrollableRegionFocusable => Cow::Borrowed("Scrollable Region Focusable"),
+            Self::AccessibilityRuleScrollableRegionFocusable => {
+                Cow::Borrowed("Scrollable Region Focusable")
+            }
             Self::AccessibilityRuleSkipLink => Cow::Borrowed("Skip Link"),
             Self::AccessibilityRuleAriaRequiredAttr => Cow::Borrowed("Aria Required Attr"),
             Self::AccessibilityRuleAriaText => Cow::Borrowed("Aria Text"),
@@ -395,7 +419,9 @@ impl FilterKey {
             Self::AccessibilityRuleAriaTreeitemName => Cow::Borrowed("Aria Treeitem Name"),
             Self::AccessibilityRuleAriaRequiredChildren => Cow::Borrowed("Aria Required Children"),
             Self::AccessibilityRuleAriaDeprecatedRole => Cow::Borrowed("Aria Deprecated Role"),
-            Self::AccessibilityRuleAriaBrailleEquivalent => Cow::Borrowed("Aria Braille Equivalent"),
+            Self::AccessibilityRuleAriaBrailleEquivalent => {
+                Cow::Borrowed("Aria Braille Equivalent")
+            }
             Self::AccessibilityRuleAriaHiddenFocus => Cow::Borrowed("Aria Hidden Focus"),
             Self::AccessibilityRuleAriaHiddenBody => Cow::Borrowed("Aria Hidden Body"),
             Self::AccessibilityRuleAriaProhibitedAttr => Cow::Borrowed("Aria Prohibited Attr"),
@@ -404,22 +430,40 @@ impl FilterKey {
             Self::AccessibilityRuleBypass => Cow::Borrowed("Bypass"),
             Self::AccessibilityRuleRegion => Cow::Borrowed("Region"),
             Self::AccessibilityRuleLandmarkOneMain => Cow::Borrowed("Landmark One Main"),
-            Self::AccessibilityRuleLandmarkNoDuplicateBanner => Cow::Borrowed("Landmark No Duplicate Banner"),
-            Self::AccessibilityRuleLandmarkBannerIsTopLevel => Cow::Borrowed("Landmark Banner is Top Level"),
-            Self::AccessibilityRuleLandmarkNoDuplicateContentinfo => Cow::Borrowed("Landmark No Duplicate Contentinfo"),
-            Self::AccessibilityRuleLandmarkNoDuplicateMain => Cow::Borrowed("Landmark No Duplicate Main"),
-            Self::AccessibilityRuleLandmarkComplementaryIsTopLevel => Cow::Borrowed("Landmark Complementary is Top Level"),
-            Self::AccessibilityRuleLandmarkContentinfoIsTopLevel => Cow::Borrowed("Landmark Contentinfo is Top Level"),
-            Self::AccessibilityRuleLandmarkMainIsTopLevel => Cow::Borrowed("Landmark Main is Top Level"),
+            Self::AccessibilityRuleLandmarkNoDuplicateBanner => {
+                Cow::Borrowed("Landmark No Duplicate Banner")
+            }
+            Self::AccessibilityRuleLandmarkBannerIsTopLevel => {
+                Cow::Borrowed("Landmark Banner is Top Level")
+            }
+            Self::AccessibilityRuleLandmarkNoDuplicateContentinfo => {
+                Cow::Borrowed("Landmark No Duplicate Contentinfo")
+            }
+            Self::AccessibilityRuleLandmarkNoDuplicateMain => {
+                Cow::Borrowed("Landmark No Duplicate Main")
+            }
+            Self::AccessibilityRuleLandmarkComplementaryIsTopLevel => {
+                Cow::Borrowed("Landmark Complementary is Top Level")
+            }
+            Self::AccessibilityRuleLandmarkContentinfoIsTopLevel => {
+                Cow::Borrowed("Landmark Contentinfo is Top Level")
+            }
+            Self::AccessibilityRuleLandmarkMainIsTopLevel => {
+                Cow::Borrowed("Landmark Main is Top Level")
+            }
             Self::AccessibilityRuleLandmarkUnique => Cow::Borrowed("Landmark Unique"),
             Self::AccessibilityRuleLabel => Cow::Borrowed("Label"),
             Self::AccessibilityRuleLabelTitleOnly => Cow::Borrowed("Label Title Only"),
-            Self::AccessibilityRuleFormFieldMultipleLabels => Cow::Borrowed("Form Field Multiple Labels"),
+            Self::AccessibilityRuleFormFieldMultipleLabels => {
+                Cow::Borrowed("Form Field Multiple Labels")
+            }
             Self::AccessibilityRuleAutocompleteValid => Cow::Borrowed("Autocomplete Valid"),
             Self::AccessibilityRuleFrameTitle => Cow::Borrowed("Frame Title"),
             Self::AccessibilityRuleFrameTitleUnique => Cow::Borrowed("Frame Title Unique"),
             Self::AccessibilityRuleFrameTested => Cow::Borrowed("Frame Tested"),
-            Self::AccessibilityRuleFrameFocusableContent => Cow::Borrowed("Frame Focusable Content"),
+            Self::AccessibilityRuleFrameFocusableContent => {
+                Cow::Borrowed("Frame Focusable Content")
+            }
             Self::AccessibilityRuleDocumentTitle => Cow::Borrowed("Document Title"),
             Self::AccessibilityRulePageHasHeadingOne => Cow::Borrowed("Page Has Heading One"),
             Self::AccessibilityRuleHeadingOrder => Cow::Borrowed("Heading Order"),
@@ -430,7 +474,9 @@ impl FilterKey {
             Self::AccessibilityRuleHtmlHasLang => Cow::Borrowed("Html Has Lang"),
             Self::AccessibilityRuleHtmlXmlLangMismatch => Cow::Borrowed("Html Xml Lang Mismatch"),
             Self::AccessibilityRuleValidLang => Cow::Borrowed("Valid Lang"),
-            Self::AccessibilityRuleMetaRefreshNoExceptions => Cow::Borrowed("Meta Refresh No Exceptions"),
+            Self::AccessibilityRuleMetaRefreshNoExceptions => {
+                Cow::Borrowed("Meta Refresh No Exceptions")
+            }
             Self::AccessibilityRuleMetaRefresh => Cow::Borrowed("Meta Refresh"),
             Self::AccessibilityRuleInputImageAlt => Cow::Borrowed("Input Image Alt"),
             Self::AccessibilityRuleImageAlt => Cow::Borrowed("Image Alt"),
@@ -447,12 +493,16 @@ impl FilterKey {
             Self::AccessibilityRuleInputButtonName => Cow::Borrowed("Input Button Name"),
             Self::AccessibilityRuleLinkInTextBlock => Cow::Borrowed("Link in Text Block"),
             Self::AccessibilityRuleLinkName => Cow::Borrowed("Link Name"),
-            Self::AccessibilityRuleIdenticalLinksSamePurpose => Cow::Borrowed("Identical Links Same Purpose"),
+            Self::AccessibilityRuleIdenticalLinksSamePurpose => {
+                Cow::Borrowed("Identical Links Same Purpose")
+            }
             Self::AccessibilityRuleSelectName => Cow::Borrowed("Select Name"),
             Self::AccessibilityRuleSummaryName => Cow::Borrowed("Summary Name"),
             Self::AccessibilityRuleMarquee => Cow::Borrowed("Marquee"),
             Self::AccessibilityRuleBlink => Cow::Borrowed("Blink"),
-            Self::AccessibilityRuleColorContrastEnhanced => Cow::Borrowed("Color Contrast Enhanced"),
+            Self::AccessibilityRuleColorContrastEnhanced => {
+                Cow::Borrowed("Color Contrast Enhanced")
+            }
             Self::AccessibilityRuleColorContrast => Cow::Borrowed("Color Contrast"),
             Self::AccessibilityRuleTargetSize => Cow::Borrowed("Target Size"),
             Self::AccessibilityRuleNestedInteractive => Cow::Borrowed("Nested Interactive"),
@@ -478,11 +528,15 @@ impl FilterKey {
             Self::PagespeedDomSizeDeprecated => Cow::Borrowed("Domsize"),
             Self::PagespeedFontDisplayDeprecated => Cow::Borrowed("Fontdisplay"),
             Self::PagespeedUsesOptimizedImagesDeprecated => Cow::Borrowed("Usesoptimizedimages"),
-            Self::PagespeedEfficientAnimatedContentDeprecated => Cow::Borrowed("Efficientanimatedcontent"),
+            Self::PagespeedEfficientAnimatedContentDeprecated => {
+                Cow::Borrowed("Efficientanimatedcontent")
+            }
             Self::PagespeedUsesResponsiveImagesDeprecated => Cow::Borrowed("Usesresponsiveimages"),
             Self::PagespeedLegacyJavaScriptDeprecated => Cow::Borrowed("Legacy Javascript"),
             Self::PagespeedUsesRelPreconnectDeprecated => Cow::Borrowed("Usesrelpreconnect"),
-            Self::PagespeedRenderBlockingResourcesDeprecated => Cow::Borrowed("Renderblockingresources"),
+            Self::PagespeedRenderBlockingResourcesDeprecated => {
+                Cow::Borrowed("Renderblockingresources")
+            }
             Self::PagespeedUsesLongCacheTtlDeprecated => Cow::Borrowed("Useslongcachettl"),
             Self::PagespeedOffscreenImagesDeprecated => Cow::Borrowed("Offscreenimages"),
             Self::PagespeedUsesRelPreloadDeprecated => Cow::Borrowed("Usesrelpreload"),

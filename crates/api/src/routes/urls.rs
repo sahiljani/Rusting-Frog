@@ -14,15 +14,27 @@ pub fn routes() -> Router<AppState> {
         .route("/crawls/{crawl_id}/urls", get(list_urls))
         .route("/crawls/{crawl_id}/urls/{url_id}", get(get_url_detail))
         .route("/crawls/{crawl_id}/urls/{url_id}/inlinks", get(get_inlinks))
-        .route("/crawls/{crawl_id}/urls/{url_id}/outlinks", get(get_outlinks))
+        .route(
+            "/crawls/{crawl_id}/urls/{url_id}/outlinks",
+            get(get_outlinks),
+        )
         .route("/crawls/{crawl_id}/urls/{url_id}/images", get(get_images))
-        .route("/crawls/{crawl_id}/urls/{url_id}/resources", get(get_resources))
+        .route(
+            "/crawls/{crawl_id}/urls/{url_id}/resources",
+            get(get_resources),
+        )
         .route("/crawls/{crawl_id}/urls/{url_id}/serp", get(get_serp))
         .route("/crawls/{crawl_id}/urls/{url_id}/headers", get(get_headers))
         .route("/crawls/{crawl_id}/urls/{url_id}/cookies", get(get_cookies))
         .route("/crawls/{crawl_id}/urls/{url_id}/source", get(get_source))
-        .route("/crawls/{crawl_id}/urls/{url_id}/duplicates", get(get_duplicates))
-        .route("/crawls/{crawl_id}/urls/{url_id}/structured-data", get(get_structured_data))
+        .route(
+            "/crawls/{crawl_id}/urls/{url_id}/duplicates",
+            get(get_duplicates),
+        )
+        .route(
+            "/crawls/{crawl_id}/urls/{url_id}/structured-data",
+            get(get_structured_data),
+        )
         .route("/crawls/{crawl_id}/overview", get(get_overview))
 }
 
@@ -571,14 +583,19 @@ fn parse_set_cookie(raw: &str) -> serde_json::Value {
     let mut same_site: Option<String> = None;
 
     for attr in parts {
-        if attr.is_empty() { continue; }
-        let (k, v) = attr.split_once('=').map(|(k, v)| (k.trim(), v.trim())).unwrap_or((attr, ""));
+        if attr.is_empty() {
+            continue;
+        }
+        let (k, v) = attr
+            .split_once('=')
+            .map(|(k, v)| (k.trim(), v.trim()))
+            .unwrap_or((attr, ""));
         match k.to_ascii_lowercase().as_str() {
-            "domain"   => domain = Some(v.to_string()),
-            "path"     => path = Some(v.to_string()),
-            "expires"  => expires = Some(v.to_string()),
-            "max-age"  => max_age = v.parse().ok(),
-            "secure"   => secure = true,
+            "domain" => domain = Some(v.to_string()),
+            "path" => path = Some(v.to_string()),
+            "expires" => expires = Some(v.to_string()),
+            "max-age" => max_age = v.parse().ok(),
+            "secure" => secure = true,
             "httponly" => http_only = true,
             "samesite" => same_site = Some(v.to_string()),
             _ => {}
@@ -722,11 +739,7 @@ async fn get_structured_data(
     .await?
     .ok_or_else(|| ApiError::not_found("URL not found"))?;
 
-    let items = row
-        .structured_data
-        .as_array()
-        .cloned()
-        .unwrap_or_default();
+    let items = row.structured_data.as_array().cloned().unwrap_or_default();
     let mut by_type: std::collections::BTreeMap<String, usize> = std::collections::BTreeMap::new();
     for it in &items {
         if let Some(t) = it.get("type").and_then(|v| v.as_str()) {

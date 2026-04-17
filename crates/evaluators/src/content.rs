@@ -72,7 +72,9 @@ impl Evaluator for ContentEvaluator {
 }
 
 fn extract_body_text(ctx: &EvalContext) -> String {
-    let Some(doc) = ctx.parsed else { return String::new() };
+    let Some(doc) = ctx.parsed else {
+        return String::new();
+    };
     let sel = match Selector::parse("body") {
         Ok(s) => s,
         Err(_) => return String::new(),
@@ -112,7 +114,9 @@ fn flesch_kincaid_grade(text: &str) -> Option<f64> {
 }
 
 fn count_sentences(text: &str) -> u32 {
-    text.chars().filter(|c| matches!(c, '.' | '!' | '?')).count() as u32
+    text.chars()
+        .filter(|c| matches!(c, '.' | '!' | '?'))
+        .count() as u32
 }
 
 fn count_syllables(word: &str) -> u32 {

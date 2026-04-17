@@ -6,8 +6,7 @@ use sf_core::tab::TabKey;
 use crate::app_state::AppState;
 
 pub fn routes() -> Router<AppState> {
-    Router::new()
-        .route("/catalog/tabs", get(list_tabs))
+    Router::new().route("/catalog/tabs", get(list_tabs))
 }
 
 async fn list_tabs() -> Json<serde_json::Value> {

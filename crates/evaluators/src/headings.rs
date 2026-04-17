@@ -48,7 +48,11 @@ impl Evaluator for H1Evaluator {
                 });
             }
 
-            let longest = h1s.iter().map(|h| h.text.chars().count()).max().unwrap_or(0) as u32;
+            let longest = h1s
+                .iter()
+                .map(|h| h.text.chars().count())
+                .max()
+                .unwrap_or(0) as u32;
             if longest > ctx.config.headings.max_h1_length {
                 findings.push(Finding {
                     filter_key: FilterKey::H1OverXCharacters,
@@ -106,7 +110,11 @@ impl Evaluator for H2Evaluator {
                 });
             }
 
-            let longest = h2s.iter().map(|h| h.text.chars().count()).max().unwrap_or(0) as u32;
+            let longest = h2s
+                .iter()
+                .map(|h| h.text.chars().count())
+                .max()
+                .unwrap_or(0) as u32;
             if longest > ctx.config.headings.max_h2_length {
                 findings.push(Finding {
                     filter_key: FilterKey::H2OverXCharacters,
@@ -294,17 +302,13 @@ mod tests {
 
     #[test]
     fn h3_before_h2_is_non_sequential() {
-        let keys = h1_findings(
-            "<html><body><h1>Top</h1><h3>Skipped a level</h3></body></html>",
-        );
+        let keys = h1_findings("<html><body><h1>Top</h1><h3>Skipped a level</h3></body></html>");
         assert!(keys.contains(&FilterKey::H1NonSequential));
     }
 
     #[test]
     fn normal_h1_h2_h3_order_is_sequential() {
-        let keys = h1_findings(
-            "<html><body><h1>1</h1><h2>2</h2><h3>3</h3></body></html>",
-        );
+        let keys = h1_findings("<html><body><h1>1</h1><h2>2</h2><h3>3</h3></body></html>");
         assert!(!keys.contains(&FilterKey::H1NonSequential));
     }
 

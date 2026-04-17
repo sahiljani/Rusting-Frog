@@ -15,8 +15,8 @@
 
 #![allow(clippy::too_many_lines)]
 
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 use std::fmt;
-use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::tab::TabKey;
 
@@ -1154,11 +1154,19 @@ impl FilterKey {
             Self::PagespeedUsesRelPreloadDeprecated,
             Self::MobileViewportNotSetDeprecated,
         ]);
-        for n in 1..=100u8 { v.push(Self::CustomSearchSlot(n)); }
-        for n in 1..=100u8 { v.push(Self::CustomExtractorSlot(n)); }
-        for n in 1..=100u8 { v.push(Self::CustomJavaScriptSlot(n)); }
+        for n in 1..=100u8 {
+            v.push(Self::CustomSearchSlot(n));
+        }
+        for n in 1..=100u8 {
+            v.push(Self::CustomExtractorSlot(n));
+        }
+        for n in 1..=100u8 {
+            v.push(Self::CustomJavaScriptSlot(n));
+        }
         for p in AiProvider::ALL.iter().copied() {
-            for n in 1..=100u8 { v.push(Self::AiSlot(p, n)); }
+            for n in 1..=100u8 {
+                v.push(Self::AiSlot(p, n));
+            }
         }
         v
     }

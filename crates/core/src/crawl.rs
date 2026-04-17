@@ -45,11 +45,19 @@ impl ContentType {
             Self::Pdf
         } else if lower.starts_with("video/") || lower.starts_with("audio/") {
             Self::Media
-        } else if lower.contains("font") || lower.contains("woff") || lower.contains("ttf") || lower.contains("otf") {
+        } else if lower.contains("font")
+            || lower.contains("woff")
+            || lower.contains("ttf")
+            || lower.contains("otf")
+        {
             Self::Font
         } else if lower.contains("xml") {
             Self::Xml
-        } else if lower.contains("flash") || lower.contains("shockwave") || lower.contains("silverlight") || lower.contains("java-archive") {
+        } else if lower.contains("flash")
+            || lower.contains("shockwave")
+            || lower.contains("silverlight")
+            || lower.contains("java-archive")
+        {
             Self::Plugin
         } else if mime.is_empty() {
             Self::Unknown

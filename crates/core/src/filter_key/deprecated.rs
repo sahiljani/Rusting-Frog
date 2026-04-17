@@ -12,29 +12,29 @@ impl FilterKey {
     pub fn is_deprecated(&self) -> bool {
         matches!(
             self,
-            Self::AccessibilityRuleAriaDeprecatedRole |
-            Self::ValidationHighCarbonRatingDeprecated1 |
-            Self::ValidationHighCarbonRatingDeprecated2 |
-            Self::UrlGaTrackingParametersDeprecated1 |
-            Self::UrlGaTrackingParametersDeprecated2 |
-            Self::PagespeedLayoutShiftDeprecated |
-            Self::PagespeedUnsizedImagesDeprecated |
-            Self::PagespeedUsesWebpImagesDeprecated |
-            Self::PagespeedUsesTextCompressionDeprecated |
-            Self::PagespeedTimeToFirstByteDeprecated |
-            Self::PagespeedRedirectsDeprecated |
-            Self::PagespeedDomSizeDeprecated |
-            Self::PagespeedFontDisplayDeprecated |
-            Self::PagespeedUsesOptimizedImagesDeprecated |
-            Self::PagespeedEfficientAnimatedContentDeprecated |
-            Self::PagespeedUsesResponsiveImagesDeprecated |
-            Self::PagespeedLegacyJavaScriptDeprecated |
-            Self::PagespeedUsesRelPreconnectDeprecated |
-            Self::PagespeedRenderBlockingResourcesDeprecated |
-            Self::PagespeedUsesLongCacheTtlDeprecated |
-            Self::PagespeedOffscreenImagesDeprecated |
-            Self::PagespeedUsesRelPreloadDeprecated |
-            Self::MobileViewportNotSetDeprecated
+            Self::AccessibilityRuleAriaDeprecatedRole
+                | Self::ValidationHighCarbonRatingDeprecated1
+                | Self::ValidationHighCarbonRatingDeprecated2
+                | Self::UrlGaTrackingParametersDeprecated1
+                | Self::UrlGaTrackingParametersDeprecated2
+                | Self::PagespeedLayoutShiftDeprecated
+                | Self::PagespeedUnsizedImagesDeprecated
+                | Self::PagespeedUsesWebpImagesDeprecated
+                | Self::PagespeedUsesTextCompressionDeprecated
+                | Self::PagespeedTimeToFirstByteDeprecated
+                | Self::PagespeedRedirectsDeprecated
+                | Self::PagespeedDomSizeDeprecated
+                | Self::PagespeedFontDisplayDeprecated
+                | Self::PagespeedUsesOptimizedImagesDeprecated
+                | Self::PagespeedEfficientAnimatedContentDeprecated
+                | Self::PagespeedUsesResponsiveImagesDeprecated
+                | Self::PagespeedLegacyJavaScriptDeprecated
+                | Self::PagespeedUsesRelPreconnectDeprecated
+                | Self::PagespeedRenderBlockingResourcesDeprecated
+                | Self::PagespeedUsesLongCacheTtlDeprecated
+                | Self::PagespeedOffscreenImagesDeprecated
+                | Self::PagespeedUsesRelPreloadDeprecated
+                | Self::MobileViewportNotSetDeprecated
         )
     }
 }

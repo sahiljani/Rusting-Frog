@@ -32,14 +32,7 @@ const FIFTEEN_MIB: i64 = 15 * 1024 * 1024;
 
 /// Tags that may legally appear directly inside `<head>`.
 const HEAD_LEGAL_CHILDREN: &[&str] = &[
-    "title",
-    "base",
-    "link",
-    "meta",
-    "style",
-    "script",
-    "noscript",
-    "template",
+    "title", "base", "link", "meta", "style", "script", "noscript", "template",
 ];
 
 pub struct ValidationEvaluator;

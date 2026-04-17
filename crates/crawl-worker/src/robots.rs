@@ -20,7 +20,11 @@ impl RobotsGate {
     /// treated as "no robots file" — fetch-everything behaviour. This
     /// mirrors what Screaming Frog does by default.
     pub async fn fetch(client: &reqwest::Client, seed: &Url, user_agent: &str) -> Self {
-        let robots_url = format!("{}://{}/robots.txt", seed.scheme(), seed.host_str().unwrap_or(""));
+        let robots_url = format!(
+            "{}://{}/robots.txt",
+            seed.scheme(),
+            seed.host_str().unwrap_or("")
+        );
         let (raw, status) = match client.get(&robots_url).send().await {
             Ok(resp) => {
                 let code = resp.status().as_u16() as i16;

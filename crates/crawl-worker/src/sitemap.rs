@@ -14,8 +14,8 @@
 
 use std::collections::HashSet;
 
-use quick_xml::events::Event;
 use quick_xml::Reader;
+use quick_xml::events::Event;
 use url::Url;
 
 pub struct SitemapCapture {
@@ -33,7 +33,7 @@ impl SitemapCapture {
                     raw: None,
                     status: None,
                     urls: HashSet::new(),
-                }
+                };
             }
         };
         let sitemap_url = format!("{}://{}/sitemap.xml", seed.scheme(), host);

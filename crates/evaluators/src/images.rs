@@ -209,7 +209,10 @@ mod tests {
 
     #[test]
     fn html_page_with_img_missing_alt_attr() {
-        let keys = eval(&html_url(), r#"<html><body><img src="/a.png"></body></html>"#);
+        let keys = eval(
+            &html_url(),
+            r#"<html><body><img src="/a.png"></body></html>"#,
+        );
         assert!(keys.contains(&FilterKey::ImagesMissingAltAttribute));
     }
 
@@ -225,7 +228,9 @@ mod tests {
     #[test]
     fn long_alt_over_max_flagged() {
         let alt = "x".repeat(200);
-        let html = format!(r#"<html><body><img src="/a.png" alt="{alt}" width="10" height="10"></body></html>"#);
+        let html = format!(
+            r#"<html><body><img src="/a.png" alt="{alt}" width="10" height="10"></body></html>"#
+        );
         let keys = eval(&html_url(), &html);
         assert!(keys.contains(&FilterKey::ImagesAltTextOverXCharacters));
     }
@@ -239,14 +244,16 @@ mod tests {
 
     #[test]
     fn sized_img_does_not_trip_missing_size() {
-        let html = r#"<html><body><img src="/a.png" alt="ok" width="10" height="10"></body></html>"#;
+        let html =
+            r#"<html><body><img src="/a.png" alt="ok" width="10" height="10"></body></html>"#;
         let keys = eval(&html_url(), html);
         assert!(!keys.contains(&FilterKey::ImagesMissingSizeAttributes));
     }
 
     #[test]
     fn background_image_inline_style_flagged() {
-        let html = r#"<html><body><div style="background-image:url('/x.png')"></div></body></html>"#;
+        let html =
+            r#"<html><body><div style="background-image:url('/x.png')"></div></body></html>"#;
         let keys = eval(&html_url(), html);
         assert!(keys.contains(&FilterKey::ImagesBackgroundImages));
     }

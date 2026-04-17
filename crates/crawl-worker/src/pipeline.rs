@@ -36,20 +36,14 @@ impl CrawlPipeline {
         seed_url: Url,
         config: CrawlConfig,
     ) -> Result<Self> {
-        let seed_host = seed_url
-            .host_str()
-            .unwrap_or_default()
-            .to_string();
+        let seed_host = seed_url.host_str().unwrap_or_default().to_string();
 
         let fetcher = Fetcher::new(
             &config.user_agent.user_agent_string,
             config.limits.max_response_size_bytes,
         )?;
 
-        let mut frontier = Frontier::new(
-            config.limits.max_crawl_depth,
-            config.limits.max_urls,
-        );
+        let mut frontier = Frontier::new(config.limits.max_crawl_depth, config.limits.max_urls);
         frontier.add(seed_url.clone(), 0);
 
         Ok(Self {
@@ -157,7 +151,8 @@ impl CrawlPipeline {
             // don't crawl" behaviour for disallowed URLs.
             if !gate.is_allowed(&entry.url) {
                 tracing::info!(url = %entry.url, "blocked by robots.txt");
-                self.write_blocked_url(&entry.url.to_string(), entry.depth).await?;
+                self.write_blocked_url(&entry.url.to_string(), entry.depth)
+                    .await?;
                 self.urls_crawled += 1;
                 self.update_counters().await?;
                 continue;
@@ -286,9 +281,7 @@ impl CrawlPipeline {
                         _ => None,
                     };
                     if let Some(rtype) = rtype {
-                        self.write_resource(&url_id, &link.href, rtype)
-                            .await
-                            .ok();
+                        self.write_resource(&url_id, &link.href, rtype).await.ok();
                     }
                 }
             } else {
@@ -533,7 +526,11 @@ impl CrawlPipeline {
         // Structured Data tab). Only populated for HTML responses — binary
         // and redirect bodies leave these NULL / empty.
         let is_html = *content_type == ContentType::Html && !fetch.body.is_empty();
-        let raw_html_opt: Option<&str> = if is_html { Some(fetch.body.as_str()) } else { None };
+        let raw_html_opt: Option<&str> = if is_html {
+            Some(fetch.body.as_str())
+        } else {
+            None
+        };
         let content_hash_opt: Option<Vec<u8>> = if is_html {
             Some(sha256_normalised(&fetch.body))
         } else {
@@ -644,7 +641,10 @@ impl CrawlPipeline {
         let now = chrono::Utc::now();
         let is_internal = Url::parse(url)
             .ok()
-            .and_then(|u| u.host_str().map(|h| h.eq_ignore_ascii_case(&self.seed_host)))
+            .and_then(|u| {
+                u.host_str()
+                    .map(|h| h.eq_ignore_ascii_case(&self.seed_host))
+            })
             .unwrap_or(false);
 
         sqlx::query!(
@@ -674,7 +674,11 @@ impl CrawlPipeline {
         Ok(())
     }
 
-    async fn write_finding(&self, url_id: &CrawlUrlId, filter_key: &sf_core::filter_key::FilterKey) -> Result<()> {
+    async fn write_finding(
+        &self,
+        url_id: &CrawlUrlId,
+        filter_key: &sf_core::filter_key::FilterKey,
+    ) -> Result<()> {
         let key_str = serde_json::to_value(filter_key)?
             .as_str()
             .unwrap_or_default()

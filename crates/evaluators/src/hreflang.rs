@@ -273,10 +273,7 @@ mod tests {
 
     #[test]
     fn every_html_page_emits_all() {
-        let keys = eval(
-            &page("https://example.com/"),
-            "<html><head></head></html>",
-        );
+        let keys = eval(&page("https://example.com/"), "<html><head></head></html>");
         assert!(keys.contains(&FilterKey::HreflangAll));
     }
 
@@ -290,10 +287,7 @@ mod tests {
 
     #[test]
     fn missing_when_no_tags() {
-        let keys = eval(
-            &page("https://example.com/"),
-            "<html><head></head></html>",
-        );
+        let keys = eval(&page("https://example.com/"), "<html><head></head></html>");
         assert!(keys.contains(&FilterKey::HreflangMissing));
         assert!(!keys.contains(&FilterKey::HreflangContainsHreflang));
     }

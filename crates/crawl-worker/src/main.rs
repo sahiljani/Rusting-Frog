@@ -17,8 +17,7 @@ async fn main() -> anyhow::Result<()> {
 
     tracing_subscriber::fmt()
         .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
         .init();
 
@@ -44,7 +43,9 @@ async fn main() -> anyhow::Result<()> {
                         let _ = sqlx::query!(
                             "UPDATE crawls SET status = 'failed' WHERE id = $1",
                             job.crawl_id.as_uuid()
-                        ).execute(&db).await;
+                        )
+                        .execute(&db)
+                        .await;
                         continue;
                     }
                 };
@@ -64,7 +65,9 @@ async fn main() -> anyhow::Result<()> {
                         let _ = sqlx::query!(
                             "UPDATE crawls SET status = 'failed' WHERE id = $1",
                             job.crawl_id.as_uuid()
-                        ).execute(&db).await;
+                        )
+                        .execute(&db)
+                        .await;
                         continue;
                     }
                 };
@@ -74,7 +77,9 @@ async fn main() -> anyhow::Result<()> {
                     let _ = sqlx::query!(
                         "UPDATE crawls SET status = 'failed' WHERE id = $1",
                         job.crawl_id.as_uuid()
-                    ).execute(&db).await;
+                    )
+                    .execute(&db)
+                    .await;
                 }
             }
             Ok(None) => {
@@ -129,15 +134,11 @@ async fn pick_next_job(db: &sqlx::PgPool) -> anyhow::Result<Option<CrawlJob>> {
         .context("crawl has no seed URLs")?;
 
     // Load project config
-    let project = sqlx::query!(
-        "SELECT config FROM projects WHERE id = $1",
-        row.project_id
-    )
-    .fetch_optional(db)
-    .await?;
+    let project = sqlx::query!("SELECT config FROM projects WHERE id = $1", row.project_id)
+        .fetch_optional(db)
+        .await?;
 
-    let config: Option<CrawlConfig> = project
-        .and_then(|p| serde_json::from_value(p.config).ok());
+    let config: Option<CrawlConfig> = project.and_then(|p| serde_json::from_value(p.config).ok());
 
     Ok(Some(CrawlJob {
         crawl_id: CrawlId::from_uuid(row.id),

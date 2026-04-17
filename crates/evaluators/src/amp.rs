@@ -190,13 +190,16 @@ impl Evaluator for AmpEvaluator {
             if let Some(sel) = Selector::parse("script").ok() {
                 for el in parsed.select(&sel) {
                     let v = el.value();
-                    let is_amp_runtime = v.attr("src").map(|s| s.contains("cdn.ampproject.org")).unwrap_or(false);
+                    let is_amp_runtime = v
+                        .attr("src")
+                        .map(|s| s.contains("cdn.ampproject.org"))
+                        .unwrap_or(false);
                     let is_ld_json = v
                         .attr("type")
                         .map(|t| t.eq_ignore_ascii_case("application/ld+json"))
                         .unwrap_or(false);
-                    let is_custom_element = v.attr("custom-element").is_some()
-                        || v.attr("custom-template").is_some();
+                    let is_custom_element =
+                        v.attr("custom-element").is_some() || v.attr("custom-template").is_some();
                     if !is_amp_runtime && !is_ld_json && !is_custom_element {
                         has_disallowed = true;
                         break;
@@ -270,19 +273,28 @@ mod tests {
 
     #[test]
     fn non_amp_page_emits_nothing() {
-        let keys = eval(&page(), "<!doctype html><html><head></head><body></body></html>");
+        let keys = eval(
+            &page(),
+            "<!doctype html><html><head></head><body></body></html>",
+        );
         assert!(keys.is_empty());
     }
 
     #[test]
     fn amp_page_emits_amp_all() {
-        let keys = eval(&page(), r#"<!doctype html><html amp><head></head><body></body></html>"#);
+        let keys = eval(
+            &page(),
+            r#"<!doctype html><html amp><head></head><body></body></html>"#,
+        );
         assert!(keys.contains(&FilterKey::AmpAll));
     }
 
     #[test]
     fn amp_indexable_by_default() {
-        let keys = eval(&page(), r#"<!doctype html><html amp><head></head><body></body></html>"#);
+        let keys = eval(
+            &page(),
+            r#"<!doctype html><html amp><head></head><body></body></html>"#,
+        );
         assert!(keys.contains(&FilterKey::AmpIndexable));
         assert!(!keys.contains(&FilterKey::AmpNonIndexable));
     }
@@ -291,13 +303,19 @@ mod tests {
     fn amp_noindex_is_non_indexable() {
         let mut u = page();
         u.meta_robots = Some("noindex,follow".to_string());
-        let keys = eval(&u, r#"<!doctype html><html amp><head></head><body></body></html>"#);
+        let keys = eval(
+            &u,
+            r#"<!doctype html><html amp><head></head><body></body></html>"#,
+        );
         assert!(keys.contains(&FilterKey::AmpNonIndexable));
     }
 
     #[test]
     fn amp_missing_canonical_and_charset_flagged() {
-        let keys = eval(&page(), r#"<!doctype html><html amp><head></head><body></body></html>"#);
+        let keys = eval(
+            &page(),
+            r#"<!doctype html><html amp><head></head><body></body></html>"#,
+        );
         assert!(keys.contains(&FilterKey::AmpMissingCanonical));
         assert!(keys.contains(&FilterKey::AmpMissingCharset));
         assert!(keys.contains(&FilterKey::AmpMissingViewport));
@@ -340,7 +358,10 @@ mod tests {
     fn non_200_amp_flagged() {
         let mut u = page();
         u.status_code = Some(404);
-        let keys = eval(&u, r#"<!doctype html><html amp><head></head><body></body></html>"#);
+        let keys = eval(
+            &u,
+            r#"<!doctype html><html amp><head></head><body></body></html>"#,
+        );
         assert!(keys.contains(&FilterKey::AmpNon200));
     }
 }

@@ -110,7 +110,5 @@ fn is_private_ip(url: &Url) -> bool {
         };
     }
 
-    host == "localhost"
-        || host.ends_with(".local")
-        || host.ends_with(".internal")
+    host == "localhost" || host.ends_with(".local") || host.ends_with(".internal")
 }

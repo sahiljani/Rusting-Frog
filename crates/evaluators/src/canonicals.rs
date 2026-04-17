@@ -109,8 +109,9 @@ impl Evaluator for CanonicalsEvaluator {
             if href.contains('#') {
                 saw_fragment = true;
             }
-            let is_absolute =
-                href.starts_with("http://") || href.starts_with("https://") || href.starts_with("//");
+            let is_absolute = href.starts_with("http://")
+                || href.starts_with("https://")
+                || href.starts_with("//");
             if !is_absolute {
                 saw_relative = true;
             }
@@ -270,7 +271,8 @@ mod tests {
 
     #[test]
     fn self_referencing_canonical() {
-        let html = r#"<html><head><link rel="canonical" href="https://example.com/"></head></html>"#;
+        let html =
+            r#"<html><head><link rel="canonical" href="https://example.com/"></head></html>"#;
         let keys = eval(&page("https://example.com/"), html);
         assert!(keys.contains(&FilterKey::CanonicalsSelfReferencing));
         assert!(!keys.contains(&FilterKey::CanonicalsCanonicalised));

@@ -178,7 +178,11 @@ fn extract_links(doc: &Html, base_url: &Url) -> Vec<ExtractedLink> {
     for (selector, attr, kind) in [
         ("img[src]", "src", LinkType::Image),
         ("script[src]", "src", LinkType::Script),
-        ("link[rel=\"stylesheet\"][href]", "href", LinkType::Stylesheet),
+        (
+            "link[rel=\"stylesheet\"][href]",
+            "href",
+            LinkType::Stylesheet,
+        ),
     ] {
         let sel = match Selector::parse(selector) {
             Ok(s) => s,

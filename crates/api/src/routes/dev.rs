@@ -11,7 +11,7 @@
 
 use axum::routing::get;
 use axum::{Json, Router};
-use jsonwebtoken::{encode, EncodingKey, Header};
+use jsonwebtoken::{EncodingKey, Header, encode};
 use serde_json::json;
 use std::time::{SystemTime, UNIX_EPOCH};
 

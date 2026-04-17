@@ -111,8 +111,7 @@ impl Evaluator for LinksEvaluator {
             // SF semantics: localhost/127.0.0.1 outlinks are only interesting
             // when they're foreign to the page's own host (i.e. a stray dev
             // URL left in production). Skip if the page itself is on localhost.
-            if !is_internal_link
-                && matches!(host.as_deref(), Some("localhost") | Some("127.0.0.1"))
+            if !is_internal_link && matches!(host.as_deref(), Some("localhost") | Some("127.0.0.1"))
             {
                 saw_localhost = true;
             }

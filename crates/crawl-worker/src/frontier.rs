@@ -59,7 +59,10 @@ impl Frontier {
 fn normalize_url(url: &Url) -> String {
     // Scheme + host are case-insensitive per RFC 3986; path/query are not.
     let scheme = url.scheme().to_ascii_lowercase();
-    let host = url.host_str().map(|h| h.to_ascii_lowercase()).unwrap_or_default();
+    let host = url
+        .host_str()
+        .map(|h| h.to_ascii_lowercase())
+        .unwrap_or_default();
     let port = url.port().map(|p| format!(":{p}")).unwrap_or_default();
     let mut path = url.path().to_string();
     if path.len() > 1 && path.ends_with('/') {

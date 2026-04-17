@@ -92,10 +92,7 @@ impl Evaluator for UrlEvaluator {
             }
         }
 
-        let segments: Vec<&str> = path
-            .split('/')
-            .filter(|s| !s.is_empty())
-            .collect();
+        let segments: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();
         for pair in segments.windows(2) {
             if pair[0].eq_ignore_ascii_case(pair[1]) {
                 findings.push(Finding {

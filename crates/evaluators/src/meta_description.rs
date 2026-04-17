@@ -102,10 +102,7 @@ fn has_meta_description_outside_head(html: &scraper::Html) -> bool {
     let all = Selector::parse("meta[name]").expect("valid selector");
     let in_head = Selector::parse("head meta[name]").expect("valid selector");
 
-    let total = html
-        .select(&all)
-        .filter(|el| is_description(el))
-        .count();
+    let total = html.select(&all).filter(|el| is_description(el)).count();
     let in_head_count = html
         .select(&in_head)
         .filter(|el| is_description(el))

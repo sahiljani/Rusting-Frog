@@ -49,32 +49,56 @@ impl FilterKey {
             Self::ResponseCodeSuccess => "tab.responsecode.filter.success",
             Self::ResponseCodeRedirection => "tab.responsecode.filter.redirection",
             Self::ResponseCodeRedirectionJs => "tab.responsecode.filter.redirectionjavascript",
-            Self::ResponseCodeRedirectionMetaRefresh => "tab.responsecode.filter.redirectionmetarefresh",
-            Self::ResponseCodeRedirectionHttpRefresh => "tab.responsecode.filter.redirectionhttprefresh",
+            Self::ResponseCodeRedirectionMetaRefresh => {
+                "tab.responsecode.filter.redirectionmetarefresh"
+            }
+            Self::ResponseCodeRedirectionHttpRefresh => {
+                "tab.responsecode.filter.redirectionhttprefresh"
+            }
             Self::ResponseCodeClientError => "tab.responsecode.filter.clienterror",
             Self::ResponseCodeServerError => "tab.responsecode.filter.servererror",
             Self::ResponseCodeInternalAll => "tab.responsecode.filter.all.internal",
             Self::ResponseCodeInternalBlocked => "tab.responsecode.filter.blocked.internal",
-            Self::ResponseCodeInternalBlockedResource => "tab.responsecode.filter.blockedresource.internal",
+            Self::ResponseCodeInternalBlockedResource => {
+                "tab.responsecode.filter.blockedresource.internal"
+            }
             Self::ResponseCodeInternalNoResponse => "tab.responsecode.filter.noresponse.internal",
             Self::ResponseCodeInternalSuccess => "tab.responsecode.filter.success.internal",
             Self::ResponseCodeInternalRedirection => "tab.responsecode.filter.redirection.internal",
-            Self::ResponseCodeInternalRedirectionJs => "tab.responsecode.filter.redirectionjavascript.internal",
-            Self::ResponseCodeInternalRedirectionMetaRefresh => "tab.responsecode.filter.redirectionmetarefresh.internal",
-            Self::ResponseCodeInternalRedirectionHttpRefresh => "tab.responsecode.filter.redirectionhttprefresh.internal",
-            Self::ResponseCodeInternalRedirectChain => "tab.responsecode.filter.redirect_chain.internal",
-            Self::ResponseCodeInternalRedirectLoop => "tab.responsecode.filter.redirect_loop.internal",
+            Self::ResponseCodeInternalRedirectionJs => {
+                "tab.responsecode.filter.redirectionjavascript.internal"
+            }
+            Self::ResponseCodeInternalRedirectionMetaRefresh => {
+                "tab.responsecode.filter.redirectionmetarefresh.internal"
+            }
+            Self::ResponseCodeInternalRedirectionHttpRefresh => {
+                "tab.responsecode.filter.redirectionhttprefresh.internal"
+            }
+            Self::ResponseCodeInternalRedirectChain => {
+                "tab.responsecode.filter.redirect_chain.internal"
+            }
+            Self::ResponseCodeInternalRedirectLoop => {
+                "tab.responsecode.filter.redirect_loop.internal"
+            }
             Self::ResponseCodeInternalClientError => "tab.responsecode.filter.clienterror.internal",
             Self::ResponseCodeInternalServerError => "tab.responsecode.filter.servererror.internal",
             Self::ResponseCodeExternalAll => "tab.responsecode.filter.all.external",
             Self::ResponseCodeExternalBlocked => "tab.responsecode.filter.blocked.external",
-            Self::ResponseCodeExternalBlockedResource => "tab.responsecode.filter.blockedresource.external",
+            Self::ResponseCodeExternalBlockedResource => {
+                "tab.responsecode.filter.blockedresource.external"
+            }
             Self::ResponseCodeExternalNoResponse => "tab.responsecode.filter.noresponse.external",
             Self::ResponseCodeExternalSuccess => "tab.responsecode.filter.success.external",
             Self::ResponseCodeExternalRedirection => "tab.responsecode.filter.redirection.external",
-            Self::ResponseCodeExternalRedirectionJs => "tab.responsecode.filter.redirectionjavascript.external",
-            Self::ResponseCodeExternalRedirectionMetaRefresh => "tab.responsecode.filter.redirectionmetarefresh.external",
-            Self::ResponseCodeExternalRedirectionHttpRefresh => "tab.responsecode.filter.redirectionhttprefresh.external",
+            Self::ResponseCodeExternalRedirectionJs => {
+                "tab.responsecode.filter.redirectionjavascript.external"
+            }
+            Self::ResponseCodeExternalRedirectionMetaRefresh => {
+                "tab.responsecode.filter.redirectionmetarefresh.external"
+            }
+            Self::ResponseCodeExternalRedirectionHttpRefresh => {
+                "tab.responsecode.filter.redirectionhttprefresh.external"
+            }
             Self::ResponseCodeExternalClientError => "tab.responsecode.filter.clienterror.external",
             Self::ResponseCodeExternalServerError => "tab.responsecode.filter.servererror.external",
             Self::UrlAll => "tab.url.filter.all",
@@ -103,7 +127,9 @@ impl FilterKey {
             Self::MetaDescriptonMissing => "tab.meta_description.filter.missing",
             Self::MetaDescriptonDuplicate => "tab.meta_description.filter.duplicate",
             Self::MetaDescriptonOverXCharacters => "tab.meta_description.filter.over_x_characters",
-            Self::MetaDescriptonBelowXCharacters => "tab.meta_description.filter.below_x_characters",
+            Self::MetaDescriptonBelowXCharacters => {
+                "tab.meta_description.filter.below_x_characters"
+            }
             Self::MetaDescriptonOverXPixels => "tab.meta_description.filter.over_x_pixels",
             Self::MetaDescriptonBelowXPixels => "tab.meta_description.filter.below_x_pixels",
             Self::MetaDescriptonMultiple => "tab.meta_description.filter.multiple",
@@ -139,7 +165,9 @@ impl FilterKey {
             Self::CanonicalsCanonicalised => "tab.canonicals.filter.canonicalised",
             Self::CanonicalsMissing => "tab.canonicals.filter.missing",
             Self::CanonicalsMultiple => "tab.canonicals.filter.multiple",
-            Self::CanonicalsNonIndexableCanonical => "tab.canonicals.filter.non_indexable_canonical",
+            Self::CanonicalsNonIndexableCanonical => {
+                "tab.canonicals.filter.non_indexable_canonical"
+            }
             Self::CanonicalsMultipleConflicting => "tab.canonicals.filter.conflicting",
             Self::CanonicalsCanonicalIsRelative => "tab.canonicals.filter.relative",
             Self::CanonicalsUnlinked => "tab.canonicals.filter.unlinked",
@@ -154,7 +182,9 @@ impl FilterKey {
             Self::PaginationNon200PaginationUrls => "tab.pagination.filter.non200urls",
             Self::PaginationUnlinkedPaginationUrls => "tab.pagination.filter.unlinkedurls",
             Self::PaginationNonIndexable => "tab.pagination.filter.nonindexable",
-            Self::PaginationMultiplePaginationUrls => "tab.pagination.filter.multiplepaginationurls",
+            Self::PaginationMultiplePaginationUrls => {
+                "tab.pagination.filter.multiplepaginationurls"
+            }
             Self::PaginationPaginationLoop => "tab.pagination.filter.paginationloop",
             Self::PaginationSequenceError => "tab.pagination.filter.sequenceerror",
             Self::DirectivesAll => "tab.directives.filter.all",
@@ -180,7 +210,9 @@ impl FilterKey {
             Self::HreflangNon200HreflangUrls => "tab.hreflang.filter.non200urls",
             Self::HreflangUnlinkedHreflangUrls => "tab.hreflang.filter.unlinkedurls",
             Self::HreflangMissingReturnLinks => "tab.hreflang.filter.missingreturnlinks",
-            Self::HreflangInconsistentLanguageReturnLinks => "tab.hreflang.filter.inconsistentlanguagereturnlinks",
+            Self::HreflangInconsistentLanguageReturnLinks => {
+                "tab.hreflang.filter.inconsistentlanguagereturnlinks"
+            }
             Self::HreflangNonCanonicalReturnLinks => "tab.hreflang.filter.noncanonicalreturnlinks",
             Self::HreflangNoIndexReturnLinks => "tab.hreflang.filter.noindexreturnlinks",
             Self::HreflangIncorrectLanguageCodes => "tab.hreflang.filter.incorrectlanguagecodes",
@@ -191,24 +223,36 @@ impl FilterKey {
             Self::HreflangMissing => "tab.hreflang.filter.missing",
             Self::HreflangOutsideHead => "tab.hreflang.filter.outside_head",
             Self::JavaScriptAll => "tab.javascript.filter.all",
-            Self::JavaScriptOldAjaxCrawlingScheme => "tab.javascript.filter.old_ajax_crawling_scheme_urls",
-            Self::JavaScriptOldAjaxCrawlingMetaFragmentTag => "tab.javascript.filter.old_ajax_crawling_meta_fragment_tag",
+            Self::JavaScriptOldAjaxCrawlingScheme => {
+                "tab.javascript.filter.old_ajax_crawling_scheme_urls"
+            }
+            Self::JavaScriptOldAjaxCrawlingMetaFragmentTag => {
+                "tab.javascript.filter.old_ajax_crawling_meta_fragment_tag"
+            }
             Self::JavaScriptTitleJsOnly => "tab.javascript.filter.title_js_only",
             Self::JavaScriptTitleJsUpdated => "tab.javascript.filter.title_js_updated",
             Self::JavaScriptH1JsOnly => "tab.javascript.filter.h1_js_only",
             Self::JavaScriptH1JsUpdated => "tab.javascript.filter.h1_js_updated",
-            Self::JavaScriptMetadescriptionJsOnly => "tab.javascript.filter.metadescription_js_only",
-            Self::JavaScriptMetadescriptionJsUpdated => "tab.javascript.filter.metadescription_js_updated",
+            Self::JavaScriptMetadescriptionJsOnly => {
+                "tab.javascript.filter.metadescription_js_only"
+            }
+            Self::JavaScriptMetadescriptionJsUpdated => {
+                "tab.javascript.filter.metadescription_js_updated"
+            }
             Self::JavaScriptCanonicalJsOnly => "tab.javascript.filter.canonical_js_only",
             Self::JavaScriptCanonicalMismatch => "tab.javascript.filter.canonical_mismatch",
             Self::JavaScriptNoIndexOnlyInHtml => "tab.javascript.filter.no_index_only_html",
             Self::JavaScriptNoFollowOnlyInHtml => "tab.javascript.filter.no_follow_only_html",
             Self::JavaScriptContainsJsLinks => "tab.javascript.filter.contains_js_links",
             Self::JavaScriptContainsJsContent => "tab.javascript.filter.contains_js_content",
-            Self::JavaScriptPagesWithBlockedResources => "tab.javascript.filter.pages_with_blockedresources",
+            Self::JavaScriptPagesWithBlockedResources => {
+                "tab.javascript.filter.pages_with_blockedresources"
+            }
             Self::JavaScriptPagesWithJsErrors => "tab.javascript.filter.pages_with_js_errors",
             Self::JavaScriptPagesWithJsWarnings => "tab.javascript.filter.pages_with_js_warnings",
-            Self::JavaScriptPagesWithChromeIssues => "tab.javascript.filter.pages_with_chrome_issues",
+            Self::JavaScriptPagesWithChromeIssues => {
+                "tab.javascript.filter.pages_with_chrome_issues"
+            }
             Self::AmpAll => "tab.amp.filter.all",
             Self::AmpNon200 => "tab.amp.filter.non_200",
             Self::MissingNonAmpReturnLink => "tab.amp.filter.missing_non_amp_return_link",
@@ -228,22 +272,36 @@ impl FilterKey {
             Self::AmpContainsDisallowedHtml => "tab.amp.filter.contains_disallowed_html",
             Self::AmpOtherValidationErrors => "tab.amp.filter.other_validation_errors",
             Self::StructuredDataAll => "tab.structured_data.filter.all",
-            Self::StructuredDataContainsStructuredData => "tab.structured_data.filter.contains_structured_data",
-            Self::StructuredDataMissingStructuredData => "tab.structured_data.filter.missing_structured_data",
+            Self::StructuredDataContainsStructuredData => {
+                "tab.structured_data.filter.contains_structured_data"
+            }
+            Self::StructuredDataMissingStructuredData => {
+                "tab.structured_data.filter.missing_structured_data"
+            }
             Self::StructuredDataValidationErrors => "tab.structured_data.filter.validation_errors",
-            Self::StructuredDataValidationWarnings => "tab.structured_data.filter.validation_warnings",
-            Self::StructuredDataGoogleValidationErrors => "tab.structured_data.filter.google_validation_errors",
-            Self::StructuredDataGoogleValidationWarnings => "tab.structured_data.filter.google_validation_warnings",
+            Self::StructuredDataValidationWarnings => {
+                "tab.structured_data.filter.validation_warnings"
+            }
+            Self::StructuredDataGoogleValidationErrors => {
+                "tab.structured_data.filter.google_validation_errors"
+            }
+            Self::StructuredDataGoogleValidationWarnings => {
+                "tab.structured_data.filter.google_validation_warnings"
+            }
             Self::StructuredDataParseErrors => "tab.structured_data.filter.parse_errors",
             Self::StructuredDataMicrodataUrls => "tab.structured_data.filter.microdata_urls",
             Self::StructuredDataJsonldUrls => "tab.structured_data.filter.jsonld_urls",
             Self::StructuredDataRdfaUrls => "tab.structured_data.filter.rdfa_urls",
-            Self::StructuredDataGoogleFeatureDetected => "tab.structured_data.filter.google_feature_detected",
+            Self::StructuredDataGoogleFeatureDetected => {
+                "tab.structured_data.filter.google_feature_detected"
+            }
             Self::SitemapsAll => "tab.sitemaps.filter.all",
             Self::SitemapsUrlsInSitemap => "tab.sitemaps.filter.urls_in_sitemap",
             Self::SitemapsNotInSitemap => "tab.sitemaps.filter.not_in_sitemap",
             Self::SitemapsOrphanUrl => "tab.sitemaps.filter.orphan_url",
-            Self::SitemapsNonIndexableUrlInSitemap => "tab.sitemaps.filter.non_indexable_url_in_sitemap",
+            Self::SitemapsNonIndexableUrlInSitemap => {
+                "tab.sitemaps.filter.non_indexable_url_in_sitemap"
+            }
             Self::SitemapsInMultipleSitemaps => "tab.sitemaps.filter.in_multiple_sitemaps",
             Self::SitemapsOver50KUrls => "tab.sitemaps.filter.over_50k_urls",
             Self::SitemapsOver50Mb => "tab.sitemaps.filter.over_50MB",
@@ -259,12 +317,18 @@ impl FilterKey {
             Self::GscAll => "tab.search_console.filter.all",
             Self::GscClicksAbove => "tab.search_console.filter.clicks_above",
             Self::GscNoData => "tab.search_console.filter.no_data",
-            Self::GscNonIndexableWithGscData => "tab.search_console.filter.non_indexable_with_gsc_data",
+            Self::GscNonIndexableWithGscData => {
+                "tab.search_console.filter.non_indexable_with_gsc_data"
+            }
             Self::GscOrphanUrls => "tab.search_console.filter.orphan_urls",
             Self::GscUrlNotOnGoogle => "tab.search_console.filter.url_not_on_google",
-            Self::GscIndexableUrlNotIndexed => "tab.search_console.filter.indexable_url_not_indexed",
+            Self::GscIndexableUrlNotIndexed => {
+                "tab.search_console.filter.indexable_url_not_indexed"
+            }
             Self::GscUrlOnGoogleWithIssues => "tab.search_console.filter.url_on_google_with_issues",
-            Self::GscUserCanonicalNotSelected => "tab.search_console.filter.user_canonical_not_selected",
+            Self::GscUserCanonicalNotSelected => {
+                "tab.search_console.filter.user_canonical_not_selected"
+            }
             Self::GscPageNotMobileFriendly => "tab.search_console.filter.page_not_mobile_friendly",
             Self::GscAmpUrlInvalid => "tab.search_console.filter.amp_url_invalid",
             Self::GscRichResultInvalid => "tab.search_console.filter.rich_result_invalid",
@@ -277,19 +341,35 @@ impl FilterKey {
             Self::PagespeedBootupTime => "menu.report.pagespeed.bootuptime",
             Self::PagespeedMainThreadWorkBreakdown => "menu.report.pagespeed.mainthreadbreakdown",
             Self::PagespeedRequestError => "menu.report.pagespeed.requesterror",
-            Self::PagespeedLayoutShiftCulprits => "menu.report.pagespeed.insight.layout_shift_culprits",
-            Self::PagespeedDocumentLatencyInsight => "menu.report.pagespeed.insight.document_latency",
+            Self::PagespeedLayoutShiftCulprits => {
+                "menu.report.pagespeed.insight.layout_shift_culprits"
+            }
+            Self::PagespeedDocumentLatencyInsight => {
+                "menu.report.pagespeed.insight.document_latency"
+            }
             Self::PagespeedOptimizeDomSize => "menu.report.pagespeed.insight.optimize_dom_size",
             Self::PagespeedFontDisplay => "menu.report.pagespeed.insight.font_display",
-            Self::PagespeedImproveImageDelivery => "menu.report.pagespeed.insight.improve_image_delivery",
+            Self::PagespeedImproveImageDelivery => {
+                "menu.report.pagespeed.insight.improve_image_delivery"
+            }
             Self::PagespeedLegacyJavaScript => "menu.report.pagespeed.insight.legacy_javascript",
-            Self::PagespeedRenderBlockingRequests => "menu.report.pagespeed.insight.render_blocking_requests",
-            Self::PagespeedUseEfficientCacheLifetimes => "menu.report.pagespeed.insight.use_efficient_cache_lifetimes",
+            Self::PagespeedRenderBlockingRequests => {
+                "menu.report.pagespeed.insight.render_blocking_requests"
+            }
+            Self::PagespeedUseEfficientCacheLifetimes => {
+                "menu.report.pagespeed.insight.use_efficient_cache_lifetimes"
+            }
             Self::PagespeedLcpRequestDiscovery => "menu.report.pagespeed.insight.lcp_discovery",
             Self::PagespeedForcedReflow => "menu.report.pagespeed.insight.forced_reflow",
-            Self::PagespeedAvoidEnormousNetworkPayloads => "menu.report.pagespeed.avoid_enormous_network_payloads",
-            Self::PagespeedNetworkDependencyTree => "menu.report.pagespeed.insight.network_dependency_tree",
-            Self::PagespeedDuplicatedJavaScript => "menu.report.pagespeed.insight.duplicated_javascript",
+            Self::PagespeedAvoidEnormousNetworkPayloads => {
+                "menu.report.pagespeed.avoid_enormous_network_payloads"
+            }
+            Self::PagespeedNetworkDependencyTree => {
+                "menu.report.pagespeed.insight.network_dependency_tree"
+            }
+            Self::PagespeedDuplicatedJavaScript => {
+                "menu.report.pagespeed.insight.duplicated_javascript"
+            }
             Self::Unknown => "seolementfilterkey.unknown",
             Self::SecurityAll => "tab.security.filter.all",
             Self::SecurityHttp => "tab.security.filter.http",
@@ -300,11 +380,15 @@ impl FilterKey {
             Self::SecurityUnsafeCrossOrigin => "tab.security.filter.unsafecrossorigin",
             Self::SecurityMissingHstsHeader => "tab.security.filter.missinghstsheader",
             Self::SecurityBadMimeType => "tab.security.filter.badmimetype",
-            Self::SecurityMissingContentTypeHeader => "tab.security.filter.missingcontenttypeoptionsheader",
+            Self::SecurityMissingContentTypeHeader => {
+                "tab.security.filter.missingcontenttypeoptionsheader"
+            }
             Self::SecurityMissingFrameHeader => "tab.security.filter.missingframeoptionsheader",
             Self::SecurityProtocolRelativeUrls => "tab.security.filter.protocolrelativelinks",
             Self::SecurityMissingCspHeader => "tab.security.filter.missingcspheader",
-            Self::SecurityMissingSecureReferrerPolicy => "tab.security.filter.missingreferrerpolicyheader",
+            Self::SecurityMissingSecureReferrerPolicy => {
+                "tab.security.filter.missingreferrerpolicyheader"
+            }
             Self::ContentAll => "tab.content.filter.all",
             Self::ContentLanguageErrorsMisspelt => "tab.content.filter.spelling_errors",
             Self::ContentLanguageErrorsGrammar => "tab.content.filter.grammar_errors",
@@ -314,7 +398,9 @@ impl FilterKey {
             Self::ContentDuplicates => "tab.content.filter.duplicates",
             Self::ContentLowContentPages => "tab.content.filter.low_content_pages",
             Self::ContentReadabilityDifficult => "tab.content.filter.readability_difficult",
-            Self::ContentReadabilityVeryDifficult => "tab.content.filter.readability_very_difficult",
+            Self::ContentReadabilityVeryDifficult => {
+                "tab.content.filter.readability_very_difficult"
+            }
             Self::ContentLoremIpsumPlaceholder => "tab.content.filter.lorem_ipsum_placeholder",
             Self::ContentSoft404Pages => "tab.content.filter.soft_404_pages",
             Self::ParityAll => "tab.parity.filter.all",
@@ -330,17 +416,23 @@ impl FilterKey {
             Self::ParityUniqueInternalOutlinks => "tab.parity.filter.unique_internal_outlinks",
             Self::ParityExternalOutlinks => "tab.parity.filter.external_outlinks",
             Self::ParityUniqueExternalOutlinks => "tab.parity.filter.unique_external_outlinks",
-            Self::ParityStructuredDataUniqueTypes => "tab.parity.filter.structure_data_unique_types",
+            Self::ParityStructuredDataUniqueTypes => {
+                "tab.parity.filter.structure_data_unique_types"
+            }
             Self::ParityContentChange => "tab.parity.filter.content_change",
             Self::LinksAll => "tab.links.filter.all",
             Self::LinksNoInternalOutlinks => "tab.links.filter.no_internal_outlinks",
             Self::LinksNofollowInternalOutlinks => "tab.links.filter.internal_nofollow_outlinks",
             Self::LinksNoAnchorTextOutlinks => "tab.links.filter.no_anchor_text_outlinks",
-            Self::LinksNonDescriptiveAnchorTextOutlinks => "tab.links.filter.non_descriptive_anchor_text_outlinks",
+            Self::LinksNonDescriptiveAnchorTextOutlinks => {
+                "tab.links.filter.non_descriptive_anchor_text_outlinks"
+            }
             Self::LinksHighExternalOutlinks => "tab.links.filter.pages_with_high_external_outlinks",
             Self::LinksHighInternalOutlinks => "tab.links.filter.pages_with_high_internal_outlinks",
             Self::LinksFollowNofollowInlinks => "tab.links.filter.follow.nofollow.inlinks",
-            Self::LinksInternalNofollowInlinksOnly => "tab.links.filter.internal.nofollow.inlinks.only",
+            Self::LinksInternalNofollowInlinksOnly => {
+                "tab.links.filter.internal.nofollow.inlinks.only"
+            }
             Self::LinksHighCrawlDepth => "tab.links.filter.high_crawl_depth",
             Self::LinksLocalHostOutlinks => "tab.links.filter.localhost_outlinks",
             Self::LinksNonIndexablePageInlinksOnly => "tab.links.filter.non_indexable_inlinks_only",
@@ -353,7 +445,9 @@ impl FilterKey {
             Self::ValidationMultipleBodies => "tab.validation.multiple_bodies",
             Self::ValidationDocumentOver15Mb => "tab.validation.document_over_15_mb",
             Self::ValidationResourceOver15Mb => "tab.validation.resource_over_15_mb",
-            Self::ValidationBodyElementPrecedingHtml => "tab.validation.body_element_preceding_html",
+            Self::ValidationBodyElementPrecedingHtml => {
+                "tab.validation.body_element_preceding_html"
+            }
             Self::ValidationHighCarbonRating => "tab.validation.high_carbon_rating",
             Self::MobileAll => "tab.mobile.all",
             Self::MobileViewportNotSet => "menu.report.pagespeed.insight.viewport_not_set",
@@ -365,7 +459,9 @@ impl FilterKey {
             Self::AiAll => "tab.ai.all",
             Self::AccessibilityAll => "filter.all",
             Self::AccessibilityScorePoor => "tab.accessibility.rule.score_poor",
-            Self::AccessibilityScoreNeedsImprovement => "tab.accessibility.rule.score_needs_improvement",
+            Self::AccessibilityScoreNeedsImprovement => {
+                "tab.accessibility.rule.score_needs_improvement"
+            }
             Self::AccessibilityScoreGood => "tab.accessibility.rule.score_good",
             Self::AccessibilityBestPracticeViolation => "tab.accessibility.best_practice.violation",
             Self::AccessibilityWcag2aViolation => "tab.accessibility.wcag2a.violation",
@@ -374,86 +470,146 @@ impl FilterKey {
             Self::AccessibilityWcag21aaViolation => "tab.accessibility.wcag21aa.violation",
             Self::AccessibilityWcag22aaViolation => "tab.accessibility.wcag22aa.violation",
             Self::AccessibilityRuleAccesskeys => "tab.accessibility.rule.accesskeys",
-            Self::AccessibilityRulePresentationRoleConflict => "tab.accessibility.rule.presentation_role_conflict",
+            Self::AccessibilityRulePresentationRoleConflict => {
+                "tab.accessibility.rule.presentation_role_conflict"
+            }
             Self::AccessibilityRuleTabindex => "tab.accessibility.rule.tabindex",
-            Self::AccessibilityRuleScrollableRegionFocusable => "tab.accessibility.rule.scrollable_region_focusable",
+            Self::AccessibilityRuleScrollableRegionFocusable => {
+                "tab.accessibility.rule.scrollable_region_focusable"
+            }
             Self::AccessibilityRuleSkipLink => "tab.accessibility.rule.skip_link",
             Self::AccessibilityRuleAriaRequiredAttr => "tab.accessibility.rule.aria_required_attr",
             Self::AccessibilityRuleAriaText => "tab.accessibility.rule.aria_text",
-            Self::AccessibilityRuleAriaConditionalAttr => "tab.accessibility.rule.aria_conditional_attr",
-            Self::AccessibilityRuleAriaValidAttrValue => "tab.accessibility.rule.aria_valid_attr_value",
+            Self::AccessibilityRuleAriaConditionalAttr => {
+                "tab.accessibility.rule.aria_conditional_attr"
+            }
+            Self::AccessibilityRuleAriaValidAttrValue => {
+                "tab.accessibility.rule.aria_valid_attr_value"
+            }
             Self::AccessibilityRuleAriaValidAttr => "tab.accessibility.rule.aria_valid_attr",
             Self::AccessibilityRuleAriaCommandName => "tab.accessibility.rule.aria_command_name",
             Self::AccessibilityRuleAriaDialogName => "tab.accessibility.rule.aria_dialog_name",
-            Self::AccessibilityRuleAriaInputFieldName => "tab.accessibility.rule.aria_input_field_name",
+            Self::AccessibilityRuleAriaInputFieldName => {
+                "tab.accessibility.rule.aria_input_field_name"
+            }
             Self::AccessibilityRuleAriaMeterName => "tab.accessibility.rule.aria_meter_name",
-            Self::AccessibilityRuleAriaProgressbarName => "tab.accessibility.rule.aria_progressbar_name",
+            Self::AccessibilityRuleAriaProgressbarName => {
+                "tab.accessibility.rule.aria_progressbar_name"
+            }
             Self::AccessibilityRuleAriaAllowedRole => "tab.accessibility.rule.aria_allowed_role",
-            Self::AccessibilityRuleAriaRequiredParent => "tab.accessibility.rule.aria_required_parent",
+            Self::AccessibilityRuleAriaRequiredParent => {
+                "tab.accessibility.rule.aria_required_parent"
+            }
             Self::AccessibilityRuleAriaRoles => "tab.accessibility.rule.aria_roles",
-            Self::AccessibilityRuleAriaToggleFieldName => "tab.accessibility.rule.aria_toggle_field_name",
+            Self::AccessibilityRuleAriaToggleFieldName => {
+                "tab.accessibility.rule.aria_toggle_field_name"
+            }
             Self::AccessibilityRuleAriaTooltipName => "tab.accessibility.rule.aria_tooltip_name",
             Self::AccessibilityRuleAriaTreeitemName => "tab.accessibility.rule.aria_treeitem_name",
-            Self::AccessibilityRuleAriaRequiredChildren => "tab.accessibility.rule.aria_required_children",
-            Self::AccessibilityRuleAriaDeprecatedRole => "tab.accessibility.rule.aria_deprecated_role",
-            Self::AccessibilityRuleAriaBrailleEquivalent => "tab.accessibility.rule.aria_braille_equivalent",
+            Self::AccessibilityRuleAriaRequiredChildren => {
+                "tab.accessibility.rule.aria_required_children"
+            }
+            Self::AccessibilityRuleAriaDeprecatedRole => {
+                "tab.accessibility.rule.aria_deprecated_role"
+            }
+            Self::AccessibilityRuleAriaBrailleEquivalent => {
+                "tab.accessibility.rule.aria_braille_equivalent"
+            }
             Self::AccessibilityRuleAriaHiddenFocus => "tab.accessibility.rule.aria_hidden_focus",
             Self::AccessibilityRuleAriaHiddenBody => "tab.accessibility.rule.aria_hidden_body",
-            Self::AccessibilityRuleAriaProhibitedAttr => "tab.accessibility.rule.aria_prohibited_attr",
+            Self::AccessibilityRuleAriaProhibitedAttr => {
+                "tab.accessibility.rule.aria_prohibited_attr"
+            }
             Self::AccessibilityRuleAriaAllowedAttr => "tab.accessibility.rule.aria_allowed_attr",
             Self::AccessibilityRuleDuplicateIdAria => "tab.accessibility.rule.duplicate_id_aria",
             Self::AccessibilityRuleBypass => "tab.accessibility.rule.bypass",
             Self::AccessibilityRuleRegion => "tab.accessibility.rule.region",
             Self::AccessibilityRuleLandmarkOneMain => "tab.accessibility.rule.landmark_one_main",
-            Self::AccessibilityRuleLandmarkNoDuplicateBanner => "tab.accessibility.rule.landmark_no_duplicate_banner",
-            Self::AccessibilityRuleLandmarkBannerIsTopLevel => "tab.accessibility.rule.landmark_banner_is_top_level",
-            Self::AccessibilityRuleLandmarkNoDuplicateContentinfo => "tab.accessibility.rule.landmark_no_duplicate_contentinfo",
-            Self::AccessibilityRuleLandmarkNoDuplicateMain => "tab.accessibility.rule.landmark_no_duplicate_main",
-            Self::AccessibilityRuleLandmarkComplementaryIsTopLevel => "tab.accessibility.rule.landmark_complementary_is_top_level",
-            Self::AccessibilityRuleLandmarkContentinfoIsTopLevel => "tab.accessibility.rule.landmark_contentinfo_is_top_level",
-            Self::AccessibilityRuleLandmarkMainIsTopLevel => "tab.accessibility.rule.landmark_main_is_top_level",
+            Self::AccessibilityRuleLandmarkNoDuplicateBanner => {
+                "tab.accessibility.rule.landmark_no_duplicate_banner"
+            }
+            Self::AccessibilityRuleLandmarkBannerIsTopLevel => {
+                "tab.accessibility.rule.landmark_banner_is_top_level"
+            }
+            Self::AccessibilityRuleLandmarkNoDuplicateContentinfo => {
+                "tab.accessibility.rule.landmark_no_duplicate_contentinfo"
+            }
+            Self::AccessibilityRuleLandmarkNoDuplicateMain => {
+                "tab.accessibility.rule.landmark_no_duplicate_main"
+            }
+            Self::AccessibilityRuleLandmarkComplementaryIsTopLevel => {
+                "tab.accessibility.rule.landmark_complementary_is_top_level"
+            }
+            Self::AccessibilityRuleLandmarkContentinfoIsTopLevel => {
+                "tab.accessibility.rule.landmark_contentinfo_is_top_level"
+            }
+            Self::AccessibilityRuleLandmarkMainIsTopLevel => {
+                "tab.accessibility.rule.landmark_main_is_top_level"
+            }
             Self::AccessibilityRuleLandmarkUnique => "tab.accessibility.rule.landmark_unique",
             Self::AccessibilityRuleLabel => "tab.accessibility.rule.label",
             Self::AccessibilityRuleLabelTitleOnly => "tab.accessibility.rule.label_title_only",
-            Self::AccessibilityRuleFormFieldMultipleLabels => "tab.accessibility.rule.form_field_multiple_labels",
+            Self::AccessibilityRuleFormFieldMultipleLabels => {
+                "tab.accessibility.rule.form_field_multiple_labels"
+            }
             Self::AccessibilityRuleAutocompleteValid => "tab.accessibility.rule.autocomplete_valid",
             Self::AccessibilityRuleFrameTitle => "tab.accessibility.rule.frame_title",
             Self::AccessibilityRuleFrameTitleUnique => "tab.accessibility.rule.frame_title_unique",
             Self::AccessibilityRuleFrameTested => "tab.accessibility.rule.frame_tested",
-            Self::AccessibilityRuleFrameFocusableContent => "tab.accessibility.rule.frame_focusable_content",
+            Self::AccessibilityRuleFrameFocusableContent => {
+                "tab.accessibility.rule.frame_focusable_content"
+            }
             Self::AccessibilityRuleDocumentTitle => "tab.accessibility.rule.document_title",
-            Self::AccessibilityRulePageHasHeadingOne => "tab.accessibility.rule.page_has_heading_one",
+            Self::AccessibilityRulePageHasHeadingOne => {
+                "tab.accessibility.rule.page_has_heading_one"
+            }
             Self::AccessibilityRuleHeadingOrder => "tab.accessibility.rule.heading_order",
             Self::AccessibilityRuleEmptyHeading => "tab.accessibility.rule.empty_heading",
-            Self::AccessibilityRuleMetaViewportLarge => "tab.accessibility.rule.meta_viewport_large",
+            Self::AccessibilityRuleMetaViewportLarge => {
+                "tab.accessibility.rule.meta_viewport_large"
+            }
             Self::AccessibilityRuleMetaViewport => "tab.accessibility.rule.meta_viewport",
             Self::AccessibilityRuleHtmlLangValid => "tab.accessibility.rule.html_lang_valid",
             Self::AccessibilityRuleHtmlHasLang => "tab.accessibility.rule.html_has_lang",
-            Self::AccessibilityRuleHtmlXmlLangMismatch => "tab.accessibility.rule.html_xml_lang_mismatch",
+            Self::AccessibilityRuleHtmlXmlLangMismatch => {
+                "tab.accessibility.rule.html_xml_lang_mismatch"
+            }
             Self::AccessibilityRuleValidLang => "tab.accessibility.rule.valid_lang",
-            Self::AccessibilityRuleMetaRefreshNoExceptions => "tab.accessibility.rule.meta_refresh_no_exceptions",
+            Self::AccessibilityRuleMetaRefreshNoExceptions => {
+                "tab.accessibility.rule.meta_refresh_no_exceptions"
+            }
             Self::AccessibilityRuleMetaRefresh => "tab.accessibility.rule.meta_refresh",
             Self::AccessibilityRuleInputImageAlt => "tab.accessibility.rule.input_image_alt",
             Self::AccessibilityRuleImageAlt => "tab.accessibility.rule.image_alt",
             Self::AccessibilityRuleObjectAlt => "tab.accessibility.rule.object_alt",
             Self::AccessibilityRuleAreaAlt => "tab.accessibility.rule.area_alt",
-            Self::AccessibilityRuleImageRedundantAlt => "tab.accessibility.rule.image_redundant_alt",
+            Self::AccessibilityRuleImageRedundantAlt => {
+                "tab.accessibility.rule.image_redundant_alt"
+            }
             Self::AccessibilityRuleRoleImgAlt => "tab.accessibility.rule.role_img_alt",
             Self::AccessibilityRuleSvgImgAlt => "tab.accessibility.rule.svg_img_alt",
-            Self::AccessibilityRuleServerSideImageMap => "tab.accessibility.rule.server_side_image_map",
+            Self::AccessibilityRuleServerSideImageMap => {
+                "tab.accessibility.rule.server_side_image_map"
+            }
             Self::AccessibilityRuleVideoCaption => "tab.accessibility.rule.video_caption",
             Self::AccessibilityRuleNoAutoplayAudio => "tab.accessibility.rule.no_autoplay_audio",
             Self::AccessibilityRuleButtonName => "tab.accessibility.rule.button_name",
-            Self::AccessibilityRuleAvoidInlineSpacing => "tab.accessibility.rule.avoid_inline_spacing",
+            Self::AccessibilityRuleAvoidInlineSpacing => {
+                "tab.accessibility.rule.avoid_inline_spacing"
+            }
             Self::AccessibilityRuleInputButtonName => "tab.accessibility.rule.input_button_name",
             Self::AccessibilityRuleLinkInTextBlock => "tab.accessibility.rule.link_in_text_block",
             Self::AccessibilityRuleLinkName => "tab.accessibility.rule.link_name",
-            Self::AccessibilityRuleIdenticalLinksSamePurpose => "tab.accessibility.rule.identical_links_same_purpose",
+            Self::AccessibilityRuleIdenticalLinksSamePurpose => {
+                "tab.accessibility.rule.identical_links_same_purpose"
+            }
             Self::AccessibilityRuleSelectName => "tab.accessibility.rule.select_name",
             Self::AccessibilityRuleSummaryName => "tab.accessibility.rule.summary_name",
             Self::AccessibilityRuleMarquee => "tab.accessibility.rule.marquee",
             Self::AccessibilityRuleBlink => "tab.accessibility.rule.blink",
-            Self::AccessibilityRuleColorContrastEnhanced => "tab.accessibility.rule.color_contrast_enhanced",
+            Self::AccessibilityRuleColorContrastEnhanced => {
+                "tab.accessibility.rule.color_contrast_enhanced"
+            }
             Self::AccessibilityRuleColorContrast => "tab.accessibility.rule.color_contrast",
             Self::AccessibilityRuleTargetSize => "tab.accessibility.rule.target_size",
             Self::AccessibilityRuleNestedInteractive => "tab.accessibility.rule.nested_interactive",
@@ -464,7 +620,9 @@ impl FilterKey {
             Self::AccessibilityRuleThHasDataCells => "tab.accessibility.rule.th_has_data_cells",
             Self::AccessibilityRuleTdHeadersAttr => "tab.accessibility.rule.td_headers_attr",
             Self::AccessibilityRuleEmptyTableHeader => "tab.accessibility.rule.empty_table_header",
-            Self::AccessibilityRuleTableDuplicateName => "tab.accessibility.rule.table_duplicate_name",
+            Self::AccessibilityRuleTableDuplicateName => {
+                "tab.accessibility.rule.table_duplicate_name"
+            }
             Self::AccessibilityRuleScopeAttrValid => "tab.accessibility.rule.scope_attr_valid",
             Self::ValidationHighCarbonRatingDeprecated1 => "tab.validation.high_carbon_rating",
             Self::ValidationHighCarbonRatingDeprecated2 => "tab.validation.high_carbon_rating",
@@ -473,17 +631,27 @@ impl FilterKey {
             Self::PagespeedLayoutShiftDeprecated => "menu.report.pagespeed.layout_shift_elements",
             Self::PagespeedUnsizedImagesDeprecated => "menu.report.pagespeed.unsized_images",
             Self::PagespeedUsesWebpImagesDeprecated => "menu.report.pagespeed.useswebpimages",
-            Self::PagespeedUsesTextCompressionDeprecated => "menu.report.pagespeed.usestextcompression",
+            Self::PagespeedUsesTextCompressionDeprecated => {
+                "menu.report.pagespeed.usestextcompression"
+            }
             Self::PagespeedTimeToFirstByteDeprecated => "menu.report.pagespeed.timetofirstbyte",
             Self::PagespeedRedirectsDeprecated => "menu.report.pagespeed.redirects",
             Self::PagespeedDomSizeDeprecated => "menu.report.pagespeed.domsize",
             Self::PagespeedFontDisplayDeprecated => "menu.report.pagespeed.fontdisplay",
-            Self::PagespeedUsesOptimizedImagesDeprecated => "menu.report.pagespeed.usesoptimizedimages",
-            Self::PagespeedEfficientAnimatedContentDeprecated => "menu.report.pagespeed.efficientanimatedcontent",
-            Self::PagespeedUsesResponsiveImagesDeprecated => "menu.report.pagespeed.usesresponsiveimages",
+            Self::PagespeedUsesOptimizedImagesDeprecated => {
+                "menu.report.pagespeed.usesoptimizedimages"
+            }
+            Self::PagespeedEfficientAnimatedContentDeprecated => {
+                "menu.report.pagespeed.efficientanimatedcontent"
+            }
+            Self::PagespeedUsesResponsiveImagesDeprecated => {
+                "menu.report.pagespeed.usesresponsiveimages"
+            }
             Self::PagespeedLegacyJavaScriptDeprecated => "menu.report.pagespeed.legacy_javascript",
             Self::PagespeedUsesRelPreconnectDeprecated => "menu.report.pagespeed.usesrelpreconnect",
-            Self::PagespeedRenderBlockingResourcesDeprecated => "menu.report.pagespeed.renderblockingresources",
+            Self::PagespeedRenderBlockingResourcesDeprecated => {
+                "menu.report.pagespeed.renderblockingresources"
+            }
             Self::PagespeedUsesLongCacheTtlDeprecated => "menu.report.pagespeed.useslongcachettl",
             Self::PagespeedOffscreenImagesDeprecated => "menu.report.pagespeed.offscreenimages",
             Self::PagespeedUsesRelPreloadDeprecated => "menu.report.pagespeed.usesrelpreload",

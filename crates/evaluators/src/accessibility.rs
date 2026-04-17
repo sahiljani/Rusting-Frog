@@ -113,7 +113,9 @@ impl Evaluator for AccessibilityEvaluator {
         }
 
         if let Some(sel) = Selector::parse("img").ok() {
-            let any_missing_alt = parsed.select(&sel).any(|el| el.value().attr("alt").is_none());
+            let any_missing_alt = parsed
+                .select(&sel)
+                .any(|el| el.value().attr("alt").is_none());
             if any_missing_alt {
                 findings.push(Finding {
                     filter_key: FilterKey::AccessibilityRuleImageAlt,
@@ -339,7 +341,8 @@ mod tests {
 
     #[test]
     fn missing_h1_flagged() {
-        let keys = eval(r#"<html lang="en"><head><title>t</title></head><body><p>x</p></body></html>"#);
+        let keys =
+            eval(r#"<html lang="en"><head><title>t</title></head><body><p>x</p></body></html>"#);
         assert!(keys.contains(&FilterKey::AccessibilityRulePageHasHeadingOne));
     }
 
