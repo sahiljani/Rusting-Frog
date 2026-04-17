@@ -13,6 +13,7 @@ use uuid::Uuid;
 use crate::fetcher::{FetchResult, Fetcher};
 use crate::frontier::Frontier;
 use crate::parser;
+use crate::robots::RobotsGate;
 
 pub struct CrawlPipeline {
     db: PgPool,
@@ -21,6 +22,7 @@ pub struct CrawlPipeline {
     config: CrawlConfig,
     fetcher: Fetcher,
     frontier: Frontier,
+    seed_url: Url,
     seed_host: String,
     urls_crawled: i64,
 }
@@ -47,7 +49,7 @@ impl CrawlPipeline {
             config.limits.max_crawl_depth,
             config.limits.max_urls,
         );
-        frontier.add(seed_url, 0);
+        frontier.add(seed_url.clone(), 0);
 
         Ok(Self {
             db,
@@ -56,6 +58,7 @@ impl CrawlPipeline {
             config,
             fetcher,
             frontier,
+            seed_url,
             seed_host,
             urls_crawled: 0,
         })
@@ -64,9 +67,39 @@ impl CrawlPipeline {
     pub async fn run(&mut self) -> Result<()> {
         self.set_status("running").await?;
 
+        // Fetch robots.txt once per crawl and persist it alongside the
+        // crawl row so (a) the UI's "Response Headers → Blocked by
+        // Robots.txt" filter has a source of truth and (b) /v1/crawls/:id/robots
+        // can return the exact body the matcher used.
+        let gate = RobotsGate::fetch(
+            self.fetcher.client(),
+            &self.seed_url,
+            &self.config.user_agent.user_agent_string,
+        )
+        .await;
+        sqlx::query!(
+            "UPDATE crawls SET robots_txt_raw = $1, robots_txt_status = $2 WHERE id = $3",
+            gate.raw(),
+            gate.status(),
+            self.crawl_id.as_uuid(),
+        )
+        .execute(&self.db)
+        .await?;
+
         let evaluators = sf_evaluators::phase1_evaluators();
 
         while let Some(entry) = self.frontier.next() {
+            // Robots gate: if Disallow matches, we still record the URL so
+            // the "Blocked by Robots.txt" filter has a row to surface, but we
+            // don't fetch it. This mirrors Screaming Frog's "discover but
+            // don't crawl" behaviour for disallowed URLs.
+            if !gate.is_allowed(&entry.url) {
+                tracing::info!(url = %entry.url, "blocked by robots.txt");
+                self.write_blocked_url(&entry.url.to_string(), entry.depth).await?;
+                self.urls_crawled += 1;
+                self.update_counters().await?;
+                continue;
+            }
             let url_str = entry.url.to_string();
             tracing::info!(url = %url_str, depth = entry.depth, "fetching");
 
@@ -419,6 +452,38 @@ impl CrawlPipeline {
             self.crawl_id.as_uuid(),
             url,
             url_hash,
+            depth as i32,
+            now,
+        )
+        .execute(&self.db)
+        .await?;
+
+        Ok(())
+    }
+
+    async fn write_blocked_url(&self, url: &str, depth: u32) -> Result<()> {
+        let url_id = CrawlUrlId::new();
+        let url_hash = format!("{:x}", md5::compute(url.as_bytes()));
+        let now = chrono::Utc::now();
+        let is_internal = Url::parse(url)
+            .ok()
+            .and_then(|u| u.host_str().map(|h| h.eq_ignore_ascii_case(&self.seed_host)))
+            .unwrap_or(false);
+
+        sqlx::query!(
+            r#"
+            INSERT INTO crawl_urls (
+                id, crawl_id, url, url_hash, content_type, is_internal, depth,
+                crawled_at, blocked_by_robots
+            )
+            VALUES ($1, $2, $3, $4, 'unknown', $5, $6, $7, TRUE)
+            ON CONFLICT (crawl_id, url_hash) DO UPDATE SET blocked_by_robots = TRUE
+            "#,
+            url_id.as_uuid(),
+            self.crawl_id.as_uuid(),
+            url,
+            url_hash,
+            is_internal,
             depth as i32,
             now,
         )

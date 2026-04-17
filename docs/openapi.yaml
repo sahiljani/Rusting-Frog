@@ -133,7 +133,7 @@ info:
 
     **This spec is hand-written** — a Swagger UI app in `../swagger-ui/` loads it
     and issues requests against the Rust server at `http://localhost:3000`.
-  version: "0.12.0"
+  version: "0.13.0"
   contact:
     name: sf-clone-rust
     url: https://github.com/sahiljani/Rusting-Frog
@@ -400,6 +400,75 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CrawlStartResponse" }
+
+  /v1/crawls/{id}/robots:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlId" }
+    get:
+      tags: [crawls]
+      summary: Get the robots.txt body + parsed groups used for this crawl
+      description: |
+        Returns the literal `robots.txt` body fetched at crawl start, the
+        HTTP status of that fetch, a best-effort structural parse (grouped
+        user-agent → disallow/allow/sitemap) and the running count of URLs
+        that were discovered but blocked by a `Disallow` directive.
+
+        Status semantics:
+          - `200` — site served a robots file; `raw` is populated and was
+            used to gate every fetch.
+          - `404` — site has no robots file; `raw` is `null` and every URL
+            was allowed (matches Screaming Frog's default).
+          - `null` — robots fetch errored (DNS / timeout / TLS); `raw` is
+            `null` and the crawler fetched everything.
+
+        `blocked_url_count` drives SF's "Response Codes → Blocked by
+        Robots.txt" filter.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, status, raw, groups, blocked_url_count]
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                    nullable: true
+                    description: The URL the robots.txt was fetched from.
+                  status:
+                    type: integer
+                    nullable: true
+                    description: HTTP status of the robots fetch. `null` means the fetch errored.
+                  raw:
+                    type: string
+                    nullable: true
+                    description: Literal robots.txt body. `null` when the fetch was non-2xx or errored.
+                  groups:
+                    type: array
+                    description: One entry per `User-agent:` block, parsed out of `raw`.
+                    items:
+                      type: object
+                      required: [user_agents, disallow, allow, sitemap]
+                      properties:
+                        user_agents: { type: array, items: { type: string } }
+                        disallow:    { type: array, items: { type: string } }
+                        allow:       { type: array, items: { type: string } }
+                        sitemap:     { type: array, items: { type: string } }
+                  blocked_url_count:
+                    type: integer
+                    description: Number of URLs in this crawl that were discovered but blocked by a matching `Disallow` directive.
+              example:
+                url: "https://github.com/robots.txt"
+                status: 200
+                raw: "User-agent: *\nDisallow: /*/pulse\nDisallow: /*/forks\nSitemap: https://github.com/sitemap.xml\n"
+                groups:
+                  - user_agents: ["*"]
+                    disallow: ["/*/pulse", "/*/forks"]
+                    allow: []
+                    sitemap: ["https://github.com/sitemap.xml"]
+                blocked_url_count: 2
 
   /v1/crawls/{crawl_id}/urls:
     parameters:

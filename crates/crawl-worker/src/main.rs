@@ -8,6 +8,7 @@ mod fetcher;
 mod frontier;
 mod parser;
 mod pipeline;
+mod robots;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

@@ -35,6 +35,10 @@ impl Fetcher {
         })
     }
 
+    pub fn client(&self) -> &Client {
+        &self.client
+    }
+
     pub async fn fetch(&self, url: &Url) -> Result<FetchResult> {
         if is_private_ip(url) && !allow_private_ips() {
             anyhow::bail!("SSRF blocked: private/reserved IP");
