@@ -119,18 +119,16 @@ fn parse(body: &str) -> ParseResult {
                     current.clear();
                 }
             }
-            Ok(Event::End(e)) => {
-                if e.name().as_ref() == b"loc" && in_loc {
-                    let trimmed = current.trim().to_string();
-                    if !trimmed.is_empty() {
-                        if is_index {
-                            indexes.push(trimmed);
-                        } else {
-                            urls.insert(trimmed);
-                        }
+            Ok(Event::End(e)) if e.name().as_ref() == b"loc" && in_loc => {
+                let trimmed = current.trim().to_string();
+                if !trimmed.is_empty() {
+                    if is_index {
+                        indexes.push(trimmed);
+                    } else {
+                        urls.insert(trimmed);
                     }
-                    in_loc = false;
                 }
+                in_loc = false;
             }
             Ok(Event::Text(e)) => {
                 if in_loc && let Ok(s) = e.unescape() {
