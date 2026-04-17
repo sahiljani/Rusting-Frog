@@ -15,6 +15,10 @@ pub struct CrawlConfig {
     pub robots: RobotsConfig,
     #[serde(default)]
     pub page_title: PageTitleConfig,
+    #[serde(default)]
+    pub meta_description: MetaDescriptionConfig,
+    #[serde(default)]
+    pub headings: HeadingsConfig,
 }
 
 impl Default for CrawlConfig {
@@ -25,6 +29,8 @@ impl Default for CrawlConfig {
             user_agent: UserAgentConfig::default(),
             robots: RobotsConfig::default(),
             page_title: PageTitleConfig::default(),
+            meta_description: MetaDescriptionConfig::default(),
+            headings: HeadingsConfig::default(),
         }
     }
 }
@@ -102,6 +108,41 @@ impl Default for PageTitleConfig {
             min_title_length: 30,
             max_title_pixel_width: 580,
             min_title_pixel_width: 200,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MetaDescriptionConfig {
+    pub max_length: u32,
+    pub min_length: u32,
+    pub max_pixel_width: u32,
+    pub min_pixel_width: u32,
+}
+
+impl Default for MetaDescriptionConfig {
+    fn default() -> Self {
+        // SF defaults matching SERP display cutoffs.
+        Self {
+            max_length: 155,
+            min_length: 70,
+            max_pixel_width: 985,
+            min_pixel_width: 400,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HeadingsConfig {
+    pub max_h1_length: u32,
+    pub max_h2_length: u32,
+}
+
+impl Default for HeadingsConfig {
+    fn default() -> Self {
+        Self {
+            max_h1_length: 70,
+            max_h2_length: 70,
         }
     }
 }

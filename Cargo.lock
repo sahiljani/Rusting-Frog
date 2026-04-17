@@ -2548,6 +2548,7 @@ dependencies = [
 name = "sf-evaluators"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "scraper",
  "serde",
  "sf-core",

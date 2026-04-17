@@ -1,6 +1,9 @@
+pub mod headings;
+pub mod internal;
+pub mod meta_description;
+pub mod meta_keywords;
 pub mod page_titles;
 pub mod response_codes;
-pub mod internal;
 
 use sf_core::config::CrawlConfig;
 use sf_core::crawl::CrawlUrl;
@@ -32,5 +35,9 @@ pub fn phase1_evaluators() -> Vec<Box<dyn Evaluator>> {
         Box::new(internal::InternalEvaluator),
         Box::new(response_codes::ResponseCodeEvaluator),
         Box::new(page_titles::PageTitleEvaluator),
+        Box::new(meta_description::MetaDescriptionEvaluator),
+        Box::new(meta_keywords::MetaKeywordsEvaluator),
+        Box::new(headings::H1Evaluator),
+        Box::new(headings::H2Evaluator),
     ]
 }
