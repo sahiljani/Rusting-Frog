@@ -1,148 +1,91 @@
-* { box-sizing: border-box; }
-html, body, #root { height: 100%; margin: 0; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-size: 13px;
-  color: #1c1e21;
-  background: #f5f6f7;
-}
-button { font: inherit; cursor: pointer; }
-input, select { font: inherit; }
-a { color: #1769aa; text-decoration: none; }
-a:hover { text-decoration: underline; }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* ---------- app shell ---------- */
-.app {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-.topbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  border-bottom: 1px solid #d0d3d7;
-  background: #2b3139;
-  color: #fff;
-}
-.topbar .brand {
-  font-weight: 700;
-  color: #7ed957;
-  letter-spacing: 0.5px;
-}
-.topbar input[type="text"] {
-  flex: 1;
-  padding: 6px 10px;
-  border: 1px solid #4b525a;
-  border-radius: 3px;
-  background: #1f242a;
-  color: #fff;
-  min-width: 280px;
-}
-.topbar button {
-  padding: 6px 14px;
-  background: #7ed957;
-  color: #1c1e21;
-  border: 0;
-  border-radius: 3px;
-  font-weight: 600;
-}
-.topbar button:disabled { opacity: 0.5; cursor: not-allowed; }
-.topbar .status { font-size: 12px; color: #c7cdd4; white-space: nowrap; }
+/* shadcn tokens — neutral gray palette tuned for a tool UI, plus
+   severity colors matching the Screaming Frog look (red / orange / blue). */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 14% 18%;
 
-/* ---------- main layout ---------- */
-.main {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 280px 1fr 320px;
-  min-height: 0;
-}
-.sidebar { border-right: 1px solid #d0d3d7; background: #fff; overflow: auto; }
-.center { display: flex; flex-direction: column; min-width: 0; background: #fff; }
-.detail { border-left: 1px solid #d0d3d7; background: #fafbfc; overflow: auto; padding: 12px; font-size: 12px; }
+    --card: 0 0% 100%;
+    --card-foreground: 222 14% 18%;
 
-/* ---------- sidebar (tabs tree) ---------- */
-.sidebar h3 {
-  margin: 0; padding: 8px 12px;
-  font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px;
-  color: #5a6068; border-bottom: 1px solid #e0e3e7; background: #f5f6f7;
-}
-.tab-group { border-bottom: 1px solid #eceef1; }
-.tab-header {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 6px 10px; font-weight: 600; cursor: pointer; user-select: none;
-}
-.tab-header:hover { background: #f0f2f4; }
-.tab-header .count { font-weight: 400; color: #5a6068; font-size: 11px; }
-.tab-header .count.hot { color: #c0392b; font-weight: 600; }
-.filter-list { padding: 0 0 4px 22px; }
-.filter-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 3px 10px 3px 0; cursor: pointer; border-radius: 3px;
-}
-.filter-row:hover { background: #eef2f8; }
-.filter-row.active { background: #d7e6f7; font-weight: 600; }
-.filter-row.zero { color: #9097a0; }
-.filter-row .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.filter-row .count { margin-left: 8px; font-variant-numeric: tabular-nums; font-size: 11px; color: inherit; }
-.filter-row .sev { width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; flex-shrink: 0; }
-.sev.Issue { background: #c0392b; }
-.sev.Warning { background: #e67e22; }
-.sev.Opportunity { background: #2980b9; }
-.sev.Info, .sev.NONE { background: #b4bac2; }
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 14% 18%;
 
-/* ---------- grid (center) ---------- */
-.grid-toolbar {
-  padding: 6px 10px; border-bottom: 1px solid #e0e3e7; background: #f5f6f7;
-  display: flex; justify-content: space-between; align-items: center;
-}
-.grid-toolbar .title { font-weight: 600; }
-.grid-toolbar .sub { color: #5a6068; font-size: 12px; }
-.grid-wrap { flex: 1; overflow: auto; }
-table.grid { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
-table.grid th {
-  text-align: left; padding: 6px 10px; border-bottom: 1px solid #d0d3d7;
-  background: #f5f6f7; position: sticky; top: 0; z-index: 1;
-  font-size: 11px; color: #5a6068; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap;
-}
-table.grid td { padding: 5px 10px; border-bottom: 1px solid #eceef1; vertical-align: top; }
-table.grid tbody tr { cursor: pointer; }
-table.grid tbody tr:hover { background: #f7f9fb; }
-table.grid tbody tr.selected { background: #d7e6f7; }
-.url-cell { max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #1769aa; }
-.status-ok { color: #27ae60; font-weight: 600; }
-.status-redir { color: #e67e22; font-weight: 600; }
-.status-err { color: #c0392b; font-weight: 600; }
-.status-unk { color: #9097a0; }
-.empty { padding: 40px; text-align: center; color: #9097a0; }
-.empty h3 { margin: 0 0 4px; color: #5a6068; }
+    --primary: 221 44% 25%;
+    --primary-foreground: 0 0% 100%;
 
-/* ---------- detail pane ---------- */
-.detail h3 { margin: 0 0 8px; font-size: 13px; color: #1c1e21; word-break: break-all; }
-.detail h4 {
-  margin: 16px 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: #5a6068;
-}
-.detail dl { margin: 0; display: grid; grid-template-columns: 110px 1fr; gap: 2px 10px; }
-.detail dt { color: #5a6068; }
-.detail dd { margin: 0; word-break: break-word; }
-.finding-pill {
-  display: inline-block; margin: 2px 4px 2px 0; padding: 2px 7px;
-  background: #eef2f8; border-radius: 10px; font-size: 11px; color: #1769aa;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 14% 18%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 8% 46%;
+
+    --accent: 220 14% 93%;
+    --accent-foreground: 222 14% 18%;
+
+    --destructive: 0 70% 46%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 221 44% 35%;
+
+    --radius: 0.375rem;
+
+    --sev-issue: 0 70% 46%;
+    --sev-warning: 28 86% 52%;
+    --sev-opportunity: 211 60% 48%;
+    --sev-stat: 220 9% 60%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html, body, #root {
+    @apply h-full;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-size: 13px;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
 }
 
-/* ---------- welcome / start view ---------- */
-.welcome {
-  flex: 1; display: flex; align-items: center; justify-content: center;
-  padding: 32px; color: #5a6068; text-align: center;
-}
-.welcome .card {
-  max-width: 520px; background: #fff; border: 1px solid #e0e3e7;
-  border-radius: 6px; padding: 28px 32px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
-.welcome h1 { margin: 0 0 8px; color: #2b3139; font-size: 20px; }
-.welcome p { margin: 0 0 4px; }
+/* Dense-table tweaks — shadcn's defaults are too airy for an SF-style grid. */
+@layer components {
+  .sf-grid {
+    @apply w-full text-xs border-separate border-spacing-0;
+    font-variant-numeric: tabular-nums;
+  }
+  .sf-grid thead th {
+    @apply sticky top-0 z-10 bg-muted px-2 py-1.5 text-left font-medium text-muted-foreground
+           border-b border-border whitespace-nowrap uppercase tracking-wide text-[10px];
+  }
+  .sf-grid tbody td {
+    @apply px-2 py-1 border-b border-border/60 align-middle;
+  }
+  .sf-grid tbody tr {
+    @apply cursor-pointer;
+  }
+  .sf-grid tbody tr:hover td {
+    @apply bg-muted/60;
+  }
+  .sf-grid tbody tr[data-selected='true'] td {
+    @apply bg-accent text-accent-foreground;
+  }
 
-/* ---------- progress ---------- */
-.progress-bar { height: 4px; background: #e0e3e7; overflow: hidden; }
-.progress-bar .fill { height: 100%; background: #7ed957; transition: width 0.2s ease; }
+  .sf-url {
+    @apply font-mono text-[11px] truncate max-w-[420px] text-primary;
+  }
+
+  .status-ok { @apply text-emerald-600 font-semibold; }
+  .status-redir { @apply text-orange-600 font-semibold; }
+  .status-err { @apply text-red-600 font-semibold; }
+  .status-unk { @apply text-muted-foreground; }
+}

@@ -1,36 +1,37 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { TopMenuBar } from '@/components/TopMenuBar';
+import { CrawlBar } from '@/components/CrawlBar';
+import { Sidebar, type FilterSel } from '@/components/Sidebar';
+import { DataGrid } from '@/components/DataGrid';
+import { DetailPane } from '@/components/DetailPane';
+import { StatusFooter } from '@/components/StatusFooter';
+import {
+  clearToken,
   createProject,
   fetchTabs,
   getCrawl,
   getOverview,
-  getUrlDetail,
   listUrls,
+  pauseCrawl,
+  resumeCrawl,
   startCrawl,
   stopCrawl,
-  CrawlStatus,
-  CrawlUrlRow,
-  OverviewCounts,
-  TabDef,
-  UrlDetail,
-} from './api';
-
-type FilterSel = { tabKey: string; filterKey: string } | null;
-
-function statusClass(code: number | null): string {
-  if (code == null) return 'status-unk';
-  if (code >= 200 && code < 300) return 'status-ok';
-  if (code >= 300 && code < 400) return 'status-redir';
-  return 'status-err';
-}
-
-function fmt(n: number | null | undefined): string {
-  if (n == null) return '—';
-  return String(n);
-}
+  type CrawlStatus,
+  type CrawlUrlRow,
+  type OverviewCounts,
+  type TabDef,
+} from '@/api';
 
 export default function App() {
-  const [seedUrl, setSeedUrl] = useState('http://localhost:8080/');
+  const [seedUrl, setSeedUrl] = useState('https://example.com/');
   const [tabs, setTabs] = useState<TabDef[]>([]);
   const [crawl, setCrawl] = useState<CrawlStatus | null>(null);
   const [overview, setOverview] = useState<OverviewCounts>({});
@@ -39,9 +40,9 @@ export default function App() {
   const [rows, setRows] = useState<CrawlUrlRow[]>([]);
   const [loadingRows, setLoadingRows] = useState(false);
   const [selectedUrlId, setSelectedUrlId] = useState<string | null>(null);
-  const [detail, setDetail] = useState<UrlDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [configOpen, setConfigOpen] = useState(false);
   const pollRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -57,37 +58,50 @@ export default function App() {
     }
   }, []);
 
-  const tick = useCallback(async (crawlId: string) => {
-    try {
-      const [c, ov] = await Promise.all([getCrawl(crawlId), getOverview(crawlId)]);
-      setCrawl(c);
-      setOverview(ov);
-      if (c.status !== 'running' && c.status !== 'queued') {
-        stopPolling();
+  const tick = useCallback(
+    async (crawlId: string) => {
+      try {
+        const [c, ov] = await Promise.all([getCrawl(crawlId), getOverview(crawlId)]);
+        setCrawl(c);
+        setOverview(ov);
+        if (c.status !== 'running' && c.status !== 'queued') {
+          stopPolling();
+        }
+      } catch (e) {
+        console.warn('poll error', e);
       }
-    } catch (e) {
-      // keep polling; transient errors are ok
-      console.warn('poll error', e);
-    }
-  }, [stopPolling]);
+    },
+    [stopPolling],
+  );
 
-  const startPolling = useCallback((crawlId: string) => {
-    stopPolling();
-    void tick(crawlId);
-    pollRef.current = window.setInterval(() => { void tick(crawlId); }, 2000);
-  }, [stopPolling, tick]);
+  const startPolling = useCallback(
+    (crawlId: string) => {
+      stopPolling();
+      void tick(crawlId);
+      pollRef.current = window.setInterval(() => {
+        void tick(crawlId);
+      }, 2000);
+    },
+    [stopPolling, tick],
+  );
 
   useEffect(() => () => stopPolling(), [stopPolling]);
 
-  async function onStart() {
+  const onStart = useCallback(async () => {
     setError(null);
     setBusy(true);
-    setRows([]);
-    setSel(null);
-    setSelectedUrlId(null);
-    setDetail(null);
-    setOverview({});
+    if (!crawl || crawl.status !== 'paused') {
+      setRows([]);
+      setSel(null);
+      setSelectedUrlId(null);
+      setOverview({});
+    }
     try {
+      if (crawl && crawl.status === 'paused') {
+        await resumeCrawl(crawl.id);
+        startPolling(crawl.id);
+        return;
+      }
       const u = seedUrl.trim();
       if (!u) throw new Error('Enter a URL');
       const name = `Audit ${new Date().toISOString().slice(0, 19)}`;
@@ -96,30 +110,40 @@ export default function App() {
       const initial = await getCrawl(cr.id);
       setCrawl(initial);
       startPolling(cr.id);
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (e) {
+      setError((e as Error).message);
     } finally {
       setBusy(false);
     }
-  }
+  }, [seedUrl, crawl, startPolling]);
 
-  async function onStop() {
+  const onPause = useCallback(async () => {
+    if (!crawl) return;
+    try {
+      await pauseCrawl(crawl.id);
+      await tick(crawl.id);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }, [crawl, tick]);
+
+  const onStop = useCallback(async () => {
     if (!crawl) return;
     try {
       await stopCrawl(crawl.id);
       await tick(crawl.id);
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (e) {
+      setError((e as Error).message);
     }
-  }
+  }, [crawl, tick]);
 
   const loadRows = useCallback(async (crawlId: string, filterKey: string) => {
     setLoadingRows(true);
     try {
       const page = await listUrls(crawlId, { filter: filterKey, limit: 500 });
       setRows(page.data);
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (e) {
+      setError((e as Error).message);
       setRows([]);
     } finally {
       setLoadingRows(false);
@@ -131,22 +155,13 @@ export default function App() {
     void loadRows(crawl.id, sel.filterKey);
   }, [crawl?.id, sel?.filterKey, loadRows, crawl, sel]);
 
-  // Refresh rows when overview changes and a filter is selected
+  // Refresh rows when overview changes mid-crawl
   useEffect(() => {
     if (!crawl || !sel) return;
     if (crawl.status === 'running' || crawl.status === 'queued') {
       void loadRows(crawl.id, sel.filterKey);
     }
   }, [overview, crawl, sel, loadRows]);
-
-  useEffect(() => {
-    if (!crawl || !selectedUrlId) { setDetail(null); return; }
-    let cancelled = false;
-    getUrlDetail(crawl.id, selectedUrlId)
-      .then((d) => { if (!cancelled) setDetail(d); })
-      .catch((e) => { if (!cancelled) setError(String(e)); });
-    return () => { cancelled = true; };
-  }, [crawl?.id, selectedUrlId, crawl]);
 
   const tabTotals = useMemo(() => {
     const out: Record<string, number> = {};
@@ -158,240 +173,126 @@ export default function App() {
     return out;
   }, [tabs, overview]);
 
-  const progressPct = useMemo(() => {
-    if (!crawl) return 0;
-    const c = crawl.urls_crawled ?? 0;
-    const d = crawl.urls_discovered ?? 0;
-    if (!d) return 0;
-    return Math.min(100, Math.round((c / d) * 100));
-  }, [crawl]);
-
   const running = crawl?.status === 'running' || crawl?.status === 'queued';
+  const paused = crawl?.status === 'paused';
+
+  const selectedTab = tabs.find((t) => t.key === sel?.tabKey);
+  const selectedFilter = selectedTab?.filters.find((f) => f.key === sel?.filterKey);
+
+  const onMenuCommand = useCallback(
+    (id: string) => {
+      switch (id) {
+        case 'file.new':
+          setCrawl(null);
+          setRows([]);
+          setSel(null);
+          setSelectedUrlId(null);
+          setOverview({});
+          break;
+        case 'file.clear_token':
+          clearToken();
+          setError('Saved token cleared. A fresh one will mint on next request.');
+          break;
+        case 'mode.spider':
+          break; // already in Spider mode
+        case 'config.open':
+          setConfigOpen(true);
+          break;
+      }
+    },
+    [],
+  );
 
   return (
-    <div className="app">
-      <div className="topbar">
-        <span className="brand">RUSTING FROG</span>
-        <input
-          type="text"
-          placeholder="https://example.com/"
-          value={seedUrl}
-          onChange={(e) => setSeedUrl(e.target.value)}
-          disabled={busy || running}
-          onKeyDown={(e) => { if (e.key === 'Enter' && !busy && !running) onStart(); }}
+    <TooltipProvider delayDuration={200} skipDelayDuration={100}>
+      <div className="flex h-full flex-col bg-background text-foreground">
+        <TopMenuBar mode="spider" onCommand={onMenuCommand} />
+        <CrawlBar
+          seedUrl={seedUrl}
+          setSeedUrl={setSeedUrl}
+          busy={busy}
+          running={running}
+          paused={paused}
+          onStart={onStart}
+          onPause={onPause}
+          onStop={onStop}
         />
-        {running ? (
-          <button onClick={onStop}>Stop</button>
-        ) : (
-          <button onClick={onStart} disabled={busy}>Start Audit</button>
+        {error && (
+          <div className="flex items-center justify-between gap-2 border-b border-destructive/30 bg-destructive/10 px-3 py-1 text-xs text-destructive">
+            <span className="break-all">{error}</span>
+            <button
+              onClick={() => setError(null)}
+              className="shrink-0 rounded px-2 py-0.5 text-[10px] font-medium hover:bg-destructive/20"
+            >
+              dismiss
+            </button>
+          </div>
         )}
-        <span className="status">
-          {crawl ? (
-            <>
-              {crawl.status.toUpperCase()} · {fmt(crawl.urls_crawled)}/{fmt(crawl.urls_discovered)} URLs
-            </>
-          ) : (
-            'Idle'
-          )}
-        </span>
-      </div>
-      {running && (
-        <div className="progress-bar"><div className="fill" style={{ width: `${progressPct}%` }} /></div>
-      )}
-      {error && (
-        <div style={{ padding: '6px 12px', background: '#fde8e6', color: '#9b2316', fontSize: 12 }}>
-          {error} <button style={{ marginLeft: 8 }} onClick={() => setError(null)}>dismiss</button>
-        </div>
-      )}
 
-      <div className="main">
-        <aside className="sidebar">
-          <h3>Overview</h3>
-          {tabs.length === 0 && <div style={{ padding: 12, color: '#9097a0' }}>Loading tabs…</div>}
-          {tabs.map((t) => {
-            const total = tabTotals[t.key] ?? 0;
-            const open = expanded[t.key] ?? (total > 0);
-            return (
-              <div className="tab-group" key={t.key}>
-                <div
-                  className="tab-header"
-                  onClick={() => setExpanded((x) => ({ ...x, [t.key]: !open }))}
-                >
-                  <span>{open ? '▾' : '▸'} {t.display_name}</span>
-                  <span className={'count' + (total > 0 ? ' hot' : '')}>{total}</span>
-                </div>
-                {open && (
-                  <div className="filter-list">
-                    {t.filters.map((f) => {
-                      const n = overview[f.key] ?? 0;
-                      const active = sel?.filterKey === f.key;
-                      return (
-                        <div
-                          key={f.key}
-                          className={
-                            'filter-row' +
-                            (active ? ' active' : '') +
-                            (n === 0 ? ' zero' : '')
-                          }
-                          onClick={() => {
-                            setSel({ tabKey: t.key, filterKey: f.key });
-                            setSelectedUrlId(null);
-                            setDetail(null);
-                          }}
-                          title={f.key}
-                        >
-                          <span className={'sev ' + f.severity} />
-                          <span className="name">{f.display_name}</span>
-                          <span className="count">{n}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </aside>
+        <div className="flex min-h-0 flex-1">
+          <Sidebar
+            tabs={tabs}
+            overview={overview}
+            expanded={expanded}
+            setExpanded={setExpanded}
+            sel={sel}
+            onSelect={(s) => {
+              setSel(s);
+              setSelectedUrlId(null);
+            }}
+            tabTotals={tabTotals}
+          />
 
-        <section className="center">
           {!crawl ? (
-            <div className="welcome">
-              <div className="card">
-                <h1>Rusting Frog — SEO Audit</h1>
-                <p>Enter a URL above and click <b>Start Audit</b>.</p>
-                <p style={{ marginTop: 8, fontSize: 12 }}>
-                  Tip: set <code>SF_DEV_MODE=1</code> and <code>SF_ALLOW_PRIVATE_IPS=1</code> on the API so
-                  the UI can mint a dev token and crawl localhost fixtures.
+            <div className="flex flex-1 items-center justify-center bg-muted/30">
+              <div className="max-w-md rounded-lg border border-border bg-background p-6 shadow-sm">
+                <h1 className="mb-2 text-lg font-semibold">Rusting Frog — SEO Audit</h1>
+                <p className="text-sm text-muted-foreground">
+                  Enter a URL in the bar above and click <b className="text-foreground">Start</b> to
+                  begin crawling.
+                </p>
+                <p className="mt-3 text-[11px] text-muted-foreground">
+                  Tip: hover any info icon to see Screaming Frog's user-guide text for that field.
                 </p>
               </div>
             </div>
           ) : !sel ? (
-            <div className="empty">
-              <h3>Pick a filter</h3>
-              <div>Select any filter from the left to see matching URLs.</div>
+            <div className="flex flex-1 items-center justify-center bg-muted/30 text-sm text-muted-foreground">
+              Pick a filter from the sidebar to see matching URLs.
             </div>
           ) : (
-            <>
-              <div className="grid-toolbar">
-                <div>
-                  <div className="title">
-                    {tabs.find((t) => t.key === sel.tabKey)?.display_name} ·{' '}
-                    {tabs
-                      .find((t) => t.key === sel.tabKey)
-                      ?.filters.find((f) => f.key === sel.filterKey)?.display_name}
-                  </div>
-                  <div className="sub">
-                    {loadingRows ? 'Loading…' : `${rows.length} URL${rows.length === 1 ? '' : 's'}`}
-                  </div>
-                </div>
-                <code style={{ fontSize: 11, color: '#5a6068' }}>{sel.filterKey}</code>
-              </div>
-              <div className="grid-wrap">
-                <table className="grid">
-                  <thead>
-                    <tr>
-                      <th style={{ width: '40%' }}>URL</th>
-                      <th>Code</th>
-                      <th>Type</th>
-                      <th>Title</th>
-                      <th>T-Len</th>
-                      <th>H1</th>
-                      <th>Words</th>
-                      <th>Depth</th>
-                      <th>RT (ms)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((r) => (
-                      <tr
-                        key={r.id}
-                        className={selectedUrlId === r.id ? 'selected' : ''}
-                        onClick={() => setSelectedUrlId(r.id)}
-                      >
-                        <td className="url-cell" title={r.url}>{r.url}</td>
-                        <td className={statusClass(r.status_code)}>
-                          {r.status_code ?? '—'}
-                        </td>
-                        <td>{r.content_type ?? '—'}</td>
-                        <td className="url-cell" title={r.title ?? ''}>{r.title ?? '—'}</td>
-                        <td>{fmt(r.title_length)}</td>
-                        <td className="url-cell" title={r.h1_first ?? ''}>{r.h1_first ?? '—'}</td>
-                        <td>{fmt(r.word_count)}</td>
-                        <td>{fmt(r.depth)}</td>
-                        <td>{fmt(r.response_time_ms)}</td>
-                      </tr>
-                    ))}
-                    {!loadingRows && rows.length === 0 && (
-                      <tr>
-                        <td colSpan={9} style={{ textAlign: 'center', padding: 24, color: '#9097a0' }}>
-                          No URLs match this filter.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </>
+            <DataGrid
+              rows={rows}
+              loading={loadingRows}
+              selectedId={selectedUrlId}
+              onSelect={setSelectedUrlId}
+              title={`${selectedTab?.display_name ?? ''} · ${selectedFilter?.display_name ?? ''}`}
+              subtitle={
+                loadingRows
+                  ? 'Loading…'
+                  : `${rows.length} URL${rows.length === 1 ? '' : 's'}`
+              }
+              filterKey={sel.filterKey}
+            />
           )}
-        </section>
 
-        <aside className="detail">
-          {!detail ? (
-            <div style={{ color: '#9097a0' }}>
-              {selectedUrlId ? 'Loading…' : 'Select a row to see details.'}
-            </div>
-          ) : (
-            <>
-              <h3>{detail.url}</h3>
-              <dl>
-                <dt>Status</dt><dd>{detail.status_code ?? '—'}</dd>
-                <dt>Type</dt><dd>{detail.content_type ?? '—'}</dd>
-                <dt>Internal</dt><dd>{detail.is_internal ? 'yes' : 'no'}</dd>
-                <dt>Depth</dt><dd>{fmt(detail.depth)}</dd>
-                <dt>Size</dt><dd>{fmt(detail.content_length)}</dd>
-                <dt>RT</dt><dd>{fmt(detail.response_time_ms)} ms</dd>
-                <dt>Crawled</dt><dd>{detail.crawled_at ?? '—'}</dd>
-              </dl>
+          <DetailPane crawlId={crawl?.id ?? null} urlId={selectedUrlId} />
+        </div>
 
-              <h4>Title</h4>
-              <div>{detail.title ?? <i>—</i>}</div>
-              <div style={{ color: '#5a6068', fontSize: 11, marginTop: 2 }}>
-                {fmt(detail.title_length)} chars · {fmt(detail.title_pixel_width)} px
-              </div>
+        <StatusFooter crawl={crawl} />
 
-              <h4>Meta Description</h4>
-              <div>{detail.meta_description ?? <i>—</i>}</div>
-              <div style={{ color: '#5a6068', fontSize: 11, marginTop: 2 }}>
-                {fmt(detail.meta_description_length)} chars
-              </div>
-
-              <h4>Headings</h4>
-              <dl>
-                <dt>H1</dt><dd>{detail.h1_first ?? '—'} ({fmt(detail.h1_count)})</dd>
-                <dt>H2</dt><dd>{detail.h2_first ?? '—'} ({fmt(detail.h2_count)})</dd>
-              </dl>
-
-              <h4>Directives</h4>
-              <dl>
-                <dt>Canonical</dt><dd>{detail.canonical_url ?? '—'}</dd>
-                <dt>Robots</dt><dd>{detail.meta_robots ?? '—'}</dd>
-                <dt>Redirect</dt><dd>{detail.redirect_url ?? '—'}</dd>
-              </dl>
-
-              {detail.findings && detail.findings.length > 0 && (
-                <>
-                  <h4>Findings ({detail.findings.length})</h4>
-                  <div>
-                    {detail.findings.map((f) => (
-                      <span key={f} className="finding-pill">{f}</span>
-                    ))}
-                  </div>
-                </>
-              )}
-            </>
-          )}
-        </aside>
+        <Dialog open={configOpen} onOpenChange={setConfigOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Spider Configuration</DialogTitle>
+              <DialogDescription>
+                Configuration UI is wired in the next batch (K4). For now the crawler uses its
+                defaults; all Configuration menu items are placeholders.
+              </DialogDescription>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
