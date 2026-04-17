@@ -5,6 +5,7 @@ use scraper::Html;
 use sf_core::config::CrawlConfig;
 use sf_core::crawl::ContentType;
 use sf_core::id::{CrawlId, CrawlUrlId};
+use sha2::{Digest, Sha256};
 use sqlx::PgPool;
 use url::Url;
 use uuid::Uuid;
@@ -333,6 +334,27 @@ impl CrawlPipeline {
                 .collect(),
         );
 
+        // Batch C storage: raw HTML, a normalised SHA-256 content hash (for
+        // the Duplicate Details tab) and extracted JSON-LD blocks (for the
+        // Structured Data tab). Only populated for HTML responses — binary
+        // and redirect bodies leave these NULL / empty.
+        let is_html = *content_type == ContentType::Html && !fetch.body.is_empty();
+        let raw_html_opt: Option<&str> = if is_html { Some(fetch.body.as_str()) } else { None };
+        let content_hash_opt: Option<Vec<u8>> = if is_html {
+            Some(sha256_normalised(&fetch.body))
+        } else {
+            None
+        };
+        let structured_data_json: serde_json::Value = match parse_result {
+            Some(pr) if !pr.json_ld_blocks.is_empty() => serde_json::Value::Array(
+                pr.json_ld_blocks
+                    .iter()
+                    .map(|v| serde_json::json!({ "type": "JSON-LD", "data": v }))
+                    .collect(),
+            ),
+            _ => serde_json::Value::Array(vec![]),
+        };
+
         sqlx::query!(
             r#"
             INSERT INTO crawl_urls (
@@ -340,10 +362,11 @@ impl CrawlPipeline {
                 is_internal, depth, title, title_length, meta_description,
                 meta_description_length, h1_first, h1_count, h2_first, h2_count,
                 word_count, response_time_ms, content_length, canonical_url,
-                meta_robots, response_headers, final_url, crawled_at
+                meta_robots, response_headers, final_url, crawled_at,
+                raw_html, content_hash, structured_data
             ) VALUES (
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-                $15, $16, $17, $18, $19, $20, $21, $22, $23, $24
+                $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27
             )
             ON CONFLICT (crawl_id, url_hash) DO NOTHING
             "#,
@@ -371,6 +394,9 @@ impl CrawlPipeline {
             headers_json,
             fetch.final_url,
             now,
+            raw_html_opt,
+            content_hash_opt.as_deref(),
+            structured_data_json,
         )
         .execute(&self.db)
         .await?;
@@ -457,4 +483,43 @@ impl CrawlPipeline {
 
         Ok(())
     }
+}
+
+// Normalised SHA-256 for the Duplicate Details tab.
+//
+// Two pages that differ only in whitespace / casing / HTML comments are
+// treated as byte-identical duplicates by SF. We mirror that by lowercasing,
+// stripping comments, and collapsing runs of whitespace before hashing —
+// this keeps the hash insensitive to cosmetic noise (build-time cachebusters,
+// pretty-printer variance) while still being exact enough that a genuine
+// content diff produces a different hash.
+fn sha256_normalised(body: &str) -> Vec<u8> {
+    let mut out = String::with_capacity(body.len());
+    let bytes = body.as_bytes();
+    let mut i = 0;
+    let mut last_was_ws = false;
+    while i < bytes.len() {
+        if bytes[i..].starts_with(b"<!--") {
+            if let Some(end) = body[i..].find("-->") {
+                i += end + 3;
+                continue;
+            } else {
+                break;
+            }
+        }
+        let c = bytes[i] as char;
+        if c.is_ascii_whitespace() {
+            if !last_was_ws {
+                out.push(' ');
+                last_was_ws = true;
+            }
+        } else {
+            out.push(c.to_ascii_lowercase());
+            last_was_ws = false;
+        }
+        i += 1;
+    }
+    let mut hasher = Sha256::new();
+    hasher.update(out.as_bytes());
+    hasher.finalize().to_vec()
 }

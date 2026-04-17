@@ -133,7 +133,7 @@ info:
 
     **This spec is hand-written** — a Swagger UI app in `../swagger-ui/` loads it
     and issues requests against the Rust server at `http://localhost:3000`.
-  version: "0.11.0"
+  version: "0.12.0"
   contact:
     name: sf-clone-rust
     url: https://github.com/sahiljani/Rusting-Frog
@@ -1191,6 +1191,123 @@ paths:
                     url: "https://example.com/"
                     count: 0
                     cookies: []
+
+  /v1/crawls/{crawl_id}/urls/{url_id}/source:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlIdAsCrawl" }
+      - { $ref: "#/components/parameters/UrlId" }
+    get:
+      tags: [urls]
+      summary: Raw HTML body — SF View Source tab
+      description: |
+        Returns the raw HTML body captured at crawl time verbatim.
+        `content_hash` is the hex-encoded SHA-256 of a normalised form
+        of the body (lowercased, comments stripped, whitespace collapsed)
+        — the same value the **Duplicate Details** tab uses to match
+        exact duplicates. For non-HTML responses (images, binary, empty
+        redirect bodies) `html` and `content_hash` are null.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, content_type, html_length]
+                properties:
+                  url:            { type: string, format: uri }
+                  content_type:   { type: string, nullable: true }
+                  content_length: { type: integer, nullable: true }
+                  html_length:    { type: integer }
+                  content_hash:   { type: string, nullable: true, description: "Hex-encoded SHA-256 of normalised body" }
+                  html:           { type: string, nullable: true }
+
+  /v1/crawls/{crawl_id}/urls/{url_id}/duplicates:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlIdAsCrawl" }
+      - { $ref: "#/components/parameters/UrlId" }
+    get:
+      tags: [urls]
+      summary: Exact-duplicate pages — SF Duplicate Details tab
+      description: |
+        Returns every other URL in the same crawl whose normalised
+        content hash matches this URL's. `match_type` is always `"exact"`
+        in this pass — near-duplicate (MinHash) pairing is a post-crawl
+        analysis step and is deferred to Batch D.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, match_type, count, duplicates]
+                properties:
+                  url:           { type: string, format: uri }
+                  content_hash:  { type: string, nullable: true }
+                  match_type:    { type: string, enum: [exact] }
+                  count:         { type: integer }
+                  duplicates:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        url_id:     { type: string, format: uuid }
+                        url:        { type: string, format: uri }
+                        similarity: { type: number, description: "1.0 for exact matches" }
+
+  /v1/crawls/{crawl_id}/urls/{url_id}/structured-data:
+    parameters:
+      - { $ref: "#/components/parameters/CrawlIdAsCrawl" }
+      - { $ref: "#/components/parameters/UrlId" }
+    get:
+      tags: [urls]
+      summary: Structured data items — SF Structured Data tab
+      description: |
+        Returns every structured-data block extracted from the page
+        during parsing. Each item is `{ type, data }` — `type` is
+        `"JSON-LD"` (Microdata/RDFa remain empty until a parser is
+        wired). `counts_by_type` is a small rollup keyed by type so
+        the UI can render badges without re-scanning the array.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, count, items]
+                properties:
+                  url:             { type: string, format: uri }
+                  count:           { type: integer }
+                  counts_by_type:
+                    type: object
+                    additionalProperties: { type: integer }
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type: { type: string, enum: ["JSON-LD", "Microdata", "RDFa"] }
+                        data: { }
+              examples:
+                github_home:
+                  summary: github.com — 2 JSON-LD blocks (WebSite + Organization)
+                  value:
+                    url: "https://github.com/"
+                    count: 2
+                    counts_by_type: { "JSON-LD": 2 }
+                    items:
+                      - type: "JSON-LD"
+                        data:
+                          "@context": "https://schema.org"
+                          "@type": "WebSite"
+                          "url": "https://github.com/"
+                      - type: "JSON-LD"
+                        data:
+                          "@context": "https://schema.org"
+                          "@type": "Organization"
+                          "name": "GitHub"
 
   /v1/crawls/{crawl_id}/reports:
     parameters:

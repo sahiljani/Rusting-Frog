@@ -14,6 +14,11 @@ pub struct ParseResult {
     pub canonical_url: Option<String>,
     pub meta_robots: Option<String>,
     pub links: Vec<ExtractedLink>,
+    // Every <script type="application/ld+json"> block, parsed. Each entry
+    // is the raw JSON value — a single object, or an array of objects, or
+    // a @graph envelope — SF's Structured Data tab keeps them as-is and
+    // flattens @graph at render time.
+    pub json_ld_blocks: Vec<serde_json::Value>,
 }
 
 pub struct ExtractedLink {
@@ -55,6 +60,7 @@ pub fn parse_html(html_str: &str, base_url: &Url) -> ParseResult {
     let canonical_url = extract_canonical(&document);
     let meta_robots = extract_meta_content(&document, "robots");
     let links = extract_links(&document, base_url);
+    let json_ld_blocks = extract_json_ld(&document);
 
     ParseResult {
         title,
@@ -69,7 +75,21 @@ pub fn parse_html(html_str: &str, base_url: &Url) -> ParseResult {
         canonical_url,
         meta_robots,
         links,
+        json_ld_blocks,
     }
+}
+
+fn extract_json_ld(doc: &Html) -> Vec<serde_json::Value> {
+    let sel = match Selector::parse("script[type=\"application/ld+json\"]") {
+        Ok(s) => s,
+        Err(_) => return vec![],
+    };
+    doc.select(&sel)
+        .filter_map(|el| {
+            let raw: String = el.text().collect();
+            serde_json::from_str::<serde_json::Value>(raw.trim()).ok()
+        })
+        .collect()
 }
 
 fn extract_first_text(doc: &Html, selector: &str) -> Option<String> {

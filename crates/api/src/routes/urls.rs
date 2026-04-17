@@ -19,6 +19,9 @@ pub fn routes() -> Router<AppState> {
         .route("/crawls/{crawl_id}/urls/{url_id}/serp", get(get_serp))
         .route("/crawls/{crawl_id}/urls/{url_id}/headers", get(get_headers))
         .route("/crawls/{crawl_id}/urls/{url_id}/cookies", get(get_cookies))
+        .route("/crawls/{crawl_id}/urls/{url_id}/source", get(get_source))
+        .route("/crawls/{crawl_id}/urls/{url_id}/duplicates", get(get_duplicates))
+        .route("/crawls/{crawl_id}/urls/{url_id}/structured-data", get(get_structured_data))
         .route("/crawls/{crawl_id}/overview", get(get_overview))
 }
 
@@ -531,6 +534,149 @@ fn parse_set_cookie(raw: &str) -> serde_json::Value {
         "same_site": same_site,
         "raw": raw,
     })
+}
+
+/// Feeds Screaming Frog's "View Source" detail tab. Returns the raw
+/// HTML body the crawler stored verbatim. For non-HTML responses (images,
+/// binary, redirects with empty bodies) `html` is null.
+async fn get_source(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path((crawl_id, url_id)): Path<(Uuid, Uuid)>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    verify_crawl_ownership(&state, &auth, &crawl_id).await?;
+    let row = sqlx::query!(
+        r#"
+        SELECT url, content_type, content_length, raw_html, content_hash
+        FROM crawl_urls
+        WHERE id = $1 AND crawl_id = $2
+        "#,
+        &url_id,
+        &crawl_id,
+    )
+    .fetch_optional(&state.db)
+    .await?
+    .ok_or_else(|| ApiError::not_found("URL not found"))?;
+
+    let html_len = row.raw_html.as_deref().map(|s| s.len()).unwrap_or(0);
+    let hash_hex = row
+        .content_hash
+        .as_deref()
+        .map(|b| b.iter().map(|x| format!("{x:02x}")).collect::<String>());
+
+    Ok(Json(serde_json::json!({
+        "url": row.url,
+        "content_type": row.content_type,
+        "content_length": row.content_length,
+        "html_length": html_len,
+        "content_hash": hash_hex,
+        "html": row.raw_html,
+    })))
+}
+
+/// Feeds Screaming Frog's "Duplicate Details" detail tab. Two URLs are
+/// exact duplicates when their normalised content hashes match. Returns
+/// the current URL's hash plus every other crawled URL in the same
+/// crawl that shares it (exact — not near-duplicate).
+async fn get_duplicates(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path((crawl_id, url_id)): Path<(Uuid, Uuid)>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    verify_crawl_ownership(&state, &auth, &crawl_id).await?;
+    let row = sqlx::query!(
+        r#"
+        SELECT url, content_hash
+        FROM crawl_urls
+        WHERE id = $1 AND crawl_id = $2
+        "#,
+        &url_id,
+        &crawl_id,
+    )
+    .fetch_optional(&state.db)
+    .await?
+    .ok_or_else(|| ApiError::not_found("URL not found"))?;
+
+    let Some(hash) = row.content_hash.as_deref() else {
+        return Ok(Json(serde_json::json!({
+            "url": row.url,
+            "content_hash": null,
+            "match_type": "exact",
+            "count": 0,
+            "duplicates": [],
+        })));
+    };
+
+    let dupes = sqlx::query!(
+        r#"
+        SELECT id, url
+        FROM crawl_urls
+        WHERE crawl_id = $1 AND content_hash = $2 AND id <> $3
+        ORDER BY url ASC
+        "#,
+        &crawl_id,
+        hash,
+        &url_id,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    let hash_hex: String = hash.iter().map(|x| format!("{x:02x}")).collect();
+    let items: Vec<serde_json::Value> = dupes
+        .into_iter()
+        .map(|r| serde_json::json!({ "url_id": r.id, "url": r.url, "similarity": 1.0 }))
+        .collect();
+
+    Ok(Json(serde_json::json!({
+        "url": row.url,
+        "content_hash": hash_hex,
+        "match_type": "exact",
+        "count": items.len(),
+        "duplicates": items,
+    })))
+}
+
+/// Feeds Screaming Frog's "Structured Data" detail tab. Returns every
+/// extracted structured-data block for the URL. Only JSON-LD is wired
+/// for now — Microdata / RDFa remain empty arrays until we pick a
+/// parser (tracked in the master reference doc under Batch D).
+async fn get_structured_data(
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Path((crawl_id, url_id)): Path<(Uuid, Uuid)>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    verify_crawl_ownership(&state, &auth, &crawl_id).await?;
+    let row = sqlx::query!(
+        r#"
+        SELECT url, structured_data
+        FROM crawl_urls
+        WHERE id = $1 AND crawl_id = $2
+        "#,
+        &url_id,
+        &crawl_id,
+    )
+    .fetch_optional(&state.db)
+    .await?
+    .ok_or_else(|| ApiError::not_found("URL not found"))?;
+
+    let items = row
+        .structured_data
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    let mut by_type: std::collections::BTreeMap<String, usize> = std::collections::BTreeMap::new();
+    for it in &items {
+        if let Some(t) = it.get("type").and_then(|v| v.as_str()) {
+            *by_type.entry(t.to_string()).or_default() += 1;
+        }
+    }
+
+    Ok(Json(serde_json::json!({
+        "url": row.url,
+        "count": items.len(),
+        "counts_by_type": by_type,
+        "items": items,
+    })))
 }
 
 async fn get_overview(

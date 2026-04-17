@@ -29,3 +29,4 @@ robotstxt.workspace = true
 quick-xml.workspace = true
 dotenvy.workspace = true
 md5 = "0.7"
+sha2 = "0.10"
