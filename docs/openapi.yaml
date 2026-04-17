@@ -11,7 +11,7 @@ info:
     **Tenancy.** `tenant_id` is taken from the JWT `tenant_id` claim; callers never
     pass it. All reads and writes are scoped to the caller's tenant.
 
-    **Implementation progress.** Batches 1–4 of the evaluator roll-out are wired:
+    **Implementation progress.** Batches 1–5 of the evaluator roll-out are wired:
       - *Batch 1 — response/title/meta/H1/H2* (19 filter keys): `response_code_*`,
         `internal_*`, `external_*`, `title_*`, `meta_descripton_*`,
         `meta_keywords_*`, `h1_*`, `h2_*`.
@@ -34,6 +34,18 @@ info:
         ga-tracking-parameters), `content_*` (low-content-pages,
         lorem-ipsum-placeholder, readability-difficult + very-difficult
         via Flesch–Kincaid).
+      - *Batch 5 — security / validation / mobile* (12 filter keys):
+        `security_*` (http, https, mixed-content, form-on-http-page,
+        form-url-insecure, unsafe-cross-origin `target=_blank` without
+        `rel=noopener`, protocol-relative-urls), `validation_*`
+        (invalid-elements-in-head detected from raw HTML since html5ever
+        relocates illegal tags; document-over-15mb via response
+        Content-Length), `mobile_*` (viewport-not-set,
+        mobile-alternate-link). Header-dependent security filters
+        (HSTS/CSP/X-Frame/Referrer-Policy/Content-Type/BadMimeType)
+        deferred until response headers are persisted on `CrawlUrl`;
+        mobile layout filters (target-size, font-size, content sizing)
+        deferred to the render worker.
 
     A handful of cross-URL filters (e.g. `canonicals_unlinked`,
     `pagination_pagination_loop`, `canonicals_non_indexable_canonical`,
@@ -51,7 +63,7 @@ info:
 
     **This spec is hand-written** — a Swagger UI app in `../swagger-ui/` loads it
     and issues requests against the Rust server at `http://localhost:3000`.
-  version: "0.4.0"
+  version: "0.5.0"
   contact:
     name: sf-clone-rust
     url: https://github.com/sahiljani/Rusting-Frog
@@ -353,7 +365,7 @@ paths:
         `filter=images_missing_alt_text` returns every URL that had at
         least one `<img>` missing usable alt text.
 
-        **Implemented filter keys (Batches 1–4):** see the
+        **Implemented filter keys (Batches 1–5):** see the
         `/v1/catalog/tabs` catalog. Any filter key is accepted, but
         un-implemented keys will return an empty `data` array.
 
@@ -453,6 +465,36 @@ paths:
                         is_internal: true
                         title: Hard to read
                         h1_first: Dense Prose
+                    next_cursor: null
+                security_unsafe_cross_origin:
+                  summary: filter=security_unsafe_cross_origin (fixture — 1 row)
+                  value:
+                    data:
+                      - url: http://localhost:8181/security-mixed.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: Mixed content example
+                    next_cursor: null
+                validation_invalid_elements_in_head:
+                  summary: filter=validation_invalid_elements_in_head (fixture — 1 row)
+                  value:
+                    data:
+                      - url: http://localhost:8181/validation-invalid-head.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: Invalid head children
+                    next_cursor: null
+                mobile_mobile_alternate_link:
+                  summary: filter=mobile_mobile_alternate_link (fixture — 1 row)
+                  value:
+                    data:
+                      - url: http://localhost:8181/mobile-alt.html
+                        content_type: html
+                        status_code: 200
+                        is_internal: true
+                        title: Mobile alternate
                     next_cursor: null
 
   /v1/crawls/{crawl_id}/urls/{url_id}:

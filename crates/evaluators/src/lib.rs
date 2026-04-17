@@ -9,10 +9,13 @@ pub mod internal;
 pub mod links;
 pub mod meta_description;
 pub mod meta_keywords;
+pub mod mobile;
 pub mod page_titles;
 pub mod pagination;
 pub mod response_codes;
+pub mod security;
 pub mod url;
+pub mod validation;
 
 use sf_core::config::CrawlConfig;
 use sf_core::crawl::CrawlUrl;
@@ -57,5 +60,8 @@ pub fn phase1_evaluators() -> Vec<Box<dyn Evaluator>> {
         Box::new(url::UrlEvaluator),
         Box::new(content::ContentEvaluator),
         Box::new(hreflang::HreflangEvaluator),
+        Box::new(security::SecurityEvaluator),
+        Box::new(validation::ValidationEvaluator),
+        Box::new(mobile::MobileEvaluator),
     ]
 }
