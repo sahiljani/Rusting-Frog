@@ -7,6 +7,23 @@ interface Props {
   crawl: CrawlStatus | null;
 }
 
+const VICTORIA_TZ = 'America/Vancouver';
+
+const buildLabel = (() => {
+  const d = new Date(__APP_BUILD_TIME__);
+  if (Number.isNaN(d.getTime())) return '';
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: VICTORIA_TZ,
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZoneName: 'short',
+  });
+  return fmt.format(d);
+})();
+
 function statusColor(status?: string): string {
   switch (status) {
     case 'running':
@@ -91,7 +108,7 @@ export function StatusFooter({ crawl }: Props) {
           <span>started {new Date(crawl.started_at).toLocaleTimeString()}</span>
         </>
       )}
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-3">
         {discovered > 0 && (
           <>
             <span>{progressPct}%</span>
@@ -101,8 +118,16 @@ export function StatusFooter({ crawl }: Props) {
                 style={{ width: `${progressPct}%` }}
               />
             </div>
+            <Separator orientation="vertical" className="h-3" />
           </>
         )}
+        <span
+          className="text-muted-foreground/80"
+          title={`Build ${__APP_BUILD_TIME__}`}
+        >
+          v{__APP_VERSION__}
+          {buildLabel && <span> · {buildLabel}</span>}
+        </span>
       </div>
     </footer>
   );
