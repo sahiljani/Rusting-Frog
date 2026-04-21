@@ -12,9 +12,11 @@
 //!   GET /v1/crawls/:id/reports/:report_key     → run one report
 //!
 //! Reports that require crawler data we don't yet persist
-//! (http-headers, cookies, rendered-page, console-log, resources)
-//! return the envelope with `rows: []` and `notes` explaining the
-//! missing capture so the UI can degrade gracefully.
+//! (rendered-page, console-log, resources) return the envelope with
+//! `rows: []` and `notes` explaining the missing capture so the UI
+//! can degrade gracefully. HTTP headers and cookies are captured
+//! (see `0002_headers_cookies.sql`) and those reports now return
+//! real rows.
 
 use axum::extract::{Path, Query, State};
 use axum::http::{StatusCode, header};
@@ -215,7 +217,7 @@ const REPORTS: &[ReportDef] = &[
         title: "Accessibility: Summary",
         group: "Accessibility",
     },
-    // Deferred — crawler must capture headers/cookies first
+    // HTTP headers & cookies — backed by crawl_urls.response_headers
     ReportDef {
         key: "http_headers_all",
         title: "HTTP Headers: All",
@@ -308,11 +310,7 @@ async fn build_report(
     match key {
         "crawl_overview" => report_crawl_overview(state, crawl_id).await,
         "issues_overview" => report_issues_overview(state, crawl_id).await,
-        "segments_overview" => Ok((
-            vec!["segment", "urls"],
-            vec![],
-            Some("Segments feature not yet implemented".into()),
-        )),
+        "segments_overview" => report_segments_overview(state, crawl_id, limit).await,
         "site_structure" => report_site_structure(state, crawl_id, limit).await,
         "crawl_path" => report_crawl_path(state, crawl_id, limit).await,
 
@@ -331,7 +329,13 @@ async fn build_report(
 
         "pagination_non_200" => report_pagination_non_200(state, crawl_id, limit).await,
         "pagination_unlinked" => {
-            report_finding(state, crawl_id, "pagination_unlinked_pages", limit).await
+            report_finding(
+                state,
+                crawl_id,
+                "pagination_unlinked_pagination_urls",
+                limit,
+            )
+            .await
         }
 
         "hreflang_missing" => report_finding(state, crawl_id, "hreflang_missing", limit).await,
@@ -339,13 +343,19 @@ async fn build_report(
             report_finding(
                 state,
                 crawl_id,
-                "hreflang_inconsistent_language_links",
+                "hreflang_inconsistent_language_return_links",
                 limit,
             )
             .await
         }
         "hreflang_non_canonical" => {
-            report_finding(state, crawl_id, "hreflang_non_canonical", limit).await
+            report_finding(
+                state,
+                crawl_id,
+                "hreflang_non_canonical_return_links",
+                limit,
+            )
+            .await
         }
 
         "insecure_content" => report_insecure_content(state, crawl_id, limit).await,
@@ -526,6 +536,100 @@ async fn report_site_structure(
         .map(|r| json!({ "depth": r.depth, "count": r.count }))
         .collect();
     Ok((vec!["depth", "count"], data, None))
+}
+
+/// Default segmentation: group internal URLs by (host, first path segment).
+/// SF's full Segments feature is regex-rule-driven; until we add the
+/// configuration UI for custom rules, this "host + top-level path"
+/// bucketing tracks the coarse site structure most users want first
+/// (e.g. `/blog/*`, `/products/*`, `/support/*` under a single host).
+async fn report_segments_overview(
+    state: &AppState,
+    crawl_id: &Uuid,
+    limit: i64,
+) -> Result<ReportOutput, ApiError> {
+    // Bucket URLs in Rust so we don't need a new sqlx::query! offline
+    // cache entry — and so the host/first-seg parsing stays identical
+    // to what the `url` crate does elsewhere in the codebase.
+    let rows = sqlx::query!(
+        r#"
+        SELECT url, status_code
+        FROM crawl_urls
+        WHERE crawl_id = $1 AND is_internal = true
+        "#,
+        crawl_id,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    use std::collections::BTreeMap;
+    #[derive(Default)]
+    struct Bucket {
+        urls: u64,
+        ok_urls: u64,
+        redirects: u64,
+        errors: u64,
+    }
+    let mut agg: BTreeMap<(String, String), Bucket> = BTreeMap::new();
+    for r in rows {
+        let parsed = match url::Url::parse(&r.url) {
+            Ok(u) => u,
+            Err(_) => continue,
+        };
+        let host = parsed.host_str().unwrap_or("").to_string();
+        let first_seg = parsed
+            .path_segments()
+            .and_then(|mut it| it.find(|s| !s.is_empty()))
+            .unwrap_or("")
+            .to_string();
+        let entry = agg.entry((host, first_seg)).or_default();
+        entry.urls += 1;
+        match r.status_code {
+            Some(c) if (200..300).contains(&c) => entry.ok_urls += 1,
+            Some(c) if (300..400).contains(&c) => entry.redirects += 1,
+            Some(c) if c >= 400 => entry.errors += 1,
+            _ => {}
+        }
+    }
+
+    let mut data: Vec<Value> = agg
+        .into_iter()
+        .map(|((host, first_seg), b)| {
+            let segment = if first_seg.is_empty() {
+                format!("{}/", host)
+            } else {
+                format!("{}/{}", host, first_seg)
+            };
+            json!({
+                "segment": segment,
+                "host": host,
+                "path_prefix": first_seg,
+                "urls": b.urls,
+                "ok_urls": b.ok_urls,
+                "redirects": b.redirects,
+                "errors": b.errors,
+            })
+        })
+        .collect();
+    data.sort_by(|a, b| {
+        let ao = a.get("urls").and_then(|v| v.as_u64()).unwrap_or(0);
+        let bo = b.get("urls").and_then(|v| v.as_u64()).unwrap_or(0);
+        bo.cmp(&ao)
+    });
+    data.truncate(limit as usize);
+    Ok((
+        vec![
+            "segment",
+            "host",
+            "path_prefix",
+            "urls",
+            "ok_urls",
+            "redirects",
+            "errors",
+        ],
+        data,
+        None,
+    ))
 }
 
 async fn report_redirects_all(
