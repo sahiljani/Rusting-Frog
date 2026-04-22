@@ -348,7 +348,18 @@ export default function App() {
               </div>
             </div>
           ) : issuesActive ? (
-            <IssuesView crawlId={crawl.id} refreshKey={issuesRefreshKey} />
+            <IssuesView
+              crawlId={crawl.id}
+              refreshKey={issuesRefreshKey}
+              onJumpToFilter={(filterKey, urlId) => {
+                const owner = tabs.find((t) => t.filters.some((f) => f.key === filterKey));
+                if (!owner) return;
+                setSel({ tabKey: owner.key, filterKey });
+                setExpanded((prev) => ({ ...prev, [owner.key]: true }));
+                setIssuesActive(false);
+                setSelectedUrlId(urlId ?? null);
+              }}
+            />
           ) : !sel ? (
             <div className="flex flex-1 items-center justify-center bg-muted/30 text-sm text-muted-foreground">
               Pick a filter from the sidebar to see matching URLs.

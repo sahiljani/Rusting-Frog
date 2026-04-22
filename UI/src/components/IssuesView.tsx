@@ -1,10 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Download, AlertCircle, AlertTriangle, Lightbulb, Minus } from 'lucide-react';
+import {
+  Download,
+  AlertCircle,
+  AlertTriangle,
+  Lightbulb,
+  Minus,
+  ExternalLink,
+  ArrowRight,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import {
   getIssues,
+  listUrls,
+  type CrawlUrlRow,
   type IssueItem,
   type IssuesPayload,
   type IssuePriority,
@@ -14,7 +24,10 @@ import {
 interface Props {
   crawlId: string;
   refreshKey: number;
+  onJumpToFilter: (filterKey: string, urlId?: string) => void;
 }
+
+const AFFECTED_URL_LIMIT = 200;
 
 type SortKey = 'name' | 'type' | 'priority' | 'urls' | 'percent';
 type SortDir = 'asc' | 'desc';
@@ -79,13 +92,25 @@ function downloadCsv(filename: string, csv: string) {
   URL.revokeObjectURL(url);
 }
 
-export function IssuesView({ crawlId, refreshKey }: Props) {
+function statusTone(code: number | null): string {
+  if (code == null) return 'text-muted-foreground';
+  if (code >= 500) return 'text-severity-issue';
+  if (code >= 400) return 'text-severity-issue';
+  if (code >= 300) return 'text-severity-warning';
+  if (code >= 200) return 'text-severity-opportunity';
+  return 'text-muted-foreground';
+}
+
+export function IssuesView({ crawlId, refreshKey, onJumpToFilter }: Props) {
   const [payload, setPayload] = useState<IssuesPayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('priority');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [affected, setAffected] = useState<CrawlUrlRow[]>([]);
+  const [affectedLoading, setAffectedLoading] = useState(false);
+  const [affectedError, setAffectedError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,6 +166,30 @@ export function IssuesView({ crawlId, refreshKey }: Props) {
     () => sorted.find((i) => i.filter_key === selected) ?? sorted[0] ?? null,
     [sorted, selected],
   );
+
+  useEffect(() => {
+    if (!selectedItem) {
+      setAffected([]);
+      setAffectedError(null);
+      return;
+    }
+    let cancelled = false;
+    setAffectedLoading(true);
+    setAffectedError(null);
+    listUrls(crawlId, { filter: selectedItem.filter_key, limit: AFFECTED_URL_LIMIT })
+      .then((p) => {
+        if (!cancelled) setAffected(p.data);
+      })
+      .catch((e) => {
+        if (!cancelled) setAffectedError((e as Error).message);
+      })
+      .finally(() => {
+        if (!cancelled) setAffectedLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [crawlId, selectedItem?.filter_key, refreshKey]);
 
   const onSort = (k: SortKey) => {
     if (sortKey === k) {
@@ -303,11 +352,24 @@ export function IssuesView({ crawlId, refreshKey }: Props) {
         </table>
       </div>
 
-      {/* Issue Details pane */}
-      <div className="flex min-h-[180px] flex-[2] flex-col border-t border-border">
+      {/* Issue Details pane: 2 columns — left = copy, right = affected URLs */}
+      <div className="flex min-h-[220px] flex-[2] flex-col border-t border-border">
         <div className="flex items-center justify-between border-b border-border bg-muted/40 px-3 py-1.5">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-foreground">
-            Issue Details
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-foreground">
+              Issue Details
+            </span>
+            {selectedItem && (
+              <>
+                <Minus className="h-3 w-3 text-muted-foreground" />
+                <span className="text-[11px] font-semibold text-foreground">
+                  {selectedItem.issue_name}
+                </span>
+                <Badge variant={typeVariant(selectedItem.issue_type)}>
+                  {selectedItem.issue_type}
+                </Badge>
+              </>
+            )}
           </div>
           {selectedItem && (
             <code className="font-mono text-[10px] text-muted-foreground">
@@ -315,26 +377,122 @@ export function IssuesView({ crawlId, refreshKey }: Props) {
             </code>
           )}
         </div>
-        <ScrollArea className="flex-1">
-          <div className="space-y-4 px-4 py-3">
-            {selectedItem ? (
-              <>
-                <div className="flex items-center gap-2">
-                  <Minus className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-sm font-semibold text-foreground">
-                    {selectedItem.issue_name}
-                  </span>
-                </div>
-                <Section heading="Description" body={selectedItem.description} />
-                <Section heading="How To Fix" body={selectedItem.how_to_fix} />
-              </>
-            ) : (
-              <div className="text-xs text-muted-foreground">
-                Select an issue to see its description and remediation guidance.
+        <div className="flex min-h-0 flex-1 divide-x divide-border">
+          {/* Left: description + how to fix */}
+          <div className="w-[40%] min-w-[280px]">
+            <ScrollArea className="h-full">
+              <div className="space-y-4 px-4 py-3">
+                {selectedItem ? (
+                  <>
+                    <Section heading="Description" body={selectedItem.description} />
+                    <Section heading="How To Fix" body={selectedItem.how_to_fix} />
+                  </>
+                ) : (
+                  <div className="text-xs text-muted-foreground">
+                    Select an issue to see its description and remediation guidance.
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+
+          {/* Right: affected URLs list */}
+          <div className="flex min-w-0 flex-1 flex-col">
+            <div className="flex items-center justify-between border-b border-border bg-muted/20 px-3 py-1">
+              <div className="text-[11px] text-muted-foreground">
+                {selectedItem ? (
+                  <>
+                    <span className="font-semibold text-foreground">Affected URLs</span>
+                    <span className="ml-2 tabular-nums">
+                      {affectedLoading
+                        ? 'loading…'
+                        : `${affected.length}${
+                            selectedItem.urls > affected.length
+                              ? ` of ${selectedItem.urls}`
+                              : ''
+                          }`}
+                    </span>
+                  </>
+                ) : (
+                  'Affected URLs'
+                )}
+              </div>
+              {selectedItem && (
+                <button
+                  type="button"
+                  onClick={() => onJumpToFilter(selectedItem.filter_key)}
+                  className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 hover:bg-emerald-500/10"
+                  title="Open in filter grid"
+                >
+                  Open in filter grid
+                  <ArrowRight className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+            {affectedError && (
+              <div className="border-b border-destructive/30 bg-destructive/10 px-3 py-1 text-[11px] text-destructive">
+                {affectedError}
               </div>
             )}
+            <div className="min-h-0 flex-1 overflow-auto">
+              {!selectedItem ? (
+                <div className="p-3 text-[11px] text-muted-foreground">
+                  Pick an issue above to see which pages are affected.
+                </div>
+              ) : affected.length === 0 && !affectedLoading ? (
+                <div className="p-3 text-[11px] text-muted-foreground">
+                  No URLs returned for this filter.
+                </div>
+              ) : (
+                <table className="sf-grid">
+                  <thead>
+                    <tr>
+                      <th className="w-[55%]">URL</th>
+                      <th className="w-[60px] text-right">Status</th>
+                      <th>Title</th>
+                      <th className="w-[50px] text-right">Depth</th>
+                      <th className="w-[24px]"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {affected.map((u) => (
+                      <tr
+                        key={u.id}
+                        onClick={() => onJumpToFilter(selectedItem.filter_key, u.id)}
+                        className="cursor-pointer"
+                        title={u.url}
+                      >
+                        <td className="truncate">
+                          <span className="inline-flex max-w-full items-center gap-1">
+                            <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
+                            <span className="truncate">{u.url}</span>
+                          </span>
+                        </td>
+                        <td
+                          className={cn(
+                            'text-right tabular-nums',
+                            statusTone(u.status_code),
+                          )}
+                        >
+                          {u.status_code ?? '—'}
+                        </td>
+                        <td className="truncate text-muted-foreground" title={u.title ?? ''}>
+                          {u.title ?? '—'}
+                        </td>
+                        <td className="text-right tabular-nums text-muted-foreground">
+                          {u.depth ?? '—'}
+                        </td>
+                        <td className="text-right">
+                          <ArrowRight className="inline-block h-3 w-3 text-muted-foreground" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
-        </ScrollArea>
+        </div>
       </div>
     </section>
   );
