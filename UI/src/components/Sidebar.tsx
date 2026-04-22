@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AlertCircle, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -17,6 +17,9 @@ interface Props {
   tabTotals: Record<string, number>;
   collapsed: boolean;
   onToggleCollapsed: () => void;
+  issuesActive: boolean;
+  onSelectIssues: () => void;
+  issuesTotal: number;
 }
 
 function severityVariant(sev: string): 'issue' | 'warning' | 'opportunity' | 'stat' {
@@ -41,6 +44,9 @@ export function Sidebar({
   tabTotals,
   collapsed,
   onToggleCollapsed,
+  issuesActive,
+  onSelectIssues,
+  issuesTotal,
 }: Props) {
   if (collapsed) {
     return (
@@ -55,6 +61,31 @@ export function Sidebar({
         </button>
         <ScrollArea className="flex-1">
           <div className="flex flex-col items-center gap-0.5 py-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={onSelectIssues}
+                  className={cn(
+                    'relative flex h-7 w-7 items-center justify-center rounded',
+                    issuesActive
+                      ? 'bg-emerald-500 text-white'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                  )}
+                >
+                  <AlertCircle className="h-4 w-4" />
+                  {issuesTotal > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 inline-flex h-3 min-w-3 items-center justify-center rounded-full bg-severity-issue px-[3px] text-[8px] font-medium leading-none text-white">
+                      {issuesTotal > 99 ? '99+' : issuesTotal}
+                    </span>
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                Issues{issuesTotal > 0 && <span className="ml-1 opacity-70">({issuesTotal})</span>}
+              </TooltipContent>
+            </Tooltip>
+            <div className="my-1 h-px w-6 bg-border" />
             {tabs.map((t) => {
               const total = tabTotals[t.key] ?? 0;
               const isActiveTab = t.key === sel?.tabKey;
@@ -108,6 +139,31 @@ export function Sidebar({
           className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-accent-foreground"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <div className="border-b border-border px-2 py-1.5">
+        <button
+          type="button"
+          onClick={onSelectIssues}
+          className={cn(
+            'flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-[12px] font-semibold transition-colors',
+            issuesActive
+              ? 'bg-emerald-500 text-white shadow-sm hover:bg-emerald-500/90'
+              : 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20',
+          )}
+        >
+          <span className="flex items-center gap-2">
+            <AlertCircle className="h-3.5 w-3.5" />
+            Issues
+          </span>
+          <span
+            className={cn(
+              'inline-flex min-w-[22px] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums',
+              issuesActive ? 'bg-white/20 text-white' : 'bg-emerald-500/20 text-emerald-700',
+            )}
+          >
+            {issuesTotal}
+          </span>
         </button>
       </div>
       <ScrollArea className="flex-1">

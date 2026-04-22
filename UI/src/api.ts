@@ -456,3 +456,37 @@ export async function getStructuredData(
     await authedFetch(`/v1/crawls/${crawlId}/urls/${urlId}/structured-data`),
   );
 }
+
+// ---- Issues tab (aggregated findings across all filters) ----
+
+export type IssueType = 'Issue' | 'Warning' | 'Opportunity';
+export type IssuePriority = 'High' | 'Medium' | 'Low';
+
+export interface IssueItem {
+  filter_key: string;
+  issue_name: string;
+  issue_type: IssueType;
+  priority: IssuePriority | null;
+  urls: number;
+  percent_of_total: number;
+  description: string;
+  how_to_fix: string;
+}
+
+export interface IssueSummary {
+  issues: number;
+  warnings: number;
+  opportunities: number;
+  info: number;
+  total: number;
+}
+
+export interface IssuesPayload {
+  summary: IssueSummary;
+  total_urls: number;
+  items: IssueItem[];
+}
+
+export async function getIssues(crawlId: string): Promise<IssuesPayload> {
+  return json<IssuesPayload>(await authedFetch(`/v1/crawls/${crawlId}/issues`));
+}

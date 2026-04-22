@@ -12,6 +12,7 @@ import { CrawlBar } from '@/components/CrawlBar';
 import { Sidebar, type FilterSel } from '@/components/Sidebar';
 import { DataGrid } from '@/components/DataGrid';
 import { DetailPane } from '@/components/DetailPane';
+import { IssuesView } from '@/components/IssuesView';
 import { StatusFooter } from '@/components/StatusFooter';
 import { HistoryDialog } from '@/components/HistoryDialog';
 import {
@@ -50,6 +51,7 @@ export default function App() {
   const [configOpen, setConfigOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [issuesActive, setIssuesActive] = useState(false);
   const pollRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -219,6 +221,31 @@ export default function App() {
     return out;
   }, [tabs, overview]);
 
+  // Count distinct filter_keys with findings whose severity is actionable
+  // (issue/warning/opportunity). Matches the backend /issues summary.total.
+  const issuesTotal = useMemo(() => {
+    let n = 0;
+    for (const t of tabs) {
+      for (const f of t.filters) {
+        if (
+          (overview[f.key] ?? 0) > 0 &&
+          (f.severity === 'issue' ||
+            f.severity === 'warning' ||
+            f.severity === 'opportunity')
+        ) {
+          n += 1;
+        }
+      }
+    }
+    return n;
+  }, [tabs, overview]);
+
+  // Refresh trigger for IssuesView: bump whenever overview counts shift.
+  const issuesRefreshKey = useMemo(
+    () => Object.values(overview).reduce((a, b) => a + b, 0),
+    [overview],
+  );
+
   const running = crawl?.status === 'running' || crawl?.status === 'queued';
   const paused = crawl?.status === 'paused';
 
@@ -293,10 +320,18 @@ export default function App() {
             onSelect={(s) => {
               setSel(s);
               setSelectedUrlId(null);
+              setIssuesActive(false);
             }}
             tabTotals={tabTotals}
             collapsed={sidebarCollapsed}
             onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
+            issuesActive={issuesActive}
+            onSelectIssues={() => {
+              setIssuesActive(true);
+              setSel(null);
+              setSelectedUrlId(null);
+            }}
+            issuesTotal={issuesTotal}
           />
 
           {!crawl ? (
@@ -312,6 +347,8 @@ export default function App() {
                 </p>
               </div>
             </div>
+          ) : issuesActive ? (
+            <IssuesView crawlId={crawl.id} refreshKey={issuesRefreshKey} />
           ) : !sel ? (
             <div className="flex flex-1 items-center justify-center bg-muted/30 text-sm text-muted-foreground">
               Pick a filter from the sidebar to see matching URLs.
@@ -332,7 +369,7 @@ export default function App() {
             />
           )}
 
-          <DetailPane crawlId={crawl?.id ?? null} urlId={selectedUrlId} />
+          {!issuesActive && <DetailPane crawlId={crawl?.id ?? null} urlId={selectedUrlId} />}
         </div>
 
         <StatusFooter crawl={crawl} />
