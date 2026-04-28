@@ -64,8 +64,11 @@ services:
       LISTEN_ADDR: 0.0.0.0:3000
       RUST_LOG: ${RUST_LOG:-info}
       SF_DEV_MODE: ${SF_DEV_MODE:-}
+      SF_DEBUG_LOG_DIR: /var/log/sf-debug
     ports:
       - "${API_PORT:-3000}:3000"
+    volumes:
+      - debug-logs:/var/log/sf-debug:ro
     depends_on:
       migrations:
         condition: service_completed_successfully
@@ -80,6 +83,9 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-sf}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-sf_clone}
       REDIS_URL: redis://redis:6379
       RUST_LOG: ${RUST_LOG:-info}
+      SF_DEBUG_LOG_DIR: /var/log/sf-debug
+    volumes:
+      - debug-logs:/var/log/sf-debug
     depends_on:
       migrations:
         condition: service_completed_successfully
@@ -102,3 +108,4 @@ services:
 volumes:
   pgdata:
   redisdata:
+  debug-logs:

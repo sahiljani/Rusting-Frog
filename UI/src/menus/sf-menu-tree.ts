@@ -113,4 +113,18 @@ export const SF_MENUS: TopMenu[] = [
       { label: 'Inlink Anchor Text Word Cloud', disabled: true, action: { kind: 'placeholder' } },
     ],
   },
+  {
+    key: 'debug',
+    label: 'Debug',
+    items: [
+      {
+        label: 'Open Debug Page (current crawl)…',
+        action: { kind: 'command', id: 'debug.open_current' },
+      },
+      {
+        label: 'Open Debug Page (pick crawl)…',
+        action: { kind: 'command', id: 'debug.open_picker' },
+      },
+    ],
+  },
 ];

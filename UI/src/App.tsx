@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import DebugPage from '@/pages/DebugPage';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import {
   Dialog,
@@ -37,6 +38,13 @@ import {
 } from '@/api';
 
 export default function App() {
+  // The debug page is a separate route opened in a new tab. We
+  // short-circuit before the rest of the app state initializes so the
+  // debug viewer doesn't accidentally start a poll or hit /v1/tabs.
+  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/debug')) {
+    return <DebugPage />;
+  }
+
   const [seedUrl, setSeedUrl] = useState('https://example.com/');
   const [tabs, setTabs] = useState<TabDef[]>([]);
   const [crawl, setCrawl] = useState<CrawlStatus | null>(null);
@@ -279,9 +287,18 @@ export default function App() {
         case 'config.open':
           setConfigOpen(true);
           break;
+        case 'debug.open_current': {
+          const id = crawl?.id ?? getLastCrawlId();
+          const url = id ? `/debug?crawl=${encodeURIComponent(id)}` : '/debug';
+          window.open(url, '_blank', 'noopener,noreferrer');
+          break;
+        }
+        case 'debug.open_picker':
+          window.open('/debug', '_blank', 'noopener,noreferrer');
+          break;
       }
     },
-    [],
+    [crawl],
   );
 
   return (

@@ -1,5 +1,10 @@
+use std::sync::atomic::Ordering;
+use std::sync::Arc;
+use std::time::Instant;
+
 use anyhow::{Context, Result};
 use scraper::Html;
+use serde_json::json;
 use sf_core::config::CrawlConfig;
 use sf_core::crawl::ContentType;
 use sf_core::id::{CrawlId, CrawlUrlId};
@@ -7,10 +12,12 @@ use sha2::{Digest, Sha256};
 use sqlx::PgPool;
 use url::Url;
 
+use crate::debug_log::DebugLogger;
 use crate::fetcher::{FetchResult, Fetcher};
 use crate::frontier::Frontier;
 use crate::parser;
 use crate::robots::RobotsGate;
+use crate::sampler::Counters;
 use crate::sitemap::SitemapCapture;
 
 pub struct CrawlPipeline {
@@ -24,6 +31,8 @@ pub struct CrawlPipeline {
     seed_url: Url,
     seed_host: String,
     urls_crawled: i64,
+    debug: DebugLogger,
+    counters: Arc<Counters>,
 }
 
 impl CrawlPipeline {
@@ -33,6 +42,8 @@ impl CrawlPipeline {
         tenant_id: String,
         seed_url: Url,
         config: CrawlConfig,
+        debug: DebugLogger,
+        counters: Arc<Counters>,
     ) -> Result<Self> {
         let seed_host = seed_url.host_str().unwrap_or_default().to_string();
 
@@ -44,6 +55,12 @@ impl CrawlPipeline {
         let mut frontier = Frontier::new(config.limits.max_crawl_depth, config.limits.max_urls);
         frontier.add(seed_url.clone(), 0);
 
+        // Prime the sampler counter so the first 1s sample shows the
+        // seed URL queued instead of 0/0.
+        counters
+            .urls_queued
+            .store(frontier.discovered_count() as i64, Ordering::Relaxed);
+
         Ok(Self {
             db,
             crawl_id,
@@ -54,22 +71,38 @@ impl CrawlPipeline {
             seed_url,
             seed_host,
             urls_crawled: 0,
+            debug,
+            counters,
         })
     }
 
     pub async fn run(&mut self) -> Result<()> {
+        let crawl_start = Instant::now();
+        self.debug.phase(
+            "crawl_start",
+            0,
+            true,
+            json!({"seed_url": self.seed_url.as_str()}),
+        );
         self.set_status("running").await?;
 
         // Fetch robots.txt once per crawl and persist it alongside the
         // crawl row so (a) the UI's "Response Headers → Blocked by
         // Robots.txt" filter has a source of truth and (b) /v1/crawls/:id/robots
         // can return the exact body the matcher used.
+        let robots_started = Instant::now();
         let gate = RobotsGate::fetch(
             self.fetcher.client(),
             &self.seed_url,
             &self.config.user_agent.user_agent_string,
         )
         .await;
+        self.debug.phase(
+            "robots_fetch",
+            robots_started.elapsed().as_millis() as u64,
+            true,
+            json!({"status": gate.status(), "body_bytes": gate.raw().map(|s| s.len()).unwrap_or(0)}),
+        );
         sqlx::query!(
             "UPDATE crawls SET robots_txt_raw = $1, robots_txt_status = $2 WHERE id = $3",
             gate.raw(),
@@ -83,7 +116,14 @@ impl CrawlPipeline {
         // + every <loc> URL into crawl_sitemap_urls. SF's "URLs in Sitemap"
         // and "Orphan URLs" filters read from this set — we don't gate the
         // crawl on it (unlike robots), just record coverage.
+        let sitemap_started = Instant::now();
         let sitemap = SitemapCapture::fetch(self.fetcher.client(), &self.seed_url).await;
+        self.debug.phase(
+            "sitemap_discover",
+            sitemap_started.elapsed().as_millis() as u64,
+            true,
+            json!({"status": sitemap.status, "urls_found": sitemap.urls.len()}),
+        );
         sqlx::query!(
             "UPDATE crawls SET sitemap_xml_raw = $1, sitemap_xml_status = $2 WHERE id = $3",
             sitemap.raw.as_deref(),
@@ -158,10 +198,31 @@ impl CrawlPipeline {
             tracing::info!(url = %url_str, depth = entry.depth, "fetching");
 
             // Fetch the URL
+            let fetch_started = Instant::now();
             let fetch_result = match self.fetcher.fetch(&entry.url).await {
-                Ok(r) => r,
+                Ok(r) => {
+                    self.debug.phase_url(
+                        "fetch",
+                        &url_str,
+                        fetch_started.elapsed().as_millis() as u64,
+                        true,
+                        json!({
+                            "status": r.status_code,
+                            "bytes": r.content_length,
+                            "final_url": r.final_url,
+                        }),
+                    );
+                    r
+                }
                 Err(e) => {
                     tracing::warn!(url = %url_str, error = %e, "fetch failed");
+                    self.debug.phase_url(
+                        "fetch",
+                        &url_str,
+                        fetch_started.elapsed().as_millis() as u64,
+                        false,
+                        json!({"error": e.to_string()}),
+                    );
                     self.write_failed_url(&url_str, entry.depth).await?;
                     continue;
                 }
@@ -171,10 +232,26 @@ impl CrawlPipeline {
             let is_internal = self.is_internal(&entry.url);
 
             // Parse HTML if applicable
+            let parse_started = Instant::now();
             let parse_result = if content_type == ContentType::Html && !fetch_result.body.is_empty()
             {
-                Some(parser::parse_html(&fetch_result.body, &entry.url))
+                let pr = parser::parse_html(&fetch_result.body, &entry.url);
+                self.debug.phase_url(
+                    "parse",
+                    &url_str,
+                    parse_started.elapsed().as_millis() as u64,
+                    true,
+                    json!({"links_found": pr.links.len(), "content_type": "html"}),
+                );
+                Some(pr)
             } else {
+                self.debug.phase_url(
+                    "parse",
+                    &url_str,
+                    parse_started.elapsed().as_millis() as u64,
+                    true,
+                    json!({"links_found": 0, "content_type": format!("{:?}", content_type).to_lowercase()}),
+                );
                 None
             };
 
@@ -182,6 +259,7 @@ impl CrawlPipeline {
             let url_id = CrawlUrlId::new();
             let url_hash = format!("{:x}", md5::compute(url_str.as_bytes()));
 
+            let db_started = Instant::now();
             self.write_crawl_url(
                 &url_id,
                 &url_str,
@@ -193,8 +271,18 @@ impl CrawlPipeline {
                 &parse_result,
             )
             .await?;
+            self.debug.phase_url(
+                "db_write",
+                &url_str,
+                db_started.elapsed().as_millis() as u64,
+                true,
+                json!({"table": "crawl_urls"}),
+            );
 
             // Run evaluators and write findings
+            let evaluators_started = Instant::now();
+            let mut eval_findings = 0u64;
+            let mut slowest: (String, u64) = ("none".to_string(), 0);
             if let Some(ref pr) = parse_result {
                 let crawl_url = sf_core::crawl::CrawlUrl {
                     id: url_id,
@@ -232,7 +320,21 @@ impl CrawlPipeline {
                 };
 
                 for evaluator in &evaluators {
+                    let one = Instant::now();
                     let findings = evaluator.evaluate(&crawl_url, &eval_ctx);
+                    let one_ms = one.elapsed().as_millis() as u64;
+                    let tab_name = format!("{:?}", evaluator.tab());
+                    if one_ms > slowest.1 {
+                        slowest = (tab_name.clone(), one_ms);
+                    }
+                    if one_ms > 100 {
+                        self.debug.log(
+                            "warn",
+                            &format!("slow evaluator {tab_name}: {one_ms}ms"),
+                            json!({"url": &url_str, "evaluator": tab_name, "ms": one_ms}),
+                        );
+                    }
+                    eval_findings += findings.len() as u64;
                     for finding in findings {
                         self.write_finding(&url_id, &finding.filter_key).await?;
                     }
@@ -318,14 +420,41 @@ impl CrawlPipeline {
                 };
 
                 for evaluator in &evaluators {
+                    let one = Instant::now();
                     let findings = evaluator.evaluate(&crawl_url, &eval_ctx);
+                    let one_ms = one.elapsed().as_millis() as u64;
+                    let tab_name = format!("{:?}", evaluator.tab());
+                    if one_ms > slowest.1 {
+                        slowest = (tab_name, one_ms);
+                    }
+                    eval_findings += findings.len() as u64;
                     for finding in findings {
                         self.write_finding(&url_id, &finding.filter_key).await?;
                     }
                 }
             }
 
+            // Roll up the per-URL evaluator pass into one phase event,
+            // calling out the slowest evaluator + total findings written.
+            self.debug.phase_url(
+                "evaluators",
+                &url_str,
+                evaluators_started.elapsed().as_millis() as u64,
+                true,
+                json!({
+                    "count": evaluators.len(),
+                    "findings": eval_findings,
+                    "slowest_tab": slowest.0,
+                    "slowest_ms": slowest.1,
+                }),
+            );
+
             self.urls_crawled += 1;
+            self.counters.urls_done.store(self.urls_crawled, Ordering::Relaxed);
+            self.counters.urls_queued.store(
+                self.frontier.discovered_count() as i64 - self.urls_crawled,
+                Ordering::Relaxed,
+            );
             self.update_counters().await?;
 
             // Rate limiting: simple delay between fetches
@@ -335,13 +464,29 @@ impl CrawlPipeline {
             .await;
         }
 
+        let dup_started = Instant::now();
         self.run_duplicate_analysis().await?;
+        self.debug.phase(
+            "duplicate_analysis",
+            dup_started.elapsed().as_millis() as u64,
+            true,
+            json!({}),
+        );
 
         self.set_status("completed").await?;
         tracing::info!(
             crawl_id = %self.crawl_id,
             urls_crawled = self.urls_crawled,
             "crawl completed"
+        );
+        self.debug.phase(
+            "crawl_end",
+            crawl_start.elapsed().as_millis() as u64,
+            true,
+            json!({
+                "urls_crawled": self.urls_crawled,
+                "exit_status": "completed",
+            }),
         );
 
         Ok(())

@@ -1,15 +1,23 @@
+use std::path::PathBuf;
+use std::sync::Arc;
+
 use anyhow::Context;
 use sf_core::config::CrawlConfig;
 use sf_core::id::CrawlId;
 use sqlx::postgres::PgPoolOptions;
 use url::Url;
 
+mod debug_log;
 mod fetcher;
 mod frontier;
 mod parser;
 mod pipeline;
 mod robots;
+mod sampler;
 mod sitemap;
+
+use debug_log::{DebugLogger, DEFAULT_DEBUG_LOG_DIR};
+use sampler::Counters;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -30,6 +38,10 @@ async fn main() -> anyhow::Result<()> {
         .context("failed to connect to Postgres")?;
 
     tracing::info!("crawl-worker started, polling for jobs");
+
+    let debug_log_dir: PathBuf = std::env::var("SF_DEBUG_LOG_DIR")
+        .unwrap_or_else(|_| DEFAULT_DEBUG_LOG_DIR.to_string())
+        .into();
 
     loop {
         match pick_next_job(&db).await {
@@ -52,12 +64,17 @@ async fn main() -> anyhow::Result<()> {
 
                 let config = job.config.unwrap_or_default();
 
+                let logger = DebugLogger::new(&debug_log_dir, &job.crawl_id.to_string());
+                let counters = Arc::new(Counters::default());
+
                 let mut pipeline = match pipeline::CrawlPipeline::new(
                     db.clone(),
                     job.crawl_id,
                     job.tenant_id,
                     seed_url,
                     config,
+                    logger.clone(),
+                    counters.clone(),
                 ) {
                     Ok(p) => p,
                     Err(e) => {
@@ -72,8 +89,13 @@ async fn main() -> anyhow::Result<()> {
                     }
                 };
 
+                // Sampler lives for the life of this crawl. Drop = stop.
+                let _sampler =
+                    sampler::spawn(logger.clone(), db.clone(), counters.clone(), debug_log_dir.clone());
+
                 if let Err(e) = pipeline.run().await {
                     tracing::error!(crawl_id = %job.crawl_id, error = %e, "crawl failed");
+                    logger.log("error", &format!("crawl failed: {e}"), serde_json::Value::Null);
                     let _ = sqlx::query!(
                         "UPDATE crawls SET status = 'failed' WHERE id = $1",
                         job.crawl_id.as_uuid()

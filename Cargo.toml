@@ -42,6 +42,7 @@ jsonwebtoken = "9"
 # IDs and time
 uuid = { version = "1", features = ["v7", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
+chrono-tz = "0.10"
 
 # Error handling
 thiserror = "2"
@@ -68,6 +69,9 @@ quick-xml = "0.37"
 
 # Config
 dotenvy = "0.15"
+
+# System metrics (RAM/disk) for the debug log sampler
+sysinfo = "0.32"
 
 # Internal crates
 sf-core = { path = "crates/core" }

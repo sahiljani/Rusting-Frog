@@ -67,11 +67,14 @@ services:
       # Leave blank/unset on real prod — set to 1 on the shared staging
       # host so the React UI can auto-auth while Laravel proxy isn't wired.
       SF_DEV_MODE: ${SF_DEV_MODE:-}
+      SF_DEBUG_LOG_DIR: /var/log/sf-debug
     # No host-level ports mapping: traffic enters via the nginx `ui`
     # service which proxies /v1/* to api:3000 on the internal network.
     # Re-expose this only if Laravel needs direct access from outside.
     expose:
       - "3000"
+    volumes:
+      - debug-logs:/var/log/sf-debug:ro
     depends_on:
       migrations:
         condition: service_completed_successfully
@@ -103,6 +106,9 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-sf}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-sf_clone}
       REDIS_URL: redis://redis:6379
       RUST_LOG: ${RUST_LOG:-info}
+      SF_DEBUG_LOG_DIR: /var/log/sf-debug
+    volumes:
+      - debug-logs:/var/log/sf-debug
     depends_on:
       migrations:
         condition: service_completed_successfully
@@ -116,3 +122,4 @@ services:
 volumes:
   pgdata:
   redisdata:
+  debug-logs:
