@@ -8,6 +8,7 @@ use serde_json::json;
 use sf_core::config::CrawlConfig;
 use sf_core::crawl::ContentType;
 use sf_core::id::{CrawlId, CrawlUrlId};
+use sf_core::tab::TabKey;
 use sha2::{Digest, Sha256};
 use sqlx::PgPool;
 use url::Url;
@@ -357,6 +358,12 @@ impl CrawlPipeline {
                     };
 
                     for evaluator in &evaluators {
+                        // Content-quality evaluators only apply to URLs we
+                        // own. External pages get fetched for status-code
+                        // checking but aren't audited for missing H1, etc.
+                        if !applies_to_url(evaluator.tab(), is_internal) {
+                            continue;
+                        }
                         let one = Instant::now();
                         let findings = evaluator.evaluate(&crawl_url, &eval_ctx);
                         let one_ms = one.elapsed().as_millis() as u64;
@@ -457,6 +464,9 @@ impl CrawlPipeline {
                     };
 
                     for evaluator in &evaluators {
+                        if !applies_to_url(evaluator.tab(), is_internal) {
+                            continue;
+                        }
                         let one = Instant::now();
                         let findings = evaluator.evaluate(&crawl_url, &eval_ctx);
                         let one_ms = one.elapsed().as_millis() as u64;
@@ -941,6 +951,24 @@ impl CrawlPipeline {
         }
 
         Ok(())
+    }
+}
+
+/// Whether the evaluator for `tab` should fire on a URL with the given
+/// `is_internal` status. Mirrors Screaming Frog's policy: external URLs
+/// are fetched (so the link checker can see their status code) but
+/// content-quality audits — Page Titles, Meta Description, Hreflang,
+/// Canonicals, H1/H2, Images, etc. — only apply to URLs we own. Without
+/// this gate the Issues panel surfaces nonsense like "Facebook is
+/// missing an H1" or "W3C accessibility doc is missing hreflang".
+fn applies_to_url(tab: TabKey, is_internal: bool) -> bool {
+    if is_internal {
+        // The External tab is the mirror of Internal — by definition
+        // it doesn't fire on URLs we own.
+        tab != TabKey::External
+    } else {
+        // For URLs we don't own we only run the link-health checks.
+        matches!(tab, TabKey::External | TabKey::ResponseCode)
     }
 }
 
