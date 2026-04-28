@@ -1,5 +1,5 @@
-use std::sync::atomic::Ordering;
 use std::sync::Arc;
+use std::sync::atomic::Ordering;
 use std::time::Instant;
 
 use anyhow::{Context, Result};
@@ -450,7 +450,9 @@ impl CrawlPipeline {
             );
 
             self.urls_crawled += 1;
-            self.counters.urls_done.store(self.urls_crawled, Ordering::Relaxed);
+            self.counters
+                .urls_done
+                .store(self.urls_crawled, Ordering::Relaxed);
             self.counters.urls_queued.store(
                 self.frontier.discovered_count() as i64 - self.urls_crawled,
                 Ordering::Relaxed,

@@ -8,7 +8,7 @@ use std::io::{Read, Seek, SeekFrom};
 use std::path::PathBuf;
 
 use axum::extract::{Path, Query, State};
-use axum::http::{header, StatusCode};
+use axum::http::{StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
@@ -300,7 +300,10 @@ async fn summary(
                     buckets.entry(phase.to_string()).or_default().push(ms);
                 }
                 Some("sample") => {
-                    let rss = v.get("worker_rss_bytes").and_then(|x| x.as_u64()).unwrap_or(0);
+                    let rss = v
+                        .get("worker_rss_bytes")
+                        .and_then(|x| x.as_u64())
+                        .unwrap_or(0);
                     let host = v
                         .get("host_mem_used_bytes")
                         .and_then(|x| x.as_u64())
@@ -472,6 +475,10 @@ fn read_lines(
         .rev()
         .collect();
     let consumed = (end - start) as u64;
-    let next_cursor = if start > 0 { Some(cursor + consumed) } else { None };
+    let next_cursor = if start > 0 {
+        Some(cursor + consumed)
+    } else {
+        None
+    };
     Ok((size, slice, next_cursor))
 }

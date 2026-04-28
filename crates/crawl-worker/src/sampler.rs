@@ -6,8 +6,8 @@
 // urls_queued) are read from atomics shared with the pipeline.
 
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 use std::time::Duration;
 
 use sqlx::PgPool;
@@ -83,10 +83,7 @@ pub fn spawn(
             );
             disks.refresh();
 
-            let worker_rss = sys
-                .process(pid)
-                .map(|p| p.memory())
-                .unwrap_or(0);
+            let worker_rss = sys.process(pid).map(|p| p.memory()).unwrap_or(0);
 
             let host_mem_total = sys.total_memory();
             let host_mem_used = sys.used_memory();
@@ -97,12 +94,11 @@ pub fn spawn(
             // offline sqlx cache and adding it would require a live DB
             // connection at build time. The query is trivial and run-once
             // per second, so the unchecked form is fine.
-            let pg_db_bytes: Option<i64> = sqlx::query_scalar::<_, i64>(
-                "SELECT pg_database_size(current_database())::BIGINT",
-            )
-            .fetch_one(&db)
-            .await
-            .ok();
+            let pg_db_bytes: Option<i64> =
+                sqlx::query_scalar::<_, i64>("SELECT pg_database_size(current_database())::BIGINT")
+                    .fetch_one(&db)
+                    .await
+                    .ok();
 
             let urls_done = counters.urls_done.load(Ordering::Relaxed);
             let urls_queued = counters.urls_queued.load(Ordering::Relaxed);
@@ -139,9 +135,7 @@ fn disk_for_path(disks: &Disks, path: &std::path::Path) -> (u64, u64) {
             }
         }
     }
-    let chosen = best
-        .map(|(_, d)| d)
-        .or_else(|| disks.list().first());
+    let chosen = best.map(|(_, d)| d).or_else(|| disks.list().first());
     match chosen {
         Some(d) => {
             let total = d.total_space();

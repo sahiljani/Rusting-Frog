@@ -14,7 +14,7 @@ use std::sync::{Arc, Mutex};
 use chrono::{DateTime, Offset, Utc};
 use chrono_tz::Tz;
 use serde::Serialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 const MAX_FILE_BYTES: u64 = 5 * 1024 * 1024;
 const ROTATED_FILES: usize = 2;
@@ -57,10 +57,7 @@ impl DebugLogger {
     fn open(dir: &Path, crawl_id: &str) -> std::io::Result<Inner> {
         fs::create_dir_all(dir)?;
         let path = dir.join(format!("{crawl_id}.log"));
-        let file = OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&path)?;
+        let file = OpenOptions::new().create(true).append(true).open(&path)?;
         let bytes_written = file.metadata().map(|m| m.len()).unwrap_or(0);
         Ok(Inner {
             path,
@@ -176,7 +173,11 @@ fn rotate(inner: &mut Inner) -> std::io::Result<()> {
         if i == ROTATED_FILES && dst.exists() {
             fs::remove_file(&dst)?;
         }
-        let src = if i == 1 { base.clone() } else { with_suffix(base, i - 1) };
+        let src = if i == 1 {
+            base.clone()
+        } else {
+            with_suffix(base, i - 1)
+        };
         if src.exists() {
             // remove dst first if it still exists from the previous iteration
             if dst.exists() {
@@ -185,10 +186,7 @@ fn rotate(inner: &mut Inner) -> std::io::Result<()> {
             fs::rename(&src, &dst)?;
         }
     }
-    let new_file = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(base)?;
+    let new_file = OpenOptions::new().create(true).append(true).open(base)?;
     inner.file = new_file;
     inner.bytes_written = 0;
     Ok(())
