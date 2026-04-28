@@ -229,6 +229,7 @@ pub struct SampleEvent {
 }
 
 impl SampleEvent {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         crawl_id: &str,
         worker_rss_bytes: u64,

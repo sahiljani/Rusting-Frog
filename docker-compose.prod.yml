@@ -74,7 +74,7 @@ services:
     expose:
       - "3000"
     volumes:
-      - debug-logs:/var/log/sf-debug:ro
+      - debug-logs-v2:/var/log/sf-debug:ro
     depends_on:
       migrations:
         condition: service_completed_successfully
@@ -108,7 +108,7 @@ services:
       RUST_LOG: ${RUST_LOG:-info}
       SF_DEBUG_LOG_DIR: /var/log/sf-debug
     volumes:
-      - debug-logs:/var/log/sf-debug
+      - debug-logs-v2:/var/log/sf-debug
     depends_on:
       migrations:
         condition: service_completed_successfully
@@ -122,4 +122,4 @@ services:
 volumes:
   pgdata:
   redisdata:
-  debug-logs:
+  debug-logs-v2:

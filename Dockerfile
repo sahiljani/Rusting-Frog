@@ -50,7 +50,9 @@ RUN apt-get update \
         tini \
  && rm -rf /var/lib/apt/lists/* \
  && groupadd --system sf \
- && useradd --system --gid sf --home-dir /app --shell /usr/sbin/nologin sf
+ && useradd --system --gid sf --home-dir /app --shell /usr/sbin/nologin sf \
+ && mkdir -p /var/log/sf-debug \
+ && chown sf:sf /var/log/sf-debug
 
 WORKDIR /app
 

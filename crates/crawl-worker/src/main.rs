@@ -39,9 +39,27 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!("crawl-worker started, polling for jobs");
 
-    let debug_log_dir: PathBuf = std::env::var("SF_DEBUG_LOG_DIR")
+    // Pick a writable debug-log dir. We try the configured one first; if
+    // that's read-only (e.g. a docker volume that was created before we
+    // added the chown to the Dockerfile), fall back to /tmp/sf-debug so
+    // debug logging keeps working without blocking the scrape.
+    let configured: PathBuf = std::env::var("SF_DEBUG_LOG_DIR")
         .unwrap_or_else(|_| DEFAULT_DEBUG_LOG_DIR.to_string())
         .into();
+    let debug_log_dir = match probe_writable(&configured) {
+        Ok(()) => configured,
+        Err(e) => {
+            let fallback = std::env::temp_dir().join("sf-debug");
+            tracing::warn!(
+                error = %e,
+                configured = %configured.display(),
+                fallback = %fallback.display(),
+                "configured debug log dir not writable, falling back",
+            );
+            fallback
+        }
+    };
+    tracing::info!(dir = %debug_log_dir.display(), "debug log dir ready");
 
     loop {
         match pick_next_job(&db).await {
@@ -129,6 +147,16 @@ struct CrawlJob {
     tenant_id: String,
     seed_url: String,
     config: Option<CrawlConfig>,
+}
+
+/// Verify we can create the dir and write a probe file. Returns Err on
+/// the first IO failure so the caller can pick a different location.
+fn probe_writable(dir: &std::path::Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(dir)?;
+    let probe = dir.join(".write-probe");
+    std::fs::File::create(&probe)?;
+    let _ = std::fs::remove_file(&probe);
+    Ok(())
 }
 
 async fn pick_next_job(db: &sqlx::PgPool) -> anyhow::Result<Option<CrawlJob>> {

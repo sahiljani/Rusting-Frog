@@ -288,14 +288,13 @@ async fn summary(
                     if phase == "crawl_end" {
                         crawl_end_ms = Some(ms);
                     }
-                    if phase == "fetch" {
-                        if let Some(b) = v
+                    if phase == "fetch"
+                        && let Some(b) = v
                             .get("meta")
                             .and_then(|m| m.get("bytes"))
                             .and_then(|b| b.as_u64())
-                        {
-                            totals.bytes_downloaded += b;
-                        }
+                    {
+                        totals.bytes_downloaded += b;
                     }
                     buckets.entry(phase.to_string()).or_default().push(ms);
                 }
@@ -341,7 +340,7 @@ async fn summary(
             v.sort_unstable();
             let count = v.len() as u64;
             let total_ms: u64 = v.iter().sum();
-            let avg_ms = if count > 0 { total_ms / count } else { 0 };
+            let avg_ms = total_ms.checked_div(count).unwrap_or(0);
             let p95_idx = ((v.len() as f64) * 0.95).ceil() as usize;
             let p95_ms = if v.is_empty() {
                 0
