@@ -73,6 +73,9 @@ dotenvy = "0.15"
 # System metrics (RAM/disk) for the debug log sampler
 sysinfo = "0.32"
 
+# Futures combinators (join_all etc.) for concurrent fetches
+futures = "0.3"
+
 # Internal crates
 sf-core = { path = "crates/core" }
 sf-evaluators = { path = "crates/evaluators" }

@@ -2601,6 +2601,7 @@ dependencies = [
  "chrono",
  "chrono-tz",
  "dotenvy",
+ "futures",
  "lol_html",
  "md5",
  "quick-xml",

@@ -32,6 +32,7 @@ md5 = "0.7"
 sha2 = "0.10"
 sysinfo.workspace = true
 chrono-tz.workspace = true
+futures.workspace = true
 
 [dev-dependencies]
 tempfile = "3"

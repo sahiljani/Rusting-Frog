@@ -153,317 +153,360 @@ impl CrawlPipeline {
         );
 
         let evaluators = sf_evaluators::phase1_evaluators();
-        let mut status_check_countdown = 0_u32;
+        let concurrency = self.config.speed.max_threads.max(1) as usize;
 
-        while let Some(entry) = self.frontier.next() {
+        'outer: loop {
             // External stop signal: the /v1/crawls/:id/stop endpoint
             // flips crawls.status to 'completed' but has no IPC channel
-            // to us. Poll the DB once every 5 fetches — cheap, and means
-            // stop takes effect within ~5s at default rate limits. Break
-            // out so the post-loop analysis + set_status still runs.
-            if status_check_countdown == 0 {
-                if let Ok(row) = sqlx::query!(
-                    "SELECT status FROM crawls WHERE id = $1",
-                    self.crawl_id.as_uuid(),
-                )
-                .fetch_one(&self.db)
-                .await
-                    && matches!(row.status.as_str(), "completed" | "failed" | "cancelled")
-                {
-                    tracing::info!(
-                        crawl_id = %self.crawl_id,
-                        status = %row.status,
-                        "external stop signal received — ending fetch loop",
-                    );
-                    break;
-                }
-                status_check_countdown = 5;
-            } else {
-                status_check_countdown -= 1;
+            // to us. Poll the DB once per batch — cheap, and means stop
+            // takes effect within a batch's worth of fetches. Break out
+            // so the post-loop analysis + set_status still runs.
+            if let Ok(row) = sqlx::query!(
+                "SELECT status FROM crawls WHERE id = $1",
+                self.crawl_id.as_uuid(),
+            )
+            .fetch_one(&self.db)
+            .await
+                && matches!(row.status.as_str(), "completed" | "failed" | "cancelled")
+            {
+                tracing::info!(
+                    crawl_id = %self.crawl_id,
+                    status = %row.status,
+                    "external stop signal received — ending fetch loop",
+                );
+                break;
             }
 
-            // Robots gate: if Disallow matches, we still record the URL so
-            // the "Blocked by Robots.txt" filter has a row to surface, but we
-            // don't fetch it. This mirrors Screaming Frog's "discover but
-            // don't crawl" behaviour for disallowed URLs.
-            if !gate.is_allowed(&entry.url) {
-                tracing::info!(url = %entry.url, "blocked by robots.txt");
-                self.write_blocked_url(entry.url.as_ref(), entry.depth)
-                    .await?;
-                self.urls_crawled += 1;
-                self.update_counters().await?;
-                continue;
-            }
-            let url_str = entry.url.to_string();
-            tracing::info!(url = %url_str, depth = entry.depth, "fetching");
-
-            // Fetch the URL
-            let fetch_started = Instant::now();
-            let fetch_result = match self.fetcher.fetch(&entry.url).await {
-                Ok(r) => {
-                    self.debug.phase_url(
-                        "fetch",
-                        &url_str,
-                        fetch_started.elapsed().as_millis() as u64,
-                        true,
-                        json!({
-                            "status": r.status_code,
-                            "bytes": r.content_length,
-                            "final_url": r.final_url,
-                        }),
-                    );
-                    r
+            // Build a batch of up to `concurrency` URLs to fetch in
+            // parallel. Empty batch ⇒ frontier exhausted ⇒ done.
+            let mut batch = Vec::with_capacity(concurrency);
+            while batch.len() < concurrency {
+                match self.frontier.next() {
+                    Some(e) => batch.push(e),
+                    None => break,
                 }
-                Err(e) => {
-                    tracing::warn!(url = %url_str, error = %e, "fetch failed");
-                    self.debug.phase_url(
-                        "fetch",
-                        &url_str,
-                        fetch_started.elapsed().as_millis() as u64,
-                        false,
-                        json!({"error": e.to_string()}),
-                    );
-                    self.write_failed_url(&url_str, entry.depth).await?;
+            }
+            if batch.is_empty() {
+                break 'outer;
+            }
+
+            // Robots gate is fast and synchronous — apply it before we
+            // spend a network round-trip on each URL. Blocked URLs still
+            // get a row written so the "Blocked by Robots.txt" filter
+            // has data, mirroring Screaming Frog's discover-but-don't-fetch.
+            let mut allowed: Vec<crate::frontier::FrontierEntry> = Vec::with_capacity(batch.len());
+            for entry in batch {
+                if !gate.is_allowed(&entry.url) {
+                    tracing::info!(url = %entry.url, "blocked by robots.txt");
+                    self.write_blocked_url(entry.url.as_ref(), entry.depth)
+                        .await?;
+                    self.urls_crawled += 1;
+                    self.counters
+                        .urls_done
+                        .store(self.urls_crawled, Ordering::Relaxed);
+                    self.update_counters().await?;
                     continue;
                 }
+                allowed.push(entry);
+            }
+
+            // Concurrent fetch. Each future borrows &self.fetcher but
+            // owns its url clone; reqwest's Client is internally an Arc
+            // so cloning isn't required. The outer block scopes the
+            // borrow on self so we can take &mut self again to process.
+            let batch_started = Instant::now();
+            let fetch_results = {
+                let fetcher = &self.fetcher;
+                let futs = allowed.iter().map(|e| {
+                    let url = e.url.clone();
+                    async move {
+                        let started = Instant::now();
+                        let result = fetcher.fetch(&url).await;
+                        (started, result)
+                    }
+                });
+                futures::future::join_all(futs).await
             };
 
-            let content_type = ContentType::from_mime(&fetch_result.content_type);
-            let is_internal = self.is_internal(&entry.url);
+            // Sequential post-fetch processing preserves the original
+            // ordering of DB writes + link enqueueing, so frontier growth
+            // is deterministic regardless of which fetch returned first.
+            for (entry, (fetch_started, fetch_outcome)) in allowed.into_iter().zip(fetch_results) {
+                let url_str = entry.url.to_string();
+                tracing::info!(url = %url_str, depth = entry.depth, "fetched");
 
-            // Parse HTML if applicable
-            let parse_started = Instant::now();
-            let parse_result = if content_type == ContentType::Html && !fetch_result.body.is_empty()
-            {
-                let pr = parser::parse_html(&fetch_result.body, &entry.url);
-                self.debug.phase_url(
-                    "parse",
-                    &url_str,
-                    parse_started.elapsed().as_millis() as u64,
-                    true,
-                    json!({"links_found": pr.links.len(), "content_type": "html"}),
-                );
-                Some(pr)
-            } else {
-                self.debug.phase_url(
+                let fetch_result = match fetch_outcome {
+                    Ok(r) => {
+                        self.debug.phase_url(
+                            "fetch",
+                            &url_str,
+                            fetch_started.elapsed().as_millis() as u64,
+                            true,
+                            json!({
+                                "status": r.status_code,
+                                "bytes": r.content_length,
+                                "final_url": r.final_url,
+                            }),
+                        );
+                        r
+                    }
+                    Err(e) => {
+                        tracing::warn!(url = %url_str, error = %e, "fetch failed");
+                        self.debug.phase_url(
+                            "fetch",
+                            &url_str,
+                            fetch_started.elapsed().as_millis() as u64,
+                            false,
+                            json!({"error": e.to_string()}),
+                        );
+                        self.write_failed_url(&url_str, entry.depth).await?;
+                        continue;
+                    }
+                };
+
+                let content_type = ContentType::from_mime(&fetch_result.content_type);
+                let is_internal = self.is_internal(&entry.url);
+
+                // Parse HTML if applicable
+                let parse_started = Instant::now();
+                let parse_result = if content_type == ContentType::Html
+                    && !fetch_result.body.is_empty()
+                {
+                    let pr = parser::parse_html(&fetch_result.body, &entry.url);
+                    self.debug.phase_url(
+                        "parse",
+                        &url_str,
+                        parse_started.elapsed().as_millis() as u64,
+                        true,
+                        json!({"links_found": pr.links.len(), "content_type": "html"}),
+                    );
+                    Some(pr)
+                } else {
+                    self.debug.phase_url(
                     "parse",
                     &url_str,
                     parse_started.elapsed().as_millis() as u64,
                     true,
                     json!({"links_found": 0, "content_type": format!("{:?}", content_type).to_lowercase()}),
                 );
-                None
-            };
+                    None
+                };
 
-            // Write the crawl_url row
-            let url_id = CrawlUrlId::new();
-            let url_hash = format!("{:x}", md5::compute(url_str.as_bytes()));
+                // Write the crawl_url row
+                let url_id = CrawlUrlId::new();
+                let url_hash = format!("{:x}", md5::compute(url_str.as_bytes()));
 
-            let db_started = Instant::now();
-            self.write_crawl_url(
-                &url_id,
-                &url_str,
-                &url_hash,
-                &content_type,
-                &fetch_result,
-                is_internal,
-                entry.depth as i32,
-                &parse_result,
-            )
-            .await?;
-            self.debug.phase_url(
-                "db_write",
-                &url_str,
-                db_started.elapsed().as_millis() as u64,
-                true,
-                json!({"table": "crawl_urls"}),
-            );
-
-            // Run evaluators and write findings
-            let evaluators_started = Instant::now();
-            let mut eval_findings = 0u64;
-            let mut slowest: (String, u64) = ("none".to_string(), 0);
-            if let Some(ref pr) = parse_result {
-                let crawl_url = sf_core::crawl::CrawlUrl {
-                    id: url_id,
-                    crawl_id: self.crawl_id,
-                    url: url_str.clone(),
-                    url_hash: url_hash.clone(),
-                    content_type,
-                    status_code: Some(fetch_result.status_code as i16),
+                let db_started = Instant::now();
+                self.write_crawl_url(
+                    &url_id,
+                    &url_str,
+                    &url_hash,
+                    &content_type,
+                    &fetch_result,
                     is_internal,
-                    depth: entry.depth as i32,
-                    title: pr.title.clone(),
-                    title_length: pr.title_length,
-                    title_pixel_width: pr.title_pixel_width,
-                    meta_description: pr.meta_description.clone(),
-                    meta_description_length: pr.meta_description_length,
-                    meta_description_pixel_width: pr.meta_description_pixel_width,
-                    h1_first: pr.h1_first.clone(),
-                    h1_count: pr.h1_count,
-                    h2_first: pr.h2_first.clone(),
-                    h2_count: pr.h2_count,
-                    word_count: Some(pr.word_count),
-                    response_time_ms: Some(fetch_result.response_time_ms as i64),
-                    content_length: Some(fetch_result.content_length as i64),
-                    redirect_url: None,
-                    canonical_url: pr.canonical_url.clone(),
-                    meta_robots: pr.meta_robots.clone(),
-                    crawled_at: Some(chrono::Utc::now()),
-                };
+                    entry.depth as i32,
+                    &parse_result,
+                )
+                .await?;
+                self.debug.phase_url(
+                    "db_write",
+                    &url_str,
+                    db_started.elapsed().as_millis() as u64,
+                    true,
+                    json!({"table": "crawl_urls"}),
+                );
 
-                let parsed_html = Html::parse_document(&fetch_result.body);
-                let eval_ctx = sf_evaluators::EvalContext {
-                    config: &self.config,
-                    html: Some(&fetch_result.body),
-                    parsed: Some(&parsed_html),
-                };
+                // Run evaluators and write findings
+                let evaluators_started = Instant::now();
+                let mut eval_findings = 0u64;
+                let mut slowest: (String, u64) = ("none".to_string(), 0);
+                if let Some(ref pr) = parse_result {
+                    let crawl_url = sf_core::crawl::CrawlUrl {
+                        id: url_id,
+                        crawl_id: self.crawl_id,
+                        url: url_str.clone(),
+                        url_hash: url_hash.clone(),
+                        content_type,
+                        status_code: Some(fetch_result.status_code as i16),
+                        is_internal,
+                        depth: entry.depth as i32,
+                        title: pr.title.clone(),
+                        title_length: pr.title_length,
+                        title_pixel_width: pr.title_pixel_width,
+                        meta_description: pr.meta_description.clone(),
+                        meta_description_length: pr.meta_description_length,
+                        meta_description_pixel_width: pr.meta_description_pixel_width,
+                        h1_first: pr.h1_first.clone(),
+                        h1_count: pr.h1_count,
+                        h2_first: pr.h2_first.clone(),
+                        h2_count: pr.h2_count,
+                        word_count: Some(pr.word_count),
+                        response_time_ms: Some(fetch_result.response_time_ms as i64),
+                        content_length: Some(fetch_result.content_length as i64),
+                        redirect_url: None,
+                        canonical_url: pr.canonical_url.clone(),
+                        meta_robots: pr.meta_robots.clone(),
+                        crawled_at: Some(chrono::Utc::now()),
+                    };
 
-                for evaluator in &evaluators {
-                    let one = Instant::now();
-                    let findings = evaluator.evaluate(&crawl_url, &eval_ctx);
-                    let one_ms = one.elapsed().as_millis() as u64;
-                    let tab_name = format!("{:?}", evaluator.tab());
-                    if one_ms > slowest.1 {
-                        slowest = (tab_name.clone(), one_ms);
-                    }
-                    if one_ms > 100 {
-                        self.debug.log(
-                            "warn",
-                            &format!("slow evaluator {tab_name}: {one_ms}ms"),
-                            json!({"url": &url_str, "evaluator": tab_name, "ms": one_ms}),
-                        );
-                    }
-                    eval_findings += findings.len() as u64;
-                    for finding in findings {
-                        self.write_finding(&url_id, &finding.filter_key).await?;
-                    }
-                }
+                    let parsed_html = Html::parse_document(&fetch_result.body);
+                    let eval_ctx = sf_evaluators::EvalContext {
+                        config: &self.config,
+                        html: Some(&fetch_result.body),
+                        parsed: Some(&parsed_html),
+                    };
 
-                // Enqueue discovered links. We only follow links out of
-                // *internal* pages — once we cross the host boundary the
-                // crawl would be unbounded, so external pages become leaves.
-                // External URLs still get enqueued (and later fetched) so
-                // the External evaluator has rows to fire against, but none
-                // of their outlinks are followed.
-                if is_internal {
+                    for evaluator in &evaluators {
+                        let one = Instant::now();
+                        let findings = evaluator.evaluate(&crawl_url, &eval_ctx);
+                        let one_ms = one.elapsed().as_millis() as u64;
+                        let tab_name = format!("{:?}", evaluator.tab());
+                        if one_ms > slowest.1 {
+                            slowest = (tab_name.clone(), one_ms);
+                        }
+                        if one_ms > 100 {
+                            self.debug.log(
+                                "warn",
+                                &format!("slow evaluator {tab_name}: {one_ms}ms"),
+                                json!({"url": &url_str, "evaluator": tab_name, "ms": one_ms}),
+                            );
+                        }
+                        eval_findings += findings.len() as u64;
+                        for finding in findings {
+                            self.write_finding(&url_id, &finding.filter_key).await?;
+                        }
+                    }
+
+                    // Enqueue discovered links. We only follow links out of
+                    // *internal* pages — once we cross the host boundary the
+                    // crawl would be unbounded, so external pages become leaves.
+                    // External URLs still get enqueued (and later fetched) so
+                    // the External evaluator has rows to fire against, but none
+                    // of their outlinks are followed.
+                    if is_internal {
+                        for link in &pr.links {
+                            if let Ok(link_url) = Url::parse(&link.href) {
+                                self.frontier.add(link_url, entry.depth + 1);
+                            }
+                        }
+                    }
+
+                    // Write link edges
                     for link in &pr.links {
-                        if let Ok(link_url) = Url::parse(&link.href) {
-                            self.frontier.add(link_url, entry.depth + 1);
+                        if Url::parse(&link.href).is_ok() {
+                            self.write_link_edge(
+                                &url_id,
+                                &link.href,
+                                &link.anchor_text,
+                                link.is_nofollow,
+                            )
+                            .await
+                            .ok(); // best-effort, don't fail the crawl
+                        }
+                    }
+
+                    // Write page resources. Unlike link edges these are stored
+                    // regardless of whether the target was crawled, so external
+                    // CDN scripts/stylesheets still appear in the Resources
+                    // detail tab.
+                    for link in &pr.links {
+                        let rtype = match link.link_type {
+                            parser::LinkType::Script => Some("script"),
+                            parser::LinkType::Stylesheet => Some("stylesheet"),
+                            parser::LinkType::Image => Some("image"),
+                            _ => None,
+                        };
+                        if let Some(rtype) = rtype {
+                            self.write_resource(&url_id, &link.href, rtype).await.ok();
+                        }
+                    }
+                } else {
+                    // Non-HTML: still run evaluators that don't need parsed HTML
+                    let crawl_url = sf_core::crawl::CrawlUrl {
+                        id: url_id,
+                        crawl_id: self.crawl_id,
+                        url: url_str.clone(),
+                        url_hash: url_hash.clone(),
+                        content_type,
+                        status_code: Some(fetch_result.status_code as i16),
+                        is_internal,
+                        depth: entry.depth as i32,
+                        title: None,
+                        title_length: None,
+                        title_pixel_width: None,
+                        meta_description: None,
+                        meta_description_length: None,
+                        meta_description_pixel_width: None,
+                        h1_first: None,
+                        h1_count: 0,
+                        h2_first: None,
+                        h2_count: 0,
+                        word_count: None,
+                        response_time_ms: Some(fetch_result.response_time_ms as i64),
+                        content_length: Some(fetch_result.content_length as i64),
+                        redirect_url: None,
+                        canonical_url: None,
+                        meta_robots: None,
+                        crawled_at: Some(chrono::Utc::now()),
+                    };
+
+                    let eval_ctx = sf_evaluators::EvalContext {
+                        config: &self.config,
+                        html: None,
+                        parsed: None,
+                    };
+
+                    for evaluator in &evaluators {
+                        let one = Instant::now();
+                        let findings = evaluator.evaluate(&crawl_url, &eval_ctx);
+                        let one_ms = one.elapsed().as_millis() as u64;
+                        let tab_name = format!("{:?}", evaluator.tab());
+                        if one_ms > slowest.1 {
+                            slowest = (tab_name, one_ms);
+                        }
+                        eval_findings += findings.len() as u64;
+                        for finding in findings {
+                            self.write_finding(&url_id, &finding.filter_key).await?;
                         }
                     }
                 }
 
-                // Write link edges
-                for link in &pr.links {
-                    if Url::parse(&link.href).is_ok() {
-                        self.write_link_edge(
-                            &url_id,
-                            &link.href,
-                            &link.anchor_text,
-                            link.is_nofollow,
-                        )
-                        .await
-                        .ok(); // best-effort, don't fail the crawl
-                    }
-                }
+                // Roll up the per-URL evaluator pass into one phase event,
+                // calling out the slowest evaluator + total findings written.
+                self.debug.phase_url(
+                    "evaluators",
+                    &url_str,
+                    evaluators_started.elapsed().as_millis() as u64,
+                    true,
+                    json!({
+                        "count": evaluators.len(),
+                        "findings": eval_findings,
+                        "slowest_tab": slowest.0,
+                        "slowest_ms": slowest.1,
+                    }),
+                );
 
-                // Write page resources. Unlike link edges these are stored
-                // regardless of whether the target was crawled, so external
-                // CDN scripts/stylesheets still appear in the Resources
-                // detail tab.
-                for link in &pr.links {
-                    let rtype = match link.link_type {
-                        parser::LinkType::Script => Some("script"),
-                        parser::LinkType::Stylesheet => Some("stylesheet"),
-                        parser::LinkType::Image => Some("image"),
-                        _ => None,
-                    };
-                    if let Some(rtype) = rtype {
-                        self.write_resource(&url_id, &link.href, rtype).await.ok();
-                    }
-                }
-            } else {
-                // Non-HTML: still run evaluators that don't need parsed HTML
-                let crawl_url = sf_core::crawl::CrawlUrl {
-                    id: url_id,
-                    crawl_id: self.crawl_id,
-                    url: url_str.clone(),
-                    url_hash: url_hash.clone(),
-                    content_type,
-                    status_code: Some(fetch_result.status_code as i16),
-                    is_internal,
-                    depth: entry.depth as i32,
-                    title: None,
-                    title_length: None,
-                    title_pixel_width: None,
-                    meta_description: None,
-                    meta_description_length: None,
-                    meta_description_pixel_width: None,
-                    h1_first: None,
-                    h1_count: 0,
-                    h2_first: None,
-                    h2_count: 0,
-                    word_count: None,
-                    response_time_ms: Some(fetch_result.response_time_ms as i64),
-                    content_length: Some(fetch_result.content_length as i64),
-                    redirect_url: None,
-                    canonical_url: None,
-                    meta_robots: None,
-                    crawled_at: Some(chrono::Utc::now()),
-                };
-
-                let eval_ctx = sf_evaluators::EvalContext {
-                    config: &self.config,
-                    html: None,
-                    parsed: None,
-                };
-
-                for evaluator in &evaluators {
-                    let one = Instant::now();
-                    let findings = evaluator.evaluate(&crawl_url, &eval_ctx);
-                    let one_ms = one.elapsed().as_millis() as u64;
-                    let tab_name = format!("{:?}", evaluator.tab());
-                    if one_ms > slowest.1 {
-                        slowest = (tab_name, one_ms);
-                    }
-                    eval_findings += findings.len() as u64;
-                    for finding in findings {
-                        self.write_finding(&url_id, &finding.filter_key).await?;
-                    }
-                }
+                self.urls_crawled += 1;
+                self.counters
+                    .urls_done
+                    .store(self.urls_crawled, Ordering::Relaxed);
+                self.counters.urls_queued.store(
+                    self.frontier.discovered_count() as i64 - self.urls_crawled,
+                    Ordering::Relaxed,
+                );
+                self.update_counters().await?;
             }
 
-            // Roll up the per-URL evaluator pass into one phase event,
-            // calling out the slowest evaluator + total findings written.
-            self.debug.phase_url(
-                "evaluators",
-                &url_str,
-                evaluators_started.elapsed().as_millis() as u64,
-                true,
-                json!({
-                    "count": evaluators.len(),
-                    "findings": eval_findings,
-                    "slowest_tab": slowest.0,
-                    "slowest_ms": slowest.1,
-                }),
-            );
-
-            self.urls_crawled += 1;
-            self.counters
-                .urls_done
-                .store(self.urls_crawled, Ordering::Relaxed);
-            self.counters.urls_queued.store(
-                self.frontier.discovered_count() as i64 - self.urls_crawled,
-                Ordering::Relaxed,
-            );
-            self.update_counters().await?;
-
-            // Rate limiting: simple delay between fetches
-            tokio::time::sleep(std::time::Duration::from_millis(
-                1000 / self.config.speed.max_uri_per_second.max(1) as u64,
-            ))
-            .await;
+            // Per-batch rate limit. With concurrency=N and target rate
+            // R URLs/sec the batch should take at least N/R seconds. If
+            // the network was slow we already exceeded that; if it was
+            // fast we sleep the remainder so we don't hammer the host.
+            let target_ms =
+                1000u64 * concurrency as u64 / self.config.speed.max_uri_per_second.max(1) as u64;
+            let elapsed_ms = batch_started.elapsed().as_millis() as u64;
+            if elapsed_ms < target_ms {
+                tokio::time::sleep(std::time::Duration::from_millis(target_ms - elapsed_ms)).await;
+            }
         }
 
         let dup_started = Instant::now();
